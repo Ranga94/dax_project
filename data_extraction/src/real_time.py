@@ -63,6 +63,6 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('connection_string', help='The MongoDB connection string')
-    parser.add_argument("-c", "--constituent", help="save historical data for specific constituent")
+    parser.add_argument("-c", "--constituent", help="save real-time data for specific constituent")
     args = parser.parse_args()
     main(args)
