@@ -1,0 +1,10 @@
+Real-time URLs
+
+DAX
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+998032;830;814+TICKS+1
+Allianz
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+322646;13;814+TICKS+1
+Adidas
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+11730015;44;814+TICKS+1
+BASF
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+11450563;44;814+TICKS+1
