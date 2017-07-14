@@ -8,3 +8,60 @@ Adidas
 http://charts.finanzen.net/ChartData.ashx?request=HISTORY+11730015;44;814+TICKS+1
 BASF
 http://charts.finanzen.net/ChartData.ashx?request=HISTORY+11450563;44;814+TICKS+1
+Bayer
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+10367293;44;814+TICKS+1440
+Beiersdorf
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+324660;44;814+TICKS+1440
+BMW
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+324410;44;814+TICKS+1440
+Commerzbank
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+21170377;44;814+TICKS+1440
+Continental
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+327800;44;814+TICKS+1440
+Daimler
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+945657;44;814+TICKS+1440
+Deutsche Bank
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+829257;13;814+TICKS+1440
+Deutsche Börse
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+1177233;44;814+TICKS+1440
+Deutsche Post
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+1124244;44;814+TICKS+1440
+Deutsche Telekom
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+1124244;44;814+TICKS+1440
+EON
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+4334819;44;814+TICKS+1440
+Fresenius Medical Care
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+520878;44;814+TICKS+1440
+Fresenius
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+332902;44;814+TICKS+1440
+HeidelbergCement
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+335740;44;814+TICKS+1440
+Henkel vz
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+335910;13;814+TICKS+1440
+Infineon
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+1038049;44;814+TICKS+1440
+Linde
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+340045;44;814+TICKS+1440
+Lufthansa
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+667979;44;814+TICKS+1440
+Merck
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+412799;44;814+TICKS+1440
+Münchener Rückversicherungs-Gesellschaft
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+341960;44;814+TICKS+1440
+ProSiebenSat1 Media
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+21967295;13;814+TICKS+1440
+RWE
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+1158883;13;814+TICKS+1440
+SAP
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+345952;44;814+TICKS+1440
+Siemens
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+827766;44;814+TICKS+1440
+thyssenkrupp
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+412006;44;814+TICKS+1440
+Volkswagen (VW) vz
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+352781;44;814+TICKS+1440
+Vonovia
+http://charts.finanzen.net/ChartData.ashx?request=HISTORY+21644750;13;814+TICKS+1440
+
+
+BEGINDATA 998032;830;814 TICKS-1 1 2017-07-13-17-45-00-000;12641.33;12641.33;12641.33;12641.33;0;0; ---packet end---

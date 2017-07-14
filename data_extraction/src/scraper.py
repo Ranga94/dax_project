@@ -52,12 +52,12 @@ def extract_historical_data(url, driver, database, constituent=None):
     table_body = table.find('tbody')
     table_row = table_body.find('tr')
 
-    if constituent == 'dax':
+    if constituent == 'DAX':
 
         while table_row.find_next_sibling('tr'):
             data = table_row.find_all('td')
             try:
-                rows.append({'constituent': 'dax',
+                rows.append({'constituent': 'DAX',
                              'date':datetime.strptime(data[0].string, "%d/%m/%Y"),
                              'opening_price': float(data[3].string.replace(',', '')),
                              'closing_price': float(data[2].string.replace(',', '')),
@@ -73,7 +73,7 @@ def extract_historical_data(url, driver, database, constituent=None):
 
         data = table_row.find_all('td')
 
-        rows.append({'constituent': 'dax',
+        rows.append({'constituent': 'DAX',
                      'date': datetime.strptime(data[0].string, "%d/%m/%Y"),
                      'opening_price': float(data[3].string.replace(',', '')),
                      'closing_price': float(data[2].string.replace(',', '')),
@@ -97,21 +97,25 @@ def extract_historical_data(url, driver, database, constituent=None):
                              'volume': float(data[6].string.replace(',',''))
                 })
             except AttributeError as e:
-                pass
+                print(e)
 
             table_row = table_row.find_next_sibling('tr')
 
         data = table_row.find_all('td')
 
-        rows.append({'constituent': constituent,
-                     'date': datetime.strptime(data[0].string, "%d/%m/%Y"),
-                     'opening_price': float(data[1].string.replace(',', '')),
-                     'closing_price': float(data[2].string.replace(',', '')),
-                     'daily_high': float(data[3].string.replace(',', '')),
-                     'daily_low': float(data[4].string.replace(',', '')),
-                     'turnover': float(data[5].string.replace(',', '')),
-                     'volume': float(data[6].string.replace(',', ''))
-                     })
+        try:
+            rows.append({'constituent': constituent,
+                         'date': datetime.strptime(data[0].string, "%d/%m/%Y"),
+                         'opening_price': float(data[1].string.replace(',', '')),
+                         'closing_price': float(data[2].string.replace(',', '')),
+                         'daily_high': float(data[3].string.replace(',', '')),
+                         'daily_low': float(data[4].string.replace(',', '')),
+                         'turnover': float(data[5].string.replace(',', '')),
+                         'volume': float(data[6].string.replace(',', ''))
+                         })
+        except AttributeError as e:
+            print(e)
+
 
 
     bulk_insert(database.historical, rows)
@@ -120,7 +124,7 @@ def bulk_insert(collection, documents):
     try:
         result = collection.insert_many(documents)
         print(result)
-    except errors.DuplicateKeyError as e:
+    except errors.BulkWriteError as e:
         print(e.details)
 
 def get_database(connection_string):
