@@ -113,10 +113,10 @@ One of the options to use the data from a Python program is to use a library lik
 ```
 mongodb://igenie:igenie@ds019654.mlab.com:19654/dax
 ```
-The database is called dax, and there are 3 collections in it: company_data, dax_real_time and historical. Sample documents from each collection are shown
+The database is called dax, and there are 3 collections in it: company_data, dax_real_time and historical. Sample documents from each collection are shown above.
 
 ### Downloading the data
 To download the data, a local installation of MongoDB is required to run mongoexport program, which extracts the data from the cloud database to a local json file:
 ```
-mongoexport -h ds019654.mlab.com:19654 -d dax -c [company_data | historical | real_time] -u igenie -p igenie -o <path to save file>
+mongoexport -h ds019654.mlab.com:19654 -d dax -c [company_data | historical | dax_real_time] -u igenie -p igenie -o <path to save file>
 ```
