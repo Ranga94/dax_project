@@ -108,8 +108,15 @@ real_time.py -c "Deutsche Telekom" <some connection string>
 ```
 A cron job should be set up to run this script with the desired periodicity.
 
-## Downloading the data
-At the moment, the data for historical prices and company data is hosted in a mLab.com MongoDB database. To download the data, a local installation of MongoDB is required:
+## Using the data
+One of the options to use the data from a Python program is to use a library like Pymongo, and create a client that connects to the cloud MongoDB database with the following connection string:
+```
+mongodb://igenie:igenie@ds019654.mlab.com:19654/dax
+```
+The database is called dax, and there are 3 collections in it: company_data, dax_real_time and historical. Sample documents from each collection are shown
+
+### Downloading the data
+To download the data, a local installation of MongoDB is required to run mongoexport program, which extracts the data from the cloud database to a local json file:
 ```
 mongoexport -h ds019654.mlab.com:19654 -d dax -c [company_data | historical | real_time] -u igenie -p igenie -o <path to save file>
 ```
