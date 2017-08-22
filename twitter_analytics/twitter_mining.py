@@ -12,6 +12,12 @@ import time
 
 current_constituent = ['BMW','adidas', 'Deutsche Bank', 'EON', 'Commerzbank']
 
+languages = ['en', 'en','ja','ar','es','am','hy','bn','bg','my','ckb','zh',
+             'da','dv','nl','et','fi','fr','ka','de','el','gu','ht','he','hi',
+             'hu','is','id','it','kn','km','ko','lo','lv','lt','ml','mr','ne',
+             'no','or','pa','ps','fa','pl','pt','pa','ro','ru','ar','ad','si',
+             'sl','sv','tl','ta','te','th','bo','tr','ur','ug','vi']
+
 all_constituents = ['Allianz', 'adidas',
                     'BASF', 'Bayer', 'Beiersdorf',
                     'BMW', 'Commerzbank','Continental',
@@ -229,4 +235,4 @@ def preprocess_tweet(text:str, language):
 
 
 if __name__ == "__main__":
-    get_twees(sys.argv[1:])
+    get_tweets(sys.argv[1:])
