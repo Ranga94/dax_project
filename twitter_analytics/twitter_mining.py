@@ -12,12 +12,6 @@ import time
 
 current_constituent = ['BMW','adidas', 'Deutsche Bank', 'EON', 'Commerzbank']
 
-languages = ['en', 'en','ja','ar','es','am','hy','bn','bg','my','ckb','zh',
-             'da','dv','nl','et','fi','fr','ka','de','el','gu','ht','he','hi',
-             'hu','is','id','it','kn','km','ko','lo','lv','lt','ml','mr','ne',
-             'no','or','pa','ps','fa','pl','pt','pa','ro','ru','ar','ad','si',
-             'sl','sv','tl','ta','te','th','bo','tr','ur','ug','vi']
-
 all_constituents = ['Allianz', 'adidas',
                     'BASF', 'Bayer', 'Beiersdorf',
                     'BMW', 'Commerzbank','Continental',
@@ -55,6 +49,11 @@ tweets in german will have:
 
 
 def get_tweets(argv):
+
+    try:
+        translate_client = translate.Client()
+    except Exception as e:
+        print(str(e))
 
     API_KEY = "fAFENmxds3YFgUqHt974ZGsov"
     API_SECRET = 'zk8IRc6WQPZ8dc2yGh8gJClEMDlL6I3L4DYIC4ZkoHvjIw4QgN'
@@ -115,6 +114,12 @@ def get_tweets(argv):
                     print("No more tweets found")
                     break
 
+                #I should check here whether translation is necessary, translate and
+                # I should do the translation here on the list_of_tweets
+                if language != "en":
+                    translate(new_tweets, translate_client)
+
+
                 for tweet in new_tweets:
                     document = tweet._json
 
@@ -134,7 +139,6 @@ def get_tweets(argv):
 
                     list_of_tweets.append(document)
                     #print(document['processed_text'])
-
 
                 #Logging
                 result = None
@@ -231,6 +235,18 @@ def preprocess_tweet(text:str, language):
 
     else:
         return {}
+
+def translate(to_translate:list, translate_client):
+    texts = [tweet._json['text'] for tweet in to_translate]
+    try:
+        translations = translate_client.translate(texts, target_language='en')
+    except Exception as e:
+        return str(e)
+
+    if len(translations) == len(to_translate):
+        for i
+
+
 
 
 
