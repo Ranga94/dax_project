@@ -1,10 +1,21 @@
 import sys
+sys.path.insert(0, '../utils')
 from DB import DB
 from sortedcontainers import SortedListWithKey
 from collections import defaultdict
 
 def main(argv):
     database = DB(argv[0], argv[1])
+    col = database.get_collection('tweets')
+    cursor = col.find({'constituent': "EON"}, {"_id": -1, "id_str": 1, "favorite_count": 1,
+                                                "retweet_count": 1, "text": 1, "processed_text": 1, "place": 1,
+                                                "user": 1})
+    results = list(cursor)
+    prices = price_analytics(results,10,50)
+    print("Prices")
+    print_prices(prices)
+    print("Countries")
+    print_countries(results)
 
 
 def general_analytics(cursor: list):
@@ -34,7 +45,7 @@ def general_analytics(cursor: list):
 
     return vocabulary, top_retweeted, top_fav, top_followed
 
-def price_analytics(cursor:list):
+def price_analytics(cursor:list, low, high):
     prices = []
     for tweet in cursor:
         text = tweet["processed_text"]
@@ -42,7 +53,7 @@ def price_analytics(cursor:list):
         for word in tweet["processed_text"]:
             try:
                 number = float(word)
-                if number < 150 and number > 50:
+                if number < high and number > low:
                     prices.append(number)
             except:
                 pass
@@ -62,7 +73,7 @@ def print_prices(prices):
 
     print("Price prediction distribution")
     for p1, p2 in sorted(prices_frequency.items(), key=lambda x: x[1], reverse=True):
-        print("{}".format(p2))
+        print("{},{}".format(p1,p2))
 
 def print_results(results:list):
     for item in reversed(results):
