@@ -11,7 +11,9 @@ import time
 from datetime import datetime
 
 
-current_constituent = ['BMW','adidas', 'Deutsche Bank', 'EON', 'Commerzbank']
+#current_constituent = ['BMW','adidas', 'Deutsche Bank', 'EON', 'Commerzbank']
+current_constituent = ['Deutsche Bank']
+
 
 all_constituents = ['Allianz', 'adidas',
                     'BASF', 'Bayer', 'Beiersdorf',
@@ -58,7 +60,7 @@ def get_tweets(argv):
     # this is what we're searching for
     maxTweets = 10000000  # Some arbitrary large number
     #maxTweets = 10
-    tweetsPerQry = 50  # this is the max the API permits
+    tweetsPerQry = 100  # this is the max the API permits
     #tweetsPerQry = 10
     language = argv[3]
 

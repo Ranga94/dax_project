@@ -7,15 +7,15 @@ from collections import defaultdict
 def main(argv):
     database = DB(argv[0], argv[1])
     col = database.get_collection('tweets')
-    cursor = col.find({'constituent': "EON"}, {"_id": -1, "id_str": 1, "favorite_count": 1,
+    cursor = col.find({'constituent': "Deutsche Bank"}, {"_id": -1, "id_str": 1, "favorite_count": 1,
                                                 "retweet_count": 1, "text": 1, "processed_text": 1, "place": 1,
                                                 "user": 1})
     results = list(cursor)
-    prices = price_analytics(results,10,50)
+    prices = price_analytics(results,11,15)
     print("Prices")
     print_prices(prices)
-    print("Countries")
-    print_countries(results)
+    #print("Countries")
+    #print_countries(results)
 
 
 def general_analytics(cursor: list):
