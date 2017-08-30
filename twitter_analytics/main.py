@@ -1,5 +1,7 @@
 from twitter_mining import get_tweets
 import sys
+sys.path.insert(0, '../utils')
+import email_tools
 
 
 '''
@@ -16,7 +18,7 @@ def main(argv):
         argv.append(lang)
         get_tweets(argv)
 
-    #send email
+    email_tools.send_mail(argv[0], argv[1], ["ulysses@igenieconsulting.com"])
 
 
 if __name__ == "__main__":

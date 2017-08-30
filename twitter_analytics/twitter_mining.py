@@ -12,7 +12,7 @@ from datetime import datetime
 
 
 #current_constituent = ['BMW','adidas', 'Deutsche Bank', 'EON', 'Commerzbank']
-current_constituent = ['Deutsche Bank']
+current_constituent = ['Deutsche Bank', 'EON', 'Commerzbank']
 
 
 all_constituents = ['Allianz', 'adidas',
