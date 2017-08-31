@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0, '../utils')
+sys.path.insert(0, '../../utils')
 from DB import DB
 from datetime import datetime
 import requests
