@@ -1,3 +1,5 @@
+import sys
+sys.path.insert(0, '../utils')
 from DB import DB
 from datetime import datetime
 import requests
@@ -117,6 +119,18 @@ def extract_real_time_values_batch(url, database, constituent):
     
     except Exception as ex:
         return str(ex)
+
+def main(argv:list):
+    response = real_time_wrapper(
+        {'connection_string': 'mongodb://igenie_readwrite:igenie@35.189.101.142:27017/dax_gcp',
+         'database': 'dax_gcp',
+         'part': argv[0]})
+
+    print(response)
+    #return response
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
 
 
 
