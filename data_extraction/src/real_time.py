@@ -124,7 +124,7 @@ def main(argv:list):
     response = real_time_wrapper(
         {'connection_string': 'mongodb://igenie_readwrite:igenie@35.189.101.142:27017/dax_gcp',
          'database': 'dax_gcp',
-         'part': argv[0]})
+         'part': int(argv[0])})
 
     print(response)
     #return response
