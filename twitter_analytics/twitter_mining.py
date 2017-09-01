@@ -8,15 +8,12 @@ from nltk.stem import PorterStemmer
 import string
 from google.cloud import translate
 import time
+from datetime import datetime
 
 
-current_constituent = ['BMW','adidas', 'Deutsche Bank', 'EON', 'Commerzbank']
+#current_constituent = ['BMW','adidas', 'Deutsche Bank', 'EON', 'Commerzbank']
+current_constituent = ['Deutsche Bank', 'EON', 'Commerzbank']
 
-languages = ['en', 'en','ja','ar','es','am','hy','bn','bg','my','ckb','zh',
-             'da','dv','nl','et','fi','fr','ka','de','el','gu','ht','he','hi',
-             'hu','is','id','it','kn','km','ko','lo','lv','lt','ml','mr','ne',
-             'no','or','pa','ps','fa','pl','pt','pa','ro','ru','ar','ad','si',
-             'sl','sv','tl','ta','te','th','bo','tr','ur','ug','vi']
 
 all_constituents = ['Allianz', 'adidas',
                     'BASF', 'Bayer', 'Beiersdorf',
@@ -55,7 +52,6 @@ tweets in german will have:
 
 
 def get_tweets(argv):
-
     API_KEY = "fAFENmxds3YFgUqHt974ZGsov"
     API_SECRET = 'zk8IRc6WQPZ8dc2yGh8gJClEMDlL6I3L4DYIC4ZkoHvjIw4QgN'
 
@@ -93,7 +89,7 @@ def get_tweets(argv):
         tweetCount = 0
 
 
-        print("Downloading max {0} tweets for {1}".format(maxTweets, constituent))
+        print("Downloading max {0} tweets for {1} in {2}".format(maxTweets, constituent, language))
         while tweetCount < maxTweets:
             list_of_tweets = []
             try:
@@ -115,10 +111,20 @@ def get_tweets(argv):
                     print("No more tweets found")
                     break
 
+                if language != "en":
+                    if not do_translation(new_tweets):
+                        if not do_translation(new_tweets):
+                            continue
+
+
                 for tweet in new_tweets:
+                    #add language and date
                     document = tweet._json
 
-                    document.update(preprocess_tweet(document['text'], language))
+                    if language == 'en':
+                        document.update(preprocess_tweet(document['text']))
+                    else:
+                        document.update(preprocess_tweet(document['text_en']))
 
                     text_set = set(document['semi_processed_text'].split(' '))
                     if len(filter_set.intersection(text_set)) == 0:
@@ -126,7 +132,10 @@ def get_tweets(argv):
 
                     document['search_term'] = searchQuery
                     document['constituent'] = constituent
+                    document['language'] = language
 
+                    date = datetime.strptime(document['created_at'], '%a %b %d %H:%M:%S %z %Y')
+                    document['date'] = date
 
                     if 'retweeted_status' in document:
                         document.pop('retweeted_status', None)
@@ -134,7 +143,6 @@ def get_tweets(argv):
 
                     list_of_tweets.append(document)
                     #print(document['processed_text'])
-
 
                 #Logging
                 result = None
@@ -171,7 +179,7 @@ def load_api(API_KEY, API_SECRET):
     else:
         return api
 
-def preprocess_tweet(text:str, language):
+def preprocess_tweet(text:str):
     # Tokenize the tweet text
     tokenizer = TweetTokenizer(preserve_case=False, reduce_len=True, strip_handles=False)
     tokens = tokenizer.tokenize(text)
@@ -181,57 +189,57 @@ def preprocess_tweet(text:str, language):
 
     no_url_joined = " ".join(no_url_tokens)
 
+    # remove stop words and punctuation
+    stop_words = set(stopwords.words('english'))
+    punct = string.punctuation
+    punct_1 = punct.replace('#', '')
+    punct_2 = punct_1.replace('@', '')
+    stop_words.update(punct_2)
+    stop_words.add('...')
 
-    if language == 'en':
-        lang = 'english'
+    filtered_tokens = [word for word in no_url_tokens if not word in stop_words]
 
-        # remove stop words and punctuation
-        stop_words = set(stopwords.words(lang))
-        punct = string.punctuation
-        punct_1 = punct.replace('#', '')
-        punct_2 = punct_1.replace('@', '')
-        stop_words.update(punct_2)
-        stop_words.add('...')
+    stemmer = PorterStemmer()
+    stemmed_tokens = [stemmer.stem(word) if (word[0] != '#' and word[0] != '@') else word for word in filtered_tokens]
 
-        filtered_tokens = [word for word in no_url_tokens if not word in stop_words]
+    return {'semi_processed_text': no_url_joined, 'processed_text': stemmed_tokens}
 
-        stemmer = PorterStemmer()
-        stemmed_tokens = [stemmer.stem(word) if (word[0] != '#' and word[0] != '@') else word for word in filtered_tokens]
-
-        return {'semi_processed_text': no_url_joined, 'processed_text':stemmed_tokens}
-
-
-    if language == 'de':
-        lang = 'german'
-
-        #translate no_url_joined
+def do_translation(to_translate:list):
+    translate_client = None
+    try:
         translate_client = translate.Client()
-        translation = translate_client.translate(no_url_joined, target_language='en')
-        no_url_translated = translation['translatedText']
+    except Exception as e:
+        #print("Error translating. Skipping...")
+        print(e)
+        return False
 
-        #tokenize no_url_translated
-        no_url_translated_tokens = no_url_translated.split(' ')
 
-        # remove stop words and punctuation
-        stop_words = set(stopwords.words(lang))
-        punct = string.punctuation
-        punct_1 = punct.replace('#', '')
-        punct_2 = punct_1.replace('@', '')
-        stop_words.update(punct_2)
-        stop_words.add('...')
+    texts = []
+    tokenizer = TweetTokenizer(preserve_case=False, reduce_len=True, strip_handles=False)
 
-        filtered_tokens = [word for word in no_url_translated_tokens if not word in stop_words]
+    for tweet in to_translate:
+        tokens = tokenizer.tokenize(tweet._json['text'])
+        # remove links
+        no_url_tokens = [word for word in tokens if 'http' not in word]
+        texts.append(" ".join(no_url_tokens))
 
-        stemmer = PorterStemmer()
-        stemmed_tokens = [stemmer.stem(word) if (word[0] != '#' and word[0] != '@') else word for word in
-                          filtered_tokens]
 
-        #return no_url_joined, stemmed_tokens
-        return {'semi_processed_text_de':no_url_joined, 'semi_processed_text': no_url_translated, 'processed_text':stemmed_tokens}
+    texts = [tweet._json['text'] for tweet in to_translate]
 
+    try:
+        translations = translate_client.translate(texts, target_language='en')
+    except Exception as e:
+        #print("Error translating. Skipping...")
+        print(e)
+        return False
+
+    if len(translations) == len(to_translate):
+        for i in range(0, len(translations)):
+            to_translate[i]._json['text_en'] = translations[i]['translatedText']
+
+        return True
     else:
-        return {}
-
+        return False
 
 
 if __name__ == "__main__":
