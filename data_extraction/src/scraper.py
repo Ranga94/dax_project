@@ -129,7 +129,7 @@ def bulk_insert(collection, documents):
 
 def get_database(connection_string):
     client = MongoClient(connection_string)
-    return client.dax
+    return client.dax_gcp
 
 def insert_document(db, document):
     try:

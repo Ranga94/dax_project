@@ -11,8 +11,8 @@ import time
 from datetime import datetime
 
 
-#current_constituent = ['BMW','adidas', 'Deutsche Bank', 'EON', 'Commerzbank']
-current_constituent = ['Deutsche Bank', 'EON', 'Commerzbank']
+current_constituent = ['BMW','adidas']
+#current_constituent = ['Deutsche Bank', 'EON', 'Commerzbank']
 
 
 all_constituents = ['Allianz', 'adidas',
@@ -59,18 +59,18 @@ def get_tweets(argv):
 
     # this is what we're searching for
     maxTweets = 10000000  # Some arbitrary large number
-    #maxTweets = 10
-    tweetsPerQry = 100  # this is the max the API permits
-    #tweetsPerQry = 10
+    #maxTweets = 20
+    #tweetsPerQry = 100  # this is the max the API permits
+    tweetsPerQry = 20
     language = argv[3]
 
     database = DB(argv[0], argv[1])
 
     constituents_collection = database.get_collection('constituents')
 
-    logging_collection = database.get_collection('tweet_logs')
+    #logging_collection = database.get_collection('tweet_logs')
 
-    logging_collection.find_one_and_update({'date':time.strftime("%d/%m/%Y")}, {'$set': {'date': time.strftime("%d/%m/%Y")}}, upsert=True)
+    #logging_collection.find_one_and_update({'date':time.strftime("%d/%m/%Y")}, {'$set': {'date': time.strftime("%d/%m/%Y")}}, upsert=True)
 
     for constituent in current_constituent:
         #get constituent data for the search query
@@ -152,8 +152,10 @@ def get_tweets(argv):
 
                 if result is not None:
                     print("Inserted {} tweets".format(len(result.inserted_ids)))
+                    '''
                     logging_collection.find_one_and_update({'date': time.strftime("%d/%m/%Y")},
                                                            {'$inc': {'inserted_tweets.{}.{}'.format(language,constituent): len(result.inserted_ids)}}, upsert=True)
+                    '''
 
 
                 tweetCount += len(new_tweets)

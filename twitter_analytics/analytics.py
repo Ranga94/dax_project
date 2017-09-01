@@ -6,6 +6,10 @@ from collections import defaultdict
 import math
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
+import time
+
+current_constituent = [('BMW', 77),('adidas',188), ('Deutsche Bank',13), ('EON',9), ('Commerzbank',10)]
+#current_constituent = [('BMW', 77)]
 
 '''
 argv[0]: connection_string
@@ -19,23 +23,70 @@ def main(argv):
 
     d = datetime.today() - timedelta(days=7)
 
-    cursor = col.find({'constituent': "BMW", "date":{"$gte":d}}, {"_id": -1, "id_str": 1, "favorite_count": 1,
+    '''
+    cursor = col.find({'constituent': constituent, "date":{"$gte":d}}, {"_id": -1, "id_str": 1, "favorite_count": 1,
                                                 "retweet_count": 1, "text": 1, "processed_text": 1, "place": 1,
                                                 "user": 1})
-    results = list(cursor)
+    '''
 
-    stock = 9
-    low = stock*0.8
-    high = stock*1.2
+    for constituent, stock in current_constituent:
+        print("Getting data")
+        cursor = col.find({'constituent': constituent}, {"_id": -1, "id_str": 1, "favorite_count": 1,
+                                                         "retweet_count": 1, "text": 1,
+                                                         "processed_text": 1, "place": 1,
+                                                         "user": 1})
+
+        results = list(cursor)
 
 
-    #prices = price_analytics(results,low,high)
-    #print("Prices")
-    #print_prices(prices)
-    #print("Countries")
-    #print_countries(results)
-    countries = get_countries(results, low, high)
-    make_chart(countries, "BMW")
+        low = stock * 0.8
+        high = stock * 1.2
+
+
+        twitter_analytics_collection = database.get_collection('twitter_analytics')
+
+        twitter_analytics_collection.find_one_and_update({'date': time.strftime("%d/%m/%Y")},
+                                                         {'$set': {'date': time.strftime("%d/%m/%Y")}}, upsert=True)
+
+        category = "countries"
+        countries = get_countries(results, low, high)
+        print(countries)
+
+        twitter_analytics_collection.find_one_and_update({'date': time.strftime("%d/%m/%Y")},
+                                                         {'$set': {"{}.{}.{}".format(constituent, category,"countries"): countries}},
+                                                         upsert=True)
+
+        category = "price_targets"
+
+        print("Getting prices")
+        prices = price_analytics(results,low,high)
+
+        print("Price analytics")
+        highest, lowest, price_distribution, influencer_prices = get_price_analytics(prices)
+
+        twitter_analytics_collection.find_one_and_update({'date': time.strftime("%d/%m/%Y")},
+                                                         {'$set': {"{}.{}.{}".format(constituent,category,"general") : price_distribution}}, upsert=True)
+
+        twitter_analytics_collection.find_one_and_update({'date': time.strftime("%d/%m/%Y")},
+                                                         {'$set': {"{}.{}.{}".format(constituent,category,"influencers") : influencer_prices}}, upsert=True)
+
+        twitter_analytics_collection.find_one_and_update({'date': time.strftime("%d/%m/%Y")},
+                                                         {'$set': {"{}.{}.{}".format(constituent,category,"highest") : highest}}, upsert=True)
+
+        twitter_analytics_collection.find_one_and_update({'date': time.strftime("%d/%m/%Y")},
+                                                         {'$set': {"{}.{}.{}".format(constituent,category,"lowest") : lowest}}, upsert=True)
+
+
+        #print("High: {}, Low: {}".format(highest, lowest))
+        #print(price_distribution)
+        #print(influencer_prices)
+        # print_prices(prices)
+        # print("Countries")
+        # print_countries(results)
+
+
+
+    #make_chart(countries, "BMW")
 
 
 def general_analytics(cursor: list):
@@ -80,11 +131,10 @@ def price_analytics(cursor:list, low, high):
 
     return prices
 
-def print_prices(prices):
+def get_price_analytics(prices):
     prices.sort(key=lambda x: x[0], reverse=True)
     prices_only, tweets = zip(*prices)
 
-    total = sum(prices_only)
     print("Highest price: {}".format(prices_only[0]))
     print("Lowest price: {}".format(prices_only[-1]))
 
@@ -92,18 +142,19 @@ def print_prices(prices):
     for p in prices_only:
         prices_frequency[math.ceil(p)] += 1
 
+    for key in prices_frequency.keys():
+        prices_frequency[key] = round(prices_frequency[key]/len(prices_only) * 100, 2)
+
+
     print("General Twitter target prices:")
     sorted_by_frequency = sorted(prices_frequency.items(), key=lambda x: x[1], reverse=True)
 
-    if len(prices_only) == 0:
-        print("No price information available")
-        return
-
-
+    '''
     for p1, p2 in sorted_by_frequency:
         percent = p2*100/len(prices_only)
         #if percent > 10:
         print("EUR {} ({}%)".format(p1, float(percent)))
+    '''
 
 
     #Get prices mentioned more often by influencers
@@ -112,19 +163,27 @@ def print_prices(prices):
         if tweet['user']['followers_count'] >= 200:
             influencer_prices.append(price)
 
-    influencer_frequency = defaultdict(int)
-    for p in influencer_prices:
-        influencer_frequency[math.ceil(p)] += 1
+    if len(influencer_prices) == 0:
+        influencer_frequency_sorted = []
+    else:
+        influencer_frequency = defaultdict(int)
+        for p in influencer_prices:
+            influencer_frequency[math.ceil(p)] += 1
 
-    influencer_frequency_sorted = sorted(influencer_frequency.items(), key=lambda x: x[1], reverse=True)
+        for key in influencer_frequency.keys():
+            influencer_frequency[key] = round(influencer_frequency[key] / len(influencer_prices) * 100, 2)
 
-    if len(influencer_prices) < 0:
-        return
-    print("Top influencers target prices:")
-    for p1, p2 in influencer_frequency_sorted:
-        percent = p2*100/len(influencer_prices)
-        #if percent > 10:
-        print("EUR {} ({}%)".format(p1, float(percent)))
+        influencer_frequency_sorted = sorted(influencer_frequency.items(), key=lambda x: x[1], reverse=True)
+
+        '''
+        print("Top influencers target prices:")
+        for p1, p2 in influencer_frequency_sorted:
+            percent = p2 * 100 / len(influencer_prices)
+            # if percent > 10:
+            print("EUR {} ({}%)".format(p1, float(percent)))
+        '''
+
+    return prices_only[0], prices_only[-1], sorted_by_frequency, influencer_frequency_sorted
 
 def print_results(results:list):
     for item in reversed(results):
@@ -141,6 +200,7 @@ returns: a list of (country,percent) tuples
 '''
 def get_countries(cursor:list, low, high):
     countries = defaultdict(float)
+    total = 0
 
     for tweet in cursor:
         for word in tweet["processed_text"]:
@@ -150,6 +210,7 @@ def get_countries(cursor:list, low, high):
                     if tweet['place'] is not None:
                         if 'country_code' in tweet['place'].keys():
                             countries[tweet['place']['country_code']] += 1
+                            total += 1
                     break
             except:
                 pass
@@ -158,7 +219,7 @@ def get_countries(cursor:list, low, high):
         return None
 
     for key in countries.keys():
-        countries[key] = countries[key]
+        countries[key] = round(countries[key]/total * 100, 2)
 
     return sorted(countries.items(), key=lambda x: x[1], reverse=True)
 
