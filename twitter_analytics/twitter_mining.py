@@ -1,5 +1,7 @@
 import sys
-sys.path.insert(0, '../utils')
+from pathlib import Path
+sys.path.insert(0, Path('..', 'utils'))
+#sys.path.insert(0, '../utils')
 from DB import DB
 import tweepy
 from nltk.tokenize import TweetTokenizer
@@ -11,8 +13,8 @@ import time
 from datetime import datetime
 
 
-current_constituent = ['BMW','adidas']
-#current_constituent = ['Deutsche Bank', 'EON', 'Commerzbank']
+#current_constituent = ['BMW','adidas']
+current_constituent = ['Deutsche Bank', 'EON', 'Commerzbank']
 
 
 all_constituents = ['Allianz', 'adidas',
@@ -58,8 +60,8 @@ def get_tweets(argv):
     api = load_api(API_KEY, API_SECRET)
 
     # this is what we're searching for
-    maxTweets = 10000000  # Some arbitrary large number
-    #maxTweets = 20
+    #maxTweets = 10000000  # Some arbitrary large number
+    maxTweets = 20
     #tweetsPerQry = 100  # this is the max the API permits
     tweetsPerQry = 20
     language = argv[3]

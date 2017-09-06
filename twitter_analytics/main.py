@@ -1,6 +1,8 @@
 from twitter_mining import get_tweets
 import sys
-sys.path.insert(0, '../utils')
+from pathlib import Path
+sys.path.insert(0, Path('..', 'utils'))
+#sys.path.insert(0, '../utils')
 import email_tools
 
 
@@ -11,7 +13,7 @@ languages = ['en', 'en','ja','ar','es','am','hy','bn','bg','my','ckb','zh',
              'no','or','pa','ps','fa','pl','pt','pa','ro','ru','ar','ad','si',
              'sl','sv','tl','ta','te','th','bo','tr','ur','ug','vi']
 '''
-languages = ['de']
+languages = ['en']
 
 def main(argv):
     for lang in languages:

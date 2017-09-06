@@ -19,7 +19,7 @@ all_constituents = {'Allianz':'Allianz', 'adidas':'adidas', 'BASF':'BASF', 'Baye
 
 
 def main(args):
-    dax_url = 'http://en.boerse-frankfurt.de/index/pricehistory/DAX/1.1.2003_12.7.2017#History'
+    dax_url = 'http://en.boerse-frankfurt.de/index/pricehistory/DAX/1.1.2003_4.9.2017#History'
     constituent_base_url = 'http://en.boerse-frankfurt.de/stock/pricehistory/'
     driver = webdriver.PhantomJS()
     db = get_database(args.connection_string)
@@ -27,14 +27,14 @@ def main(args):
     if args.all:
         extract_historical_data(dax_url, driver, db, constituent='DAX')
         for c in all_constituents.keys():
-            extract_historical_data(urljoin(constituent_base_url, all_constituents[c] + '-share/FSE/1.1.2003_13.7.2017#Price_History'), driver, db, constituent=c)
+            extract_historical_data(urljoin(constituent_base_url, all_constituents[c] + '-share/FSE/1.1.2003_4.9.2017#Price_History'), driver, db, constituent=c)
             time.sleep(60)
     else:
         if args.constituent == 'DAX':
             extract_historical_data(dax_url, driver, db, constituent='DAX')
         else:
             if args.constituent in all_constituents.keys():
-                constituent_url = urljoin(constituent_base_url, all_constituents[args.constituent] + '-share/FSE/1.1.2003_13.7.2017#Price_History') #check const url name
+                constituent_url = urljoin(constituent_base_url, all_constituents[args.constituent] + '-share/FSE/1.1.2003_4.9.2017#Price_History') #check const url name
                 extract_historical_data(constituent_url, driver, db, constituent=args.constituent)
 
     driver.quit()

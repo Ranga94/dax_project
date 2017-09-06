@@ -45,18 +45,27 @@ def main(argv):
 
         twitter_analytics_collection = database.get_collection('twitter_analytics')
 
+        '''
         twitter_analytics_collection.find_one_and_update({'date': time.strftime("%d/%m/%Y")},
                                                          {'$set': {'date': time.strftime("%d/%m/%Y")}}, upsert=True)
+        '''
 
-        category = "countries"
         countries = get_countries(results, low, high)
         print(countries)
 
+        for name, percent in countries:
+            twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
+                                                     'state': 'active',
+                                                     'constituent': constituent,
+                                                     'category': 'country_distribution',
+                                                     'name': name,
+                                                     'value': percent
+                                                     })
+        '''
         twitter_analytics_collection.find_one_and_update({'date': time.strftime("%d/%m/%Y")},
                                                          {'$set': {"{}.{}.{}".format(constituent, category,"countries"): countries}},
                                                          upsert=True)
-
-        category = "price_targets"
+        '''
 
         print("Getting prices")
         prices = price_analytics(results,low,high)
@@ -64,6 +73,41 @@ def main(argv):
         print("Price analytics")
         highest, lowest, price_distribution, influencer_prices = get_price_analytics(prices)
 
+        twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
+                                                'state': 'active',
+                                                'constituent': constituent,
+                                                'category': 'highest_price',
+                                                'name': "",
+                                                'value': highest
+                                                })
+
+        twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
+                                                 'state': 'active',
+                                                 'constituent': constituent,
+                                                 'category': 'lowest_price',
+                                                 'name': "",
+                                                 'value': lowest
+                                                 })
+
+        for target_price, percent in price_distribution:
+            twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
+                                                     'state': 'active',
+                                                     'constituent': constituent,
+                                                     'category': 'price_distribution',
+                                                     'name': target_price,
+                                                     'value': percent
+                                                     })
+
+        for influencer_price, percent in influencer_prices:
+            twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
+                                                     'state': 'active',
+                                                     'constituent': constituent,
+                                                     'category': 'influencer_distribution',
+                                                     'name': influencer_price,
+                                                     'value': percent
+                                                     })
+
+        ''''
         twitter_analytics_collection.find_one_and_update({'date': time.strftime("%d/%m/%Y")},
                                                          {'$set': {"{}.{}.{}".format(constituent,category,"general") : price_distribution}}, upsert=True)
 
@@ -75,6 +119,7 @@ def main(argv):
 
         twitter_analytics_collection.find_one_and_update({'date': time.strftime("%d/%m/%Y")},
                                                          {'$set': {"{}.{}.{}".format(constituent,category,"lowest") : lowest}}, upsert=True)
+        '''
 
 
         #print("High: {}, Low: {}".format(highest, lowest))
@@ -83,8 +128,6 @@ def main(argv):
         # print_prices(prices)
         # print("Countries")
         # print_countries(results)
-
-
 
     #make_chart(countries, "BMW")
 
