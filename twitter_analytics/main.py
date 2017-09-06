@@ -1,8 +1,8 @@
 from twitter_mining import get_tweets
 import sys
 from pathlib import Path
-sys.path.insert(0, Path('..', 'utils'))
-#sys.path.insert(0, '../utils')
+#sys.path.insert(0, Path('..', 'utils'))
+sys.path.insert(0, '../utils')
 import email_tools
 
 
