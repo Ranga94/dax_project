@@ -7,6 +7,7 @@ import math
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 import time
+from nltk.sentiment.vader import SentimentIntensityAnalyzer as SIA
 
 current_constituent = [('BMW', 77),('adidas',188), ('Deutsche Bank',13), ('EON',9), ('Commerzbank',10)]
 #current_constituent = [('BMW', 77)]
@@ -29,12 +30,17 @@ def main(argv):
                                                 "user": 1})
     '''
 
+    twitter_analytics_collection = database.get_collection('twitter_analytics')
+
+    twitter_analytics_collection.update_many({"state": "active"}, {"$set": {"state": "inactive"}})
+
+
     for constituent, stock in current_constituent:
-        print("Getting data")
+        print("Getting data for {}".format(constituent))
         cursor = col.find({'constituent': constituent}, {"_id": -1, "id_str": 1, "favorite_count": 1,
                                                          "retweet_count": 1, "text": 1,
                                                          "processed_text": 1, "place": 1,
-                                                         "user": 1})
+                                                         "user": 1, "semi_processed_text":1})
 
         results = list(cursor)
 
@@ -43,7 +49,7 @@ def main(argv):
         high = stock * 1.2
 
 
-        twitter_analytics_collection = database.get_collection('twitter_analytics')
+
 
         '''
         twitter_analytics_collection.find_one_and_update({'date': time.strftime("%d/%m/%Y")},
@@ -106,6 +112,18 @@ def main(argv):
                                                      'name': influencer_price,
                                                      'value': percent
                                                      })
+
+        sentiments = get_sentiment_analysis(results)
+
+        for sent, percent in sentiments:
+            twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
+                                                     'state': 'active',
+                                                     'constituent': constituent,
+                                                     'category': 'sentiment',
+                                                     'name': sent,
+                                                     'value': percent
+                                                     })
+
 
         ''''
         twitter_analytics_collection.find_one_and_update({'date': time.strftime("%d/%m/%Y")},
@@ -285,6 +303,34 @@ def make_chart(data:list, constituent):
     plt.savefig('./charts/countries_{}.png'.format(constituent), bbox_inches='tight')
 
     #plt.show()
+
+
+'''
+returns a list of (sentiment,percent)
+'''
+def get_sentiment_analysis(cursor:list):
+    if not cursor:
+        return []
+
+
+    sia = SIA()
+    positive = 0
+    negative = 0
+    neutral = 0
+
+    for tweet in cursor:
+        res = sia.polarity_scores(tweet["semi_processed_text"])
+
+        if res["compound"] < -0.2:
+            negative += 1
+        elif res["compound"] > 0.2:
+            positive += 1
+        else:
+            neutral += 1
+
+    return [("Positive", positive * 100 / len(cursor)),("Neutral", neutral * 100 / len(cursor)),("Negative", negative * 100 / len(cursor))]
+
+
 
 
 

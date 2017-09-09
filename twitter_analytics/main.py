@@ -1,9 +1,10 @@
 from twitter_mining import get_tweets
 import sys
 from pathlib import Path
-#sys.path.insert(0, Path('..', 'utils'))
-sys.path.insert(0, '../utils')
+sys.path.insert(0, str(Path('..', 'utils')))
+#sys.path.insert(0, '../utils')
 import email_tools
+
 
 
 '''
@@ -13,15 +14,34 @@ languages = ['en', 'en','ja','ar','es','am','hy','bn','bg','my','ckb','zh',
              'no','or','pa','ps','fa','pl','pt','pa','ro','ru','ar','ad','si',
              'sl','sv','tl','ta','te','th','bo','tr','ur','ug','vi']
 '''
-languages = ['en']
+languages = ['de']
 
-def main(argv):
-    for lang in languages:
-        argv.append(lang)
-        get_tweets(argv)
+def main(args):
+    if not args.translate: #not translate => just English
+        get_tweets(args.connection_string,args.database,args.collection,'en',logging=args.logging)
 
-    #email_tools.send_mail(argv[0], argv[1], ["ulysses@igenieconsulting.com"])
+        if args.logging:
+            email_tools.send_mail(args.connection_string, args.database,["ulysses@igenieconsulting.com", "hamsa.bharadwaj@igenieconsulting.com",
+                                                                         "emil@igenieconsulting.com","hu.kefei@yahoo.co.uk",
+                                                                         "angad.virdee.16@ucl.ac.uk","alaka@igenieresourcing.com"])
+    else:
+        for lang in languages:
+            get_tweets(args.connection_string, args.database, args.collection, lang, logging=args.logging)
+
+            if args.logging:
+                email_tools.send_mail(args.connection_string, args.database,
+                                      ["ulysses@igenieconsulting.com", "hamsa.bharadwaj@igenieconsulting.com",
+                                       "emil@igenieconsulting.com", "hu.kefei@yahoo.co.uk",
+                                       "angad.virdee.16@ucl.ac.uk", "alaka@igenieresourcing.com"])
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", "--connection_string", help="MongoDB connection string")
+    parser.add_argument("-d", "--database", help="MongoDB database")
+    parser.add_argument("-c", "--collection", help="MongoDB collection")
+    parser.add_argument("-l", "--logging", action="store_true", help='Logging')
+    parser.add_argument("-t", "--translate", action="store_true", help='Other languages')
+    args = parser.parse_args()
+    main(args)
