@@ -100,7 +100,7 @@ def main(argv):
                                                      'state': 'active',
                                                      'constituent': constituent,
                                                      'category': 'price_distribution',
-                                                     'name': target_price,
+                                                     'name': str(target_price),
                                                      'value': percent
                                                      })
 
@@ -109,7 +109,7 @@ def main(argv):
                                                      'state': 'active',
                                                      'constituent': constituent,
                                                      'category': 'influencer_distribution',
-                                                     'name': influencer_price,
+                                                     'name': str(influencer_price),
                                                      'value': percent
                                                      })
 
@@ -329,13 +329,6 @@ def get_sentiment_analysis(cursor:list):
             neutral += 1
 
     return [("Positive", positive * 100 / len(cursor)),("Neutral", neutral * 100 / len(cursor)),("Negative", negative * 100 / len(cursor))]
-
-
-
-
-
-
-
 
 
 
