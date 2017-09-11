@@ -120,7 +120,7 @@ def extract_real_time_values_batch(url, database, constituent):
     except Exception as ex:
         return str(ex)
 
-def main(argv:list):
+def main(argv):
     response = real_time_wrapper(
         {'connection_string': 'mongodb://igenie_readwrite:igenie@35.189.101.142:27017/dax_gcp',
          'database': 'dax_gcp',

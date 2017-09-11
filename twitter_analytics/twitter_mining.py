@@ -174,7 +174,7 @@ def load_api(API_KEY, API_SECRET):
     else:
         return api
 
-def preprocess_tweet(text:str):
+def preprocess_tweet(text):
     # Tokenize the tweet text
     tokenizer = TweetTokenizer(preserve_case=False, reduce_len=True, strip_handles=False)
     tokens = tokenizer.tokenize(text)
@@ -199,7 +199,7 @@ def preprocess_tweet(text:str):
 
     return {'semi_processed_text': no_url_joined, 'processed_text': stemmed_tokens}
 
-def do_translation(to_translate:list):
+def do_translation(to_translate):
     translate_client = None
     try:
         translate_client = translate.Client()
