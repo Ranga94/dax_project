@@ -21,9 +21,7 @@ def main(args):
         get_tweets(args.connection_string,args.database,args.collection,'en',logging=args.logging)
 
         if args.logging:
-            email_tools.send_mail(args.connection_string, args.database,["ulysses@igenieconsulting.com", "hamsa.bharadwaj@igenieconsulting.com",
-                                                                         "emil@igenieconsulting.com","hu.kefei@yahoo.co.uk",
-                                                                         "angad.virdee.16@ucl.ac.uk","alaka@igenieresourcing.com"])
+            email_tools.send_mail(args.connection_string, args.database,["ulysses@igenieconsulting.com", "twitter@igenieconsulting.com"])
     else:
         for lang in languages:
             get_tweets(args.connection_string, args.database, args.collection, lang, logging=args.logging)

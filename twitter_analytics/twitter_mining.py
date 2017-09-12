@@ -148,7 +148,8 @@ def get_tweets(connection_string,database,collection,language='en',logging=True)
                     print("Inserted {} tweets".format(len(result.inserted_ids)))
                     if logging:
                         logging_collection.find_one_and_update({'date': time.strftime("%d/%m/%Y")},
-                                                           {'$inc': {'inserted_tweets.{}.{}'.format(language,constituent): len(result.inserted_ids)}}, upsert=True)
+                                                           {'$inc': {'inserted_tweets.{}.{}'.format(language,constituent): len(result.inserted_ids)},
+                                                            '$set':{'time':time.strftime("%H:%M:%S")}}, upsert=True)
 
                 tweetCount += len(new_tweets)
                 print("Downloaded {0} tweets".format(tweetCount))
