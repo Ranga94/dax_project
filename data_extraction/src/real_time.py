@@ -1,5 +1,6 @@
 import sys
-sys.path.insert(0, '../../utils')
+from pathlib import Path
+sys.path.insert(0, str(Path('..', '..', 'utils')))
 from DB import DB
 from datetime import datetime
 import requests
