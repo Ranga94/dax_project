@@ -121,17 +121,23 @@ def extract_real_time_values_batch(url, database, constituent):
     except Exception as ex:
         return str(ex)
 
-def main(argv):
+def main(args):
     response = real_time_wrapper(
-        {'connection_string': argv[0],
-         'database': argv[1],
-         'part': int(argv[2])})
+        {'connection_string': args.connection_string,
+         'database': args.database,
+         'part': int(args.part)})
 
     print(response)
     #return response
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('connection_string', help='The MongoDB connection string')
+    parser.add_argument('database', help='The MongoDB database')
+    parser.add_argument('part', help='The group of constituents')
+    args = parser.parse_args()
+    main(args)
 
 
 
