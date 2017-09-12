@@ -1,5 +1,6 @@
 import sys
-sys.path.insert(0, '../../utils')
+from pathlib import Path
+sys.path.insert(0, str(Path('..', '..', 'utils')))
 from DB import DB
 from datetime import datetime
 import requests
@@ -122,9 +123,9 @@ def extract_real_time_values_batch(url, database, constituent):
 
 def main(argv):
     response = real_time_wrapper(
-        {'connection_string': 'mongodb://igenie_readwrite:igenie@35.189.101.142:27017/dax_gcp',
-         'database': 'dax_gcp',
-         'part': int(argv[0])})
+        {'connection_string': argv[0],
+         'database': argv[1],
+         'part': int(argv[2])})
 
     print(response)
     #return response
