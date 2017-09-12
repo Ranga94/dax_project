@@ -1,5 +1,6 @@
 import sys
-sys.path.insert(0, '../utils')
+from pathlib import Path
+sys.path.insert(0, str(Path('..', 'utils')))
 from DB import DB
 from sortedcontainers import SortedListWithKey
 from collections import defaultdict
@@ -10,7 +11,6 @@ import time
 from nltk.sentiment.vader import SentimentIntensityAnalyzer as SIA
 
 current_constituent = [('BMW', 77),('adidas',188), ('Deutsche Bank',13), ('EON',9), ('Commerzbank',10)]
-#current_constituent = [('BMW', 77)]
 
 '''
 argv[0]: connection_string
@@ -49,15 +49,9 @@ def main(argv):
         high = stock * 1.2
 
 
-
-
-        '''
-        twitter_analytics_collection.find_one_and_update({'date': time.strftime("%d/%m/%Y")},
-                                                         {'$set': {'date': time.strftime("%d/%m/%Y")}}, upsert=True)
-        '''
-
+        print("Getting countries")
         countries = get_countries(results, low, high)
-        print(countries)
+        #print(countries)
 
         for name, percent in countries:
             twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
@@ -67,11 +61,6 @@ def main(argv):
                                                      'name': name,
                                                      'value': percent
                                                      })
-        '''
-        twitter_analytics_collection.find_one_and_update({'date': time.strftime("%d/%m/%Y")},
-                                                         {'$set': {"{}.{}.{}".format(constituent, category,"countries"): countries}},
-                                                         upsert=True)
-        '''
 
         print("Getting prices")
         prices = price_analytics(results,low,high)
@@ -113,6 +102,7 @@ def main(argv):
                                                      'value': percent
                                                      })
 
+        print("Getting sentiment")
         sentiments = get_sentiment_analysis(results)
 
         for sent, percent in sentiments:
@@ -123,31 +113,6 @@ def main(argv):
                                                      'name': sent,
                                                      'value': percent
                                                      })
-
-
-        ''''
-        twitter_analytics_collection.find_one_and_update({'date': time.strftime("%d/%m/%Y")},
-                                                         {'$set': {"{}.{}.{}".format(constituent,category,"general") : price_distribution}}, upsert=True)
-
-        twitter_analytics_collection.find_one_and_update({'date': time.strftime("%d/%m/%Y")},
-                                                         {'$set': {"{}.{}.{}".format(constituent,category,"influencers") : influencer_prices}}, upsert=True)
-
-        twitter_analytics_collection.find_one_and_update({'date': time.strftime("%d/%m/%Y")},
-                                                         {'$set': {"{}.{}.{}".format(constituent,category,"highest") : highest}}, upsert=True)
-
-        twitter_analytics_collection.find_one_and_update({'date': time.strftime("%d/%m/%Y")},
-                                                         {'$set': {"{}.{}.{}".format(constituent,category,"lowest") : lowest}}, upsert=True)
-        '''
-
-
-        #print("High: {}, Low: {}".format(highest, lowest))
-        #print(price_distribution)
-        #print(influencer_prices)
-        # print_prices(prices)
-        # print("Countries")
-        # print_countries(results)
-
-    #make_chart(countries, "BMW")
 
 
 def general_analytics(cursor: list):
@@ -207,7 +172,7 @@ def get_price_analytics(prices):
         prices_frequency[key] = round(prices_frequency[key]/len(prices_only) * 100, 2)
 
 
-    print("General Twitter target prices:")
+    #print("General Twitter target prices:")
     sorted_by_frequency = sorted(prices_frequency.items(), key=lambda x: x[1], reverse=True)
 
     '''
