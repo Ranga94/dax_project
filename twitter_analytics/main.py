@@ -38,6 +38,7 @@ def main(args):
 
 
 if __name__ == "__main__":
+    os.chdir(os.path.dirname(sys.argv[0]))
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--connection_string", help="MongoDB connection string")
