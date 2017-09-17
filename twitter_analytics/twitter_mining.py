@@ -1,5 +1,6 @@
 import sys
-sys.path.insert(0, '../utils')
+from pathlib import Path
+sys.path.insert(0, str(Path('..', 'utils')))
 from DB import DB
 import tweepy
 from nltk.tokenize import TweetTokenizer
@@ -11,8 +12,8 @@ import time
 from datetime import datetime
 
 
-#current_constituent = ['BMW','adidas', 'Deutsche Bank', 'EON', 'Commerzbank']
-current_constituent = ['Deutsche Bank', 'EON', 'Commerzbank']
+#current_constituent = ['BMW','adidas']
+current_constituent = ['BMW','adidas','Deutsche Bank', 'EON', 'Commerzbank']
 
 
 all_constituents = ['Allianz', 'adidas',
@@ -30,11 +31,6 @@ all_constituents = ['Allianz', 'adidas',
 
 
 ''''
-args:
-0: connection string
-1: database
-2: collection
-3: language, 'en' or 'de'
 
 tweets in english will have:
 ['text']: original text
@@ -51,29 +47,28 @@ tweets in german will have:
 '''
 
 
-def get_tweets(argv):
+def get_tweets(connection_string,database,collection,language='en',logging=True):
     API_KEY = "fAFENmxds3YFgUqHt974ZGsov"
     API_SECRET = 'zk8IRc6WQPZ8dc2yGh8gJClEMDlL6I3L4DYIC4ZkoHvjIw4QgN'
 
     api = load_api(API_KEY, API_SECRET)
 
-    # this is what we're searching for
-    maxTweets = 10000000  # Some arbitrary large number
-    #maxTweets = 10
-    tweetsPerQry = 100  # this is the max the API permits
-    #tweetsPerQry = 10
-    language = argv[3]
+    if language == 'en':
+        maxTweets = 10000000
+        tweetsPerQry = 100
+    else:
+        maxTweets = 10000000
+        tweetsPerQry = 20
 
-    database = DB(argv[0], argv[1])
+    database = DB(connection_string, database)
 
     constituents_collection = database.get_collection('constituents')
 
-    logging_collection = database.get_collection('tweet_logs')
-
-    logging_collection.find_one_and_update({'date':time.strftime("%d/%m/%Y")}, {'$set': {'date': time.strftime("%d/%m/%Y")}}, upsert=True)
+    if logging:
+        logging_collection = database.get_collection('tweet_logs')
+        logging_collection.find_one_and_update({'date':time.strftime("%d/%m/%Y")}, {'$set': {'date': time.strftime("%d/%m/%Y")}}, upsert=True)
 
     for constituent in current_constituent:
-        #get constituent data for the search query
         constituent_data = constituents_collection.find_one({'name':constituent})
         keywords = constituent_data['keywords']
         exclusions = constituent_data['exclusions']
@@ -118,7 +113,6 @@ def get_tweets(argv):
 
 
                 for tweet in new_tweets:
-                    #add language and date
                     document = tweet._json
 
                     if language == 'en':
@@ -148,13 +142,14 @@ def get_tweets(argv):
                 result = None
 
                 if list_of_tweets:
-                    result = database.insert_many(argv[2], list_of_tweets)
+                    result = database.insert_many(collection, list_of_tweets)
 
                 if result is not None:
                     print("Inserted {} tweets".format(len(result.inserted_ids)))
-                    logging_collection.find_one_and_update({'date': time.strftime("%d/%m/%Y")},
-                                                           {'$inc': {'inserted_tweets.{}.{}'.format(language,constituent): len(result.inserted_ids)}}, upsert=True)
-
+                    if logging:
+                        logging_collection.find_one_and_update({'date': time.strftime("%d/%m/%Y")},
+                                                           {'$inc': {'inserted_tweets.{}.{}'.format(language,constituent): len(result.inserted_ids)},
+                                                            '$set':{'time':time.strftime("%H:%M:%S")}}, upsert=True)
 
                 tweetCount += len(new_tweets)
                 print("Downloaded {0} tweets".format(tweetCount))
@@ -179,7 +174,7 @@ def load_api(API_KEY, API_SECRET):
     else:
         return api
 
-def preprocess_tweet(text:str):
+def preprocess_tweet(text):
     # Tokenize the tweet text
     tokenizer = TweetTokenizer(preserve_case=False, reduce_len=True, strip_handles=False)
     tokens = tokenizer.tokenize(text)
@@ -204,7 +199,7 @@ def preprocess_tweet(text:str):
 
     return {'semi_processed_text': no_url_joined, 'processed_text': stemmed_tokens}
 
-def do_translation(to_translate:list):
+def do_translation(to_translate):
     translate_client = None
     try:
         translate_client = translate.Client()

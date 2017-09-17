@@ -1,5 +1,6 @@
 import sys
-sys.path.insert(0, '../../utils')
+from pathlib import Path
+sys.path.insert(0, str(Path('..', '..', 'utils')))
 from DB import DB
 from datetime import datetime
 import requests
@@ -120,17 +121,23 @@ def extract_real_time_values_batch(url, database, constituent):
     except Exception as ex:
         return str(ex)
 
-def main(argv:list):
+def main(args):
     response = real_time_wrapper(
-        {'connection_string': 'mongodb://igenie_readwrite:igenie@35.189.101.142:27017/dax_gcp',
-         'database': 'dax_gcp',
-         'part': int(argv[0])})
+        {'connection_string': args.connection_string,
+         'database': args.database,
+         'part': int(args.part)})
 
     print(response)
     #return response
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('connection_string', help='The MongoDB connection string')
+    parser.add_argument('database', help='The MongoDB database')
+    parser.add_argument('part', help='The group of constituents')
+    args = parser.parse_args()
+    main(args)
 
 
 

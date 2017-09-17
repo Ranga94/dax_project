@@ -1,11 +1,16 @@
 import sys
-sys.path.insert(0, '../utils')
+from pathlib import Path
+sys.path.insert(0, str(Path('..', 'utils')))
 from DB import DB
 from sortedcontainers import SortedListWithKey
 from collections import defaultdict
 import math
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
+import time
+from nltk.sentiment.vader import SentimentIntensityAnalyzer as SIA
+
+current_constituent = [('BMW', 77),('adidas',188), ('Deutsche Bank',13), ('EON',9), ('Commerzbank',10)]
 
 '''
 argv[0]: connection_string
@@ -19,23 +24,95 @@ def main(argv):
 
     d = datetime.today() - timedelta(days=7)
 
-    cursor = col.find({'constituent': "BMW", "date":{"$gte":d}}, {"_id": -1, "id_str": 1, "favorite_count": 1,
+    '''
+    cursor = col.find({'constituent': constituent, "date":{"$gte":d}}, {"_id": -1, "id_str": 1, "favorite_count": 1,
                                                 "retweet_count": 1, "text": 1, "processed_text": 1, "place": 1,
                                                 "user": 1})
-    results = list(cursor)
+    '''
 
-    stock = 9
-    low = stock*0.8
-    high = stock*1.2
+    twitter_analytics_collection = database.get_collection('twitter_analytics')
+
+    twitter_analytics_collection.update_many({"state": "active"}, {"$set": {"state": "inactive"}})
 
 
-    #prices = price_analytics(results,low,high)
-    #print("Prices")
-    #print_prices(prices)
-    #print("Countries")
-    #print_countries(results)
-    countries = get_countries(results, low, high)
-    make_chart(countries, "BMW")
+    for constituent, stock in current_constituent:
+        print("Getting data for {}".format(constituent))
+        cursor = col.find({'constituent': constituent}, {"_id": -1, "id_str": 1, "favorite_count": 1,
+                                                         "retweet_count": 1, "text": 1,
+                                                         "processed_text": 1, "place": 1,
+                                                         "user": 1, "semi_processed_text":1})
+
+        results = list(cursor)
+
+
+        low = stock * 0.8
+        high = stock * 1.2
+
+
+        print("Getting countries")
+        countries = get_countries(results, low, high)
+        #print(countries)
+
+        for name, percent in countries:
+            twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
+                                                     'state': 'active',
+                                                     'constituent': constituent,
+                                                     'category': 'country_distribution',
+                                                     'name': name,
+                                                     'value': percent
+                                                     })
+
+        print("Getting prices")
+        prices = price_analytics(results,low,high)
+
+        print("Price analytics")
+        highest, lowest, price_distribution, influencer_prices = get_price_analytics(prices)
+
+        twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
+                                                'state': 'active',
+                                                'constituent': constituent,
+                                                'category': 'highest_price',
+                                                'name': "",
+                                                'value': highest
+                                                })
+
+        twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
+                                                 'state': 'active',
+                                                 'constituent': constituent,
+                                                 'category': 'lowest_price',
+                                                 'name': "",
+                                                 'value': lowest
+                                                 })
+
+        for target_price, percent in price_distribution:
+            twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
+                                                     'state': 'active',
+                                                     'constituent': constituent,
+                                                     'category': 'price_distribution',
+                                                     'name': str(target_price),
+                                                     'value': percent
+                                                     })
+
+        for influencer_price, percent in influencer_prices:
+            twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
+                                                     'state': 'active',
+                                                     'constituent': constituent,
+                                                     'category': 'influencer_distribution',
+                                                     'name': str(influencer_price),
+                                                     'value': percent
+                                                     })
+
+        print("Getting sentiment")
+        sentiments = get_sentiment_analysis(results)
+
+        for sent, percent in sentiments:
+            twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
+                                                     'state': 'active',
+                                                     'constituent': constituent,
+                                                     'category': 'sentiment',
+                                                     'name': sent,
+                                                     'value': percent
+                                                     })
 
 
 def general_analytics(cursor: list):
@@ -80,11 +157,10 @@ def price_analytics(cursor:list, low, high):
 
     return prices
 
-def print_prices(prices):
+def get_price_analytics(prices):
     prices.sort(key=lambda x: x[0], reverse=True)
     prices_only, tweets = zip(*prices)
 
-    total = sum(prices_only)
     print("Highest price: {}".format(prices_only[0]))
     print("Lowest price: {}".format(prices_only[-1]))
 
@@ -92,18 +168,19 @@ def print_prices(prices):
     for p in prices_only:
         prices_frequency[math.ceil(p)] += 1
 
-    print("General Twitter target prices:")
+    for key in prices_frequency.keys():
+        prices_frequency[key] = round(prices_frequency[key]/len(prices_only) * 100, 2)
+
+
+    #print("General Twitter target prices:")
     sorted_by_frequency = sorted(prices_frequency.items(), key=lambda x: x[1], reverse=True)
 
-    if len(prices_only) == 0:
-        print("No price information available")
-        return
-
-
+    '''
     for p1, p2 in sorted_by_frequency:
         percent = p2*100/len(prices_only)
         #if percent > 10:
         print("EUR {} ({}%)".format(p1, float(percent)))
+    '''
 
 
     #Get prices mentioned more often by influencers
@@ -112,19 +189,27 @@ def print_prices(prices):
         if tweet['user']['followers_count'] >= 200:
             influencer_prices.append(price)
 
-    influencer_frequency = defaultdict(int)
-    for p in influencer_prices:
-        influencer_frequency[math.ceil(p)] += 1
+    if len(influencer_prices) == 0:
+        influencer_frequency_sorted = []
+    else:
+        influencer_frequency = defaultdict(int)
+        for p in influencer_prices:
+            influencer_frequency[math.ceil(p)] += 1
 
-    influencer_frequency_sorted = sorted(influencer_frequency.items(), key=lambda x: x[1], reverse=True)
+        for key in influencer_frequency.keys():
+            influencer_frequency[key] = round(influencer_frequency[key] / len(influencer_prices) * 100, 2)
 
-    if len(influencer_prices) < 0:
-        return
-    print("Top influencers target prices:")
-    for p1, p2 in influencer_frequency_sorted:
-        percent = p2*100/len(influencer_prices)
-        #if percent > 10:
-        print("EUR {} ({}%)".format(p1, float(percent)))
+        influencer_frequency_sorted = sorted(influencer_frequency.items(), key=lambda x: x[1], reverse=True)
+
+        '''
+        print("Top influencers target prices:")
+        for p1, p2 in influencer_frequency_sorted:
+            percent = p2 * 100 / len(influencer_prices)
+            # if percent > 10:
+            print("EUR {} ({}%)".format(p1, float(percent)))
+        '''
+
+    return prices_only[0], prices_only[-1], sorted_by_frequency, influencer_frequency_sorted
 
 def print_results(results:list):
     for item in reversed(results):
@@ -141,6 +226,7 @@ returns: a list of (country,percent) tuples
 '''
 def get_countries(cursor:list, low, high):
     countries = defaultdict(float)
+    total = 0
 
     for tweet in cursor:
         for word in tweet["processed_text"]:
@@ -150,6 +236,7 @@ def get_countries(cursor:list, low, high):
                     if tweet['place'] is not None:
                         if 'country_code' in tweet['place'].keys():
                             countries[tweet['place']['country_code']] += 1
+                            total += 1
                     break
             except:
                 pass
@@ -158,7 +245,7 @@ def get_countries(cursor:list, low, high):
         return None
 
     for key in countries.keys():
-        countries[key] = countries[key]
+        countries[key] = round(countries[key]/total * 100, 2)
 
     return sorted(countries.items(), key=lambda x: x[1], reverse=True)
 
@@ -183,9 +270,30 @@ def make_chart(data:list, constituent):
     #plt.show()
 
 
+'''
+returns a list of (sentiment,percent)
+'''
+def get_sentiment_analysis(cursor:list):
+    if not cursor:
+        return []
 
 
+    sia = SIA()
+    positive = 0
+    negative = 0
+    neutral = 0
 
+    for tweet in cursor:
+        res = sia.polarity_scores(tweet["semi_processed_text"])
+
+        if res["compound"] < -0.2:
+            negative += 1
+        elif res["compound"] > 0.2:
+            positive += 1
+        else:
+            neutral += 1
+
+    return [("Positive", positive * 100 / len(cursor)),("Neutral", neutral * 100 / len(cursor)),("Negative", negative * 100 / len(cursor))]
 
 
 
