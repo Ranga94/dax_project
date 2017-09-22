@@ -24,23 +24,28 @@ def main(argv):
 
     d = datetime.today() - timedelta(days=7)
 
-    '''
-    cursor = col.find({'constituent': constituent, "date":{"$gte":d}}, {"_id": -1, "id_str": 1, "favorite_count": 1,
-                                                "retweet_count": 1, "text": 1, "processed_text": 1, "place": 1,
-                                                "user": 1})
-    '''
-
     twitter_analytics_collection = database.get_collection('twitter_analytics')
 
     twitter_analytics_collection.update_many({"state": "active"}, {"$set": {"state": "inactive"}})
 
+    summary_box = database.get_collection('summary_box')
+
 
     for constituent, stock in current_constituent:
         print("Getting data for {}".format(constituent))
+
+        '''
         cursor = col.find({'constituent': constituent}, {"_id": -1, "id_str": 1, "favorite_count": 1,
                                                          "retweet_count": 1, "text": 1,
                                                          "processed_text": 1, "place": 1,
                                                          "user": 1, "semi_processed_text":1})
+
+        '''
+        cursor = col.find({'constituent': constituent, "date":{"$gte":d}}, {"_id": -1, "id_str": 1, "favorite_count": 1,
+                                                         "retweet_count": 1, "text": 1,
+                                                         "processed_text": 1, "place": 1,
+                                                         "user": 1, "semi_processed_text":1})
+
 
         results = list(cursor)
 
@@ -51,8 +56,10 @@ def main(argv):
 
         print("Getting countries")
         countries = get_countries(results, low, high)
-        #print(countries)
+        print(countries)
 
+        '''
+        
         for name, percent in countries:
             twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
                                                      'state': 'active',
@@ -61,13 +68,17 @@ def main(argv):
                                                      'name': name,
                                                      'value': percent
                                                      })
+        '''
 
         print("Getting prices")
         prices = price_analytics(results,low,high)
 
-        print("Price analytics")
-        highest, lowest, price_distribution, influencer_prices = get_price_analytics(prices)
 
+        print("Getting price analytics")
+        highest, lowest, price_distribution, influencer_prices = get_price_analytics(prices)
+        print(price_distribution)
+
+        '''
         twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
                                                 'state': 'active',
                                                 'constituent': constituent,
@@ -83,6 +94,7 @@ def main(argv):
                                                  'name': "",
                                                  'value': lowest
                                                  })
+        
 
         for target_price, percent in price_distribution:
             twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
@@ -101,10 +113,14 @@ def main(argv):
                                                      'name': str(influencer_price),
                                                      'value': percent
                                                      })
+        '''
 
         print("Getting sentiment")
-        sentiments = get_sentiment_analysis(results)
+        sentiments, overall = get_sentiment_analysis(results)
+        print(sentiments)
+        print("Overall:{}".format(overall))
 
+        '''
         for sent, percent in sentiments:
             twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
                                                      'state': 'active',
@@ -113,6 +129,8 @@ def main(argv):
                                                      'name': sent,
                                                      'value': percent
                                                      })
+        summary_box.update_one({"constituent":constituent, "state":"active"}, {"$set":{"twitter_sentiment":overall}})
+        '''
 
 
 def general_analytics(cursor: list):
@@ -161,8 +179,8 @@ def get_price_analytics(prices):
     prices.sort(key=lambda x: x[0], reverse=True)
     prices_only, tweets = zip(*prices)
 
-    print("Highest price: {}".format(prices_only[0]))
-    print("Lowest price: {}".format(prices_only[-1]))
+    #print("Highest price: {}".format(prices_only[0]))
+    #print("Lowest price: {}".format(prices_only[-1]))
 
     prices_frequency = defaultdict(int)
     for p in prices_only:
@@ -282,18 +300,28 @@ def get_sentiment_analysis(cursor:list):
     positive = 0
     negative = 0
     neutral = 0
+    overall = 0
 
     for tweet in cursor:
         res = sia.polarity_scores(tweet["semi_processed_text"])
 
-        if res["compound"] < -0.2:
+        if res["compound"] < -0.25:
             negative += 1
-        elif res["compound"] > 0.2:
+        elif res["compound"] > 0.25:
             positive += 1
         else:
             neutral += 1
 
-    return [("Positive", positive * 100 / len(cursor)),("Neutral", neutral * 100 / len(cursor)),("Negative", negative * 100 / len(cursor))]
+    if positive >= negative and positive >= neutral:
+        overall = 1
+    elif neutral >= positive and neutral >= negative:
+        overall = 0
+    elif negative >= positive and negative >= neutral:
+        overall = -1
+
+
+
+    return [("Positive", positive * 100 / len(cursor)),("Neutral", neutral * 100 / len(cursor)),("Negative", negative * 100 / len(cursor))], overall
 
 
 
