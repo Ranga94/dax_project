@@ -1,6 +1,6 @@
 import sys
-from pathlib import Path
-sys.path.insert(0, str(Path('..', 'utils')))
+#from pathlib import Path
+#sys.path.insert(0, str(Path('..', 'utils')))
 from DB import DB
 import tweepy
 from nltk.tokenize import TweetTokenizer
