@@ -1,9 +1,7 @@
-from twitter_mining import get_tweets
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path('..', 'utils')))
+#sys.path.insert(0, str(Path('..', 'utils')))
 #sys.path.insert(0, '../utils')
-import email_tools
 import os
 
 
@@ -20,6 +18,15 @@ languages = ['de']
 def main(args):
     #set google cloud environment variable
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(Path(".","igenie-project-key.json"))
+
+    #set direcotires
+    script_directory = os.path.dirname(os.path.realpath(__file__))
+    utils_directory = os.path.join(script_directory, "..", "utils")
+    sys.path.insert(0, str(utils_directory))
+    import email_tools
+    from twitter_mining import get_tweets
+
+
 
     if not args.translate: #not translate => just English
         get_tweets(args.connection_string,args.database,args.collection,'en',logging=args.logging)

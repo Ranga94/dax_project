@@ -1,10 +1,9 @@
 import sys
-from pathlib import Path
-sys.path.insert(0, str(Path('..', '..', 'utils')))
-from DB import DB
+#sys.path.insert(0, str(Path('..', '..', 'utils')))
 from datetime import datetime
 import requests
 import time
+import os
 
 all_constituents = {}
 
@@ -122,6 +121,11 @@ def extract_real_time_values_batch(url, database, constituent):
         return str(ex)
 
 def main(args):
+    script_directory = os.path.dirname(os.path.realpath(__file__))
+    utils_directory = os.path.join(script_directory, "..", "..", "utils")
+    sys.path.insert(0, str(utils_directory))
+    from DB import DB
+
     response = real_time_wrapper(
         {'connection_string': args.connection_string,
          'database': args.database,
