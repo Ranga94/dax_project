@@ -135,6 +135,7 @@ def main(args):
     #return response
 
 if __name__ == "__main__":
+    os.chdir(os.path.dirname(sys.argv[0]))
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('connection_string', help='The MongoDB connection string')
