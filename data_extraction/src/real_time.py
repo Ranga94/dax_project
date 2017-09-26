@@ -5,6 +5,11 @@ import requests
 import time
 import os
 
+script_directory = os.path.dirname(os.path.realpath(__file__))
+utils_directory = os.path.join(script_directory, "..", "..", "utils")
+sys.path.insert(0, str(utils_directory))
+from DB import DB
+
 all_constituents = {}
 
 all_constituents[0] = {'DAX': 'HISTORY+998032;830;814+TICKS+', 'Allianz':'HISTORY+322646;13;814+TICKS+', 'adidas':'HISTORY+11730015;44;814+TICKS+',
@@ -121,11 +126,6 @@ def extract_real_time_values_batch(url, database, constituent):
         return str(ex)
 
 def main(args):
-    script_directory = os.path.dirname(os.path.realpath(__file__))
-    utils_directory = os.path.join(script_directory, "..", "..", "utils")
-    sys.path.insert(0, str(utils_directory))
-    from DB import DB
-
     response = real_time_wrapper(
         {'connection_string': args.connection_string,
          'database': args.database,
