@@ -1,14 +1,7 @@
 import sys
-#sys.path.insert(0, str(Path('..', '..', 'utils')))
 from datetime import datetime
 import requests
 import time
-import os
-
-script_directory = os.path.dirname(os.path.realpath(__file__))
-utils_directory = os.path.join(script_directory, "..", "..", "utils")
-sys.path.insert(0, str(utils_directory))
-from DB import DB
 
 all_constituents = {}
 
@@ -42,6 +35,8 @@ part:int
 '''
 
 def real_time_wrapper(argv):
+    sys.path.insert(0, argv["utils_dir"])
+    from DB import DB
     base_url = "http://charts.finanzen.net/ChartData.ashx?request="
     database = DB(argv['connection_string'], argv['database'])
 
@@ -129,18 +124,19 @@ def main(args):
     response = real_time_wrapper(
         {'connection_string': args.connection_string,
          'database': args.database,
-         'part': int(args.part)})
+         'part': int(args.part),
+         'utils_dir':args.utils_dir})
 
     print(response)
     #return response
 
 if __name__ == "__main__":
-    os.chdir(os.path.dirname(sys.argv[0]))
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('connection_string', help='The MongoDB connection string')
     parser.add_argument('database', help='The MongoDB database')
     parser.add_argument('part', help='The group of constituents')
+    parser.add_argument('utils_dir', help='Utils directory')
     args = parser.parse_args()
     main(args)
 
