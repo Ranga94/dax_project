@@ -92,7 +92,7 @@ def get_tweets(language, tweetsPerQry, maxTweets, mongo_conn_string, database, c
                     except Exception as e:
                         print(str(e))
                         result = None
-                    
+
                 if result is not None:
                     print("Inserted {} tweets".format(len(result.inserted_ids)))
                     if logging_flag:
