@@ -1,5 +1,5 @@
 from sqlalchemy import *
-from pymongo import MongoClient
+from pymongo import MongoClient, errors
 import tweepy
 from nltk.tokenize import TweetTokenizer
 from nltk.corpus import stopwords
@@ -13,7 +13,6 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer as SIA
 from nltk.tag import StanfordNERTagger
 import os
 import smtplib
-
 
 def main(arguments):
     script_directory = os.path.dirname(os.path.realpath(__file__))
@@ -85,8 +84,15 @@ def get_tweets(language, tweetsPerQry, maxTweets, mongo_conn_string, database, c
                 result = None
 
                 if list_of_tweets:
-                    result = database.insert_many(collection, list_of_tweets)
-
+                    try:
+                        result = tweets_collection.insert_many(list_of_tweets, ordered=False)
+                    except errors.BulkWriteError as e:
+                        print(str(e.details['writeErrors']))
+                        result = None
+                    except Exception as e:
+                        print(str(e))
+                        result = None
+                    
                 if result is not None:
                     print("Inserted {} tweets".format(len(result.inserted_ids)))
                     if logging_flag:
