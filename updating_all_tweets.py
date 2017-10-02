@@ -18,7 +18,7 @@ def main(argv):
     tokenizer = TweetTokenizer(preserve_case=True, reduce_len=True, strip_handles=False)
 
     operations = []
-    cursor = collection.find({"constituent":"adidas", "nltk_sentiment_numeric":{"$exists":False}},{"_id":1,"text":1,"semi_processed_text":1})
+    cursor = collection.find({"constituent":"adidas", "nltk_sentiment_numeric":{"$exists":False}},{"_id":1,"text":1,"text_en":1,"semi_processed_text":1})
     all_tweets = list(cursor)
     records = 0
 
