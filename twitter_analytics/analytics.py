@@ -58,7 +58,7 @@ def main(argv):
         countries = get_countries(results, low, high)
         print(countries)
 
-        '''
+
         
         for name, percent in countries:
             twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
@@ -68,7 +68,7 @@ def main(argv):
                                                      'name': name,
                                                      'value': percent
                                                      })
-        '''
+
 
         print("Getting prices")
         prices = price_analytics(results,low,high)
@@ -78,7 +78,7 @@ def main(argv):
         highest, lowest, price_distribution, influencer_prices = get_price_analytics(prices)
         print(price_distribution)
 
-        '''
+
         twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
                                                 'state': 'active',
                                                 'constituent': constituent,
@@ -113,14 +113,14 @@ def main(argv):
                                                      'name': str(influencer_price),
                                                      'value': percent
                                                      })
-        '''
+
 
         print("Getting sentiment")
         sentiments, overall = get_sentiment_analysis(results)
         print(sentiments)
         print("Overall:{}".format(overall))
 
-        '''
+
         for sent, percent in sentiments:
             twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
                                                      'state': 'active',
@@ -130,7 +130,7 @@ def main(argv):
                                                      'value': percent
                                                      })
         summary_box.update_one({"constituent":constituent, "state":"active"}, {"$set":{"twitter_sentiment":overall}})
-        '''
+
 
 
 def general_analytics(cursor: list):
