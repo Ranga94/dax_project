@@ -24,6 +24,8 @@ def main():
     for doc in collection.find({}, no_cursor_timeout=True):
 
         tags_temp = get_tags(doc["NEWS_TITLE_NewsDim"], tagger)
+        if not tags_temp:
+            continue
         tags = process_tags(tags_temp)
 
         new_values = {}
@@ -66,10 +68,13 @@ def get_nltk_sentiment(semi_processed_text, sia):
 
 
 def get_tags(text, tagger):
-    new_text = text.replace('€', '$')
-    new_text = new_text.replace('#', ' ')
-    classified_text = tagger.get_entities(new_text)
-    return classified_text
+    if isinstance(text,str):
+        new_text = text.replace('€', '$')
+        new_text = new_text.replace('#', ' ')
+        classified_text = tagger.get_entities(new_text)
+        return classified_text
+    else:
+        return None
 
 
 def get_relevance(text_clf, count_vectorizer, tf_transformer, processed_text):
