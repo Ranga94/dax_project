@@ -38,7 +38,7 @@ def main():
 
         for word, tag in tags:
             if tag != "O":
-                new_values["tag_" + tag].append(word)
+                new_values["tag_header_" + tag].append(word)
 
         operations.append(
             UpdateOne({"_id": doc["_id"]}, {"$set": new_values})
