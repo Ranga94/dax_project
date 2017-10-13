@@ -8,7 +8,7 @@ import time
 from sner import Ner
 
 def main(argv):
-    client = MongoClient("mongodb://igenie_readwrite:igenie@35.189.101.142:27017/dax_gcp")
+    client = MongoClient("mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp")
     db = client["dax_gcp"]
     collection = db["tweets"]
 
