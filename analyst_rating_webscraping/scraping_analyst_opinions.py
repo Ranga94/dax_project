@@ -243,15 +243,9 @@ update_analyst(combined_analyst_json)
 
 # In[84]:
 
-data = list(db['news'].find())
-data=  pd.DataFrame(list(data))
-data
-
 
 # In[85]:
 
-data = list(db['analyst_opinions'].find())
-analyst_retrieved =  pd.DataFrame(list(data))
 #analyst_retrieved 
 
 
