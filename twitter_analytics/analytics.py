@@ -22,7 +22,9 @@ def main(argv):
     database = DB(argv[0], argv[1])
     col = database.get_collection('tweets')
 
-    d = datetime.today() - timedelta(days=7)
+    #d = datetime.today() - timedelta(days=7)
+    from_date = datetime(2017, 9, 7)
+    to_date = datetime(2017, 9, 21)
 
     twitter_analytics_collection = database.get_collection('twitter_analytics')
 
@@ -41,11 +43,22 @@ def main(argv):
                                                          "user": 1, "semi_processed_text":1})
 
         '''
-        cursor = col.find({'constituent': constituent, "date":{"$gte":d}}, {"_id": -1, "id_str": 1, "favorite_count": 1,
-                                                         "retweet_count": 1, "text": 1,
-                                                         "processed_text": 1, "place": 1,
-                                                         "user": 1, "semi_processed_text":1})
 
+        if constituent == "BMW":
+            cursor = col.find({'constituent': constituent,
+                               "relevance":1,
+                               "date": {"$gte": from_date, "$lte": to_date}},
+                              {"_id": -1, "id_str": 1, "favorite_count": 1,
+                               "retweet_count": 1, "text": 1,
+                               "processed_text": 1, "place": 1,
+                               "user": 1, "semi_processed_text": 1})
+        else:
+            cursor = col.find({'constituent': constituent,
+                               "date": {"$gte": from_date, "$lte": to_date}},
+                              {"_id": -1, "id_str": 1, "favorite_count": 1,
+                               "retweet_count": 1, "text": 1,
+                               "processed_text": 1, "place": 1,
+                               "user": 1, "semi_processed_text": 1})
 
         results = list(cursor)
 
@@ -58,8 +71,6 @@ def main(argv):
         countries = get_countries(results, low, high)
         print(countries)
 
-        '''
-        
         for name, percent in countries:
             twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
                                                      'state': 'active',
@@ -68,7 +79,7 @@ def main(argv):
                                                      'name': name,
                                                      'value': percent
                                                      })
-        '''
+
 
         print("Getting prices")
         prices = price_analytics(results,low,high)
@@ -78,7 +89,7 @@ def main(argv):
         highest, lowest, price_distribution, influencer_prices = get_price_analytics(prices)
         print(price_distribution)
 
-        '''
+
         twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
                                                 'state': 'active',
                                                 'constituent': constituent,
@@ -113,14 +124,14 @@ def main(argv):
                                                      'name': str(influencer_price),
                                                      'value': percent
                                                      })
-        '''
+
 
         print("Getting sentiment")
         sentiments, overall = get_sentiment_analysis(results)
         print(sentiments)
         print("Overall:{}".format(overall))
 
-        '''
+
         for sent, percent in sentiments:
             twitter_analytics_collection.insert_one({'date': time.strftime("%d/%m/%Y"),
                                                      'state': 'active',
@@ -129,8 +140,9 @@ def main(argv):
                                                      'name': sent,
                                                      'value': percent
                                                      })
+            print("Constituent {}, sentiment {}".format(constituent,sent))
         summary_box.update_one({"constituent":constituent, "state":"active"}, {"$set":{"twitter_sentiment":overall}})
-        '''
+
 
 
 def general_analytics(cursor: list):

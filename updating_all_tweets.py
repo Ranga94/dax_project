@@ -8,7 +8,7 @@ import time
 from sner import Ner
 
 def main(argv):
-    client = MongoClient("mongodb://igenie_readwrite:igenie@35.189.101.142:27017/dax_gcp")
+    client = MongoClient("mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp")
     db = client["dax_gcp"]
     collection = db["tweets"]
 
@@ -18,7 +18,7 @@ def main(argv):
     tokenizer = TweetTokenizer(preserve_case=True, reduce_len=True, strip_handles=False)
 
     operations = []
-    cursor = collection.find({"constituent":"BMW", "nltk_sentiment_numeric":{"$exists":False}},{"_id":1,"text":1,"semi_processed_text":1})
+    cursor = collection.find({"constituent":"adidas", "nltk_sentiment_numeric":{"$exists":False}},{"_id":1,"text":1,"text_en":1,"semi_processed_text":1})
     all_tweets = list(cursor)
     records = 0
 
@@ -57,7 +57,7 @@ def main(argv):
             collection.bulk_write(operations, ordered=False)
             operations = []
             records += 1000
-            print("Write done.")
+            print("Write done. Saved {} records".format(records))
 
     if (len(operations) > 0):
         collection.bulk_write(operations, ordered=False)
