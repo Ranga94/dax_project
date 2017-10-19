@@ -26,10 +26,10 @@ server <- function(input, output){
   twitter_count <- mongo(collection = 'twitter_sentiment_count_daily',
                          url = "mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp",
                          verbose = FALSE, options = ssl_options())
-  twitter_df<-twitter_count$find()
+  twitter_df<-twitter_count$find('{}')
   
   ##BMW
-  tweet_count_bmw <-eventReactive(input$reload_box4, {
+  tweet_count_bmw <-eventReactive(input$reload, {
     constituent_count <- twitter_df[twitter_df$constituent=='BMW',]
     pos_line = constituent_count[constituent_count$line=='Positive',c("count")]
     neg_line = constituent_count[constituent_count$line=='Negative',c("count")]
@@ -53,7 +53,7 @@ server <- function(input, output){
   output$tweet_num_bmw<-renderPlot(tweet_count_bmw())
   
   ## Adidas
-  tweet_count_adidas <-eventReactive(input$reload_box4, {
+  tweet_count_adidas <-eventReactive(input$reload, {
     constituent_count <- twitter_df[twitter_df$constituent=='adidas',]
     pos_line = constituent_count[constituent_count$line=='Positive',c("count")]
     neg_line = constituent_count[constituent_count$line=='Negative',c("count")]
@@ -77,7 +77,7 @@ server <- function(input, output){
   
   
   ## Commerzbank
-  tweet_count_cb <-eventReactive(input$reload_box4, {
+  tweet_count_cb <-eventReactive(input$reload, {
     constituent_count <- twitter_df[twitter_df$constituent=='Commerzbank',]
     pos_line = constituent_count[constituent_count$line=='Positive',c("count")]
     neg_line = constituent_count[constituent_count$line=='Negative',c("count")]
@@ -100,7 +100,7 @@ server <- function(input, output){
   
   
   ## Deutsche Bank
-  tweet_count_db <-eventReactive(input$reload_box4, {
+  tweet_count_db <-eventReactive(input$reload, {
     constituent_count <- twitter_df[twitter_df$constituent=='Deutsche Bank',]
     pos_line = constituent_count[constituent_count$line=='Positive',c("count")]
     neg_line = constituent_count[constituent_count$line=='Negative',c("count")]
@@ -124,7 +124,7 @@ server <- function(input, output){
   
   
   ## EON
-  tweet_count_eon <-eventReactive(input$reload_box4, {
+  tweet_count_eon <-eventReactive(input$reload, {
     constituent_count <- twitter_df[twitter_df$constituent=='EON',]
     pos_line = constituent_count[constituent_count$line=='Positive',c("count")]
     neg_line = constituent_count[constituent_count$line=='Negative',c("count")]
@@ -160,7 +160,7 @@ server <- function(input, output){
   }
   
   
-  news_data_all <- eventReactive(input$reload_box4, {
+  news_data_all <- eventReactive(input$reload, {
     all_news <- mongo(collection = 'all_news',
                 url = "mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp",
                 verbose = FALSE, options = ssl_options())
@@ -203,11 +203,11 @@ server <- function(input, output){
     
   
   ## Analyst Recommendation Percentage - Stacked Bar Chart
-  analyst_data <- eventReactive(input$reload_box4, {
+  analyst_data <- eventReactive(input$reload, {
     db <- mongo(collection = 'analyst_opinions',
                 url = "mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp",
                 verbose = FALSE, options = ssl_options())
-    retrieved_data <- db$find()
+    retrieved_data <- db$find('{"status":"active"}')
     df<- retrieved_data[,c('Constituent','% Buy','% Hold','% Sell')]
     v<-(sort(df$Constituent,decreasing=FALSE))
     df<-df[match(v,df$Constituent),]
@@ -224,7 +224,7 @@ server <- function(input, output){
 
   
   ##Summary Box - DataTable
-  summary_data <- eventReactive(input$reload_box4, {
+  summary_data <- eventReactive(input$reload, {
     db <- mongo(collection = 'summary_box',
                 url = "mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp",
                 verbose = FALSE, options = ssl_options())
@@ -241,7 +241,7 @@ server <- function(input, output){
   
   ################################# FUNDAMENTAL ###########################################
   ##Cumulative Returns - DataTable
-  cumulative_return <- eventReactive(input$reload_box4, {
+  cumulative_return <- eventReactive(input$reload, {
     db <- mongo(collection = 'price analysis',
                 url = "mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp",
                 verbose = FALSE, options = ssl_options())
@@ -258,7 +258,7 @@ server <- function(input, output){
   
 
   ##Golden Cross - DataTable
-  golden_cross <- eventReactive(input$reload_box4, {
+  golden_cross <- eventReactive(input$reload, {
     db <- mongo(collection = 'price analysis',
                 url = "mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp",
                 verbose = FALSE, options = ssl_options())
@@ -272,7 +272,7 @@ server <- function(input, output){
  
   
   ##Profitability Ranking - DataTable
-  ranking <- eventReactive(input$reload_box4, {
+  ranking <- eventReactive(input$reload, {
     db <- mongo(collection = 'profitability_ranking',
                 url = "mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp",
                 verbose = FALSE, options = ssl_options())
@@ -285,7 +285,7 @@ server <- function(input, output){
   
   ################################# ANALYST PAGE ####################################
   ##Analyst Recommendation - DataTable
-  analyst_recommendation <- eventReactive(input$reload_box4, {
+  analyst_recommendation <- eventReactive(input$reload, {
     db <- mongo(collection = 'analyst_opinions_all',
                 url = "mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp",
                 verbose = FALSE, options = ssl_options())
@@ -303,7 +303,7 @@ server <- function(input, output){
   
   
   ##Analyst Target Prices - DataTable
-  target_prices <- eventReactive(input$reload_box4, {
+  target_prices <- eventReactive(input$reload, {
     db <- mongo(collection = 'analyst_opinions_all',
                 url = "mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp",
                 verbose = FALSE, options = ssl_options())
@@ -316,7 +316,7 @@ server <- function(input, output){
   
   
   ##PER Analysis - DataTable
-  PER_analysis <- eventReactive(input$reload_box4, {
+  PER_analysis <- eventReactive(input$reload, {
     db <- mongo(collection = 'fundamental analysis',
                 url = "mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp",
                 verbose = FALSE, options = ssl_options())
@@ -592,6 +592,217 @@ server <- function(input, output){
       labs(colour = "Category") +
       theme(plot.title = element_text(hjust = 0.5))+theme(plot.title = element_text(lineheight=.8, face="bold"))
   })
+  
+  ################################# Correlation Page ######################################
+  ### News Sentiment Line 
+  output$news_behavior_line <- renderPlotly({
+    if(input$constituent_corr=='Adidas'){
+      corr <- mongo(collection = 'ADS_cor',
+                    url = "mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp",
+                    verbose = FALSE, options = ssl_options())}
+    
+    if(input$constituent_corr=='BMW'){
+      corr <- mongo(collection = 'BMW_cor',
+                    url = "mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp",
+                    verbose = FALSE, options = ssl_options())}
+    if(input$constituent_corr=='Deutsche Bank'){
+      corr <- mongo(collection = 'DB_cor',
+                    url = "mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp",
+                    verbose = FALSE, options = ssl_options())}
+    if(input$constituent_corr=='Commerzbank'){
+      corr <- mongo(collection = 'CB_cor',
+                    url = "mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp",
+                    verbose = FALSE, options = ssl_options())}
+    if(input$constituent_corr=='EON'){
+      corr <- mongo(collection = 'EON_cor',
+                    url = "mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp",
+                    verbose = FALSE, options = ssl_options())}
+    
+    corr = corr$find()
+    if(input$constituent_corr=='Adidas'){
+      mydata <- corr[, c('News_sent','Close','Open','High','Low','date')]
+    }else{mydata <- corr[, c('News_sent','Close','Open','High','Low','date')]}
+    
+    title_str = paste('Behavior of ',input$constituent_corr, ' prices relative to News Sentiments',sep='' )
+    
+    Close = mydata$Close
+    High = mydata$High
+    Low = mydata$Low
+    Open = mydata$Open
+    News_sent = mydata$News_sent
+    
+    O <- cor(News_sent, Open)
+    C <- cor(News_sent, Close)
+    L <- cor(News_sent, Low)
+    H <- cor(News_sent, High)
+    
+    p <- ggplot(mydata, aes(x = date, group=1))
+    
+    p <- p + {if (C > 0.5) geom_line(aes(y = Close), linetype = "dashed", colour = "black")}
+    p <- p + {if (O > 0.5) geom_line(aes(y = Open), linetype = "dashed", colour = "red")}
+    p <- p + {if (H > 0.5) geom_line(aes(y = High), linetype = "dashed", colour = "blue")}
+    p <- p + {if (L > 0.5) geom_line(aes(y = Low), linetype = "dashed", colour = "orange")}
+    
+    
+    ##add annotations and scaling
+    if(input$constituent_corr=='Adidas'){
+      p <- p + geom_line(aes(y = News_sent*270, colour = "News Sentiment"))
+      p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.85, 0.950)) + labs(title = "Behaviour of Adidas Prices Relative to News Sentiment") 
+    }
+    
+    if(input$constituent_corr=='BMW'){
+      p <- p + geom_line(aes(y = News_sent*370, colour = "News Sentiment"))
+      p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) + labs(title = "Behaviour of BMW Prices Relative to News Sentiment") 
+    }
+    
+    if(input$constituent_corr=='Commerzbank'){
+      p <- p + geom_line(aes(y = News_sent*70, colour = "News Sentiment"))
+      p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) + labs(title = "Commerzbank Prices Relative to News Sentiment") 
+    }
+    
+    if(input$constituent_corr=='Deutsche Bank'){
+      p <- p + geom_line(aes(y = News_sent*270, colour = "News Sentiment"))
+      p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) + labs(title = "Deutschebank Prices Relative to News Sentiment") 
+    }
+    
+    if(input$constituent_corr=='EON'){
+      p <- p + geom_line(aes(y = News_sent*56, colour = "News Sentiment"))
+      p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) + labs(title = "Behaviour of E.ON Stock Prices Relative to News Sentiment") 
+    }
+    p <- p + theme(plot.title=element_text(size=10))
+    ggplotly(p)
+    p_changed <- ggplotly(p)
+    pp_changed=plotly_build(p_changed)   
+    style( pp_changed ) %>% 
+      layout( legend = list(x = 0.01, y = 0.95) )
+    
+  })
+  
+  
+  
+  
+  
+  ## Twitter Sentiment line
+  output$twitter_behavior_line <- renderPlotly({
+    if(input$constituent_corr=='Adidas'){
+      corr <- mongo(collection = 'ADS_cor',
+                    url = "mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp",
+                    verbose = FALSE, options = ssl_options())}
+    
+    if(input$constituent_corr=='BMW'){
+      corr <- mongo(collection = 'BMW_cor',
+                    url = "mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp",
+                    verbose = FALSE, options = ssl_options())}
+    if(input$constituent_corr=='Deutsche Bank'){
+      corr <- mongo(collection = 'DB_cor',
+                    url = "mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp",
+                    verbose = FALSE, options = ssl_options())}
+    if(input$constituent_corr=='Commerzbank'){
+      corr <- mongo(collection = 'CB_cor',
+                    url = "mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp",
+                    verbose = FALSE, options = ssl_options())}
+    if(input$constituent_corr=='EON'){
+      corr <- mongo(collection = 'EON_cor',
+                    url = "mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp",
+                    verbose = FALSE, options = ssl_options())}
+    
+    corr = corr$find()
+    if(input$constituent_corr=='Adidas'){
+      mydata <- corr[, c('Twitter_sent','Close','Open','High','Low','date')]
+    }else{mydata <- corr[, c('Twitter_sent','Close','Open','High','Low','date')]}
+    
+    
+    Close = mydata$Close
+    High = mydata$High
+    Low = mydata$Low
+    Open = mydata$Open
+    Twitter_sent = mydata$Twitter_sent
+    
+    O <- cor(Twitter_sent, Open)
+    C <- cor(Twitter_sent, Close)
+    L <- cor(Twitter_sent, Low)
+    H <- cor(Twitter_sent, High)
+    
+    p <- ggplot(mydata, aes(x = date, group=1))
+    
+    p <- p + {if (C > 0.5) geom_line(aes(y = Close), linetype = "dashed", colour = "black")}
+    p <- p + {if (O > 0.5) geom_line(aes(y = Open), linetype = "dashed", colour = "red")}
+    p <- p + {if (H > 0.5) geom_line(aes(y = High), linetype = "dashed", colour = "blue")}
+    p <- p + {if (L > 0.5) geom_line(aes(y = Low), linetype = "dashed", colour = "orange")}
+    
+    
+    ##add annotations and scaling
+    if(input$constituent_corr=='Adidas'){
+      p <- p + geom_line(aes(y = Twitter_sent*270, colour = "Twitter Sentiment"))
+      p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) + labs(title = "Behaviour of Adidas Prices Relative to Sentiment") 
+    }
+    
+    if(input$constituent_corr=='BMW'){
+      p <- p + geom_line(aes(y = Twitter_sent*150, colour = "Twitter Sentiment"))
+      p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) + labs(title = "Behaviour of BMW Stock Prices Relative to Twitter Sentiment") 
+    }
+    
+    if(input$constituent_corr=='Commerzbank'){
+      p <- p + geom_line(aes(y = Twitter_sent*40, colour = "Twitter Sentiment"))
+      p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) + labs(title = "Behaviour of Commerzbank Prices Relative to Sentiment") 
+    }
+    
+    if(input$constituent_corr=='Deutsche Bank'){
+      p <- p + geom_line(aes(y = Twitter_sent*50, colour = "Twitter Sentiment"))
+      p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) + labs(title = "Behaviour of Deutschebank Prices Relative to Sentiment") 
+    }
+    
+    if(input$constituent_corr=='EON'){
+      p <- p + geom_line(aes(y = Twitter_sent*12.5, colour = "Twitter Sentiment"))
+      p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) + labs(title = "Behaviour of E.ON Prices Relative to Twitter Sentiment") 
+    }
+    p <- p + theme(plot.title=element_text(size=10))
+    ggplotly(p)
+    p_changed <- ggplotly(p)
+    pp_changed=plotly_build(p_changed)   
+    style( pp_changed ) %>% 
+      layout( legend = list(x = 0.01, y = 0.95) )
+  })
+  
+  ### Add explanations
+  output$news_annotation<- renderText({
+    if(input$constituent_corr=='Adidas'){
+      str = "Correlations for all Adidas stock prices have less than 50% correlation to News sentiment"
+    }
+    if(input$constituent_corr=='BMW'){
+      str = "Open, Close, High and Low prices all have greater than 50% correlations to News sentiment. News sentiment had the greatest correlations to Highs, which had a 99% correlation, followed by Open and lows, which both were 97% correlated to sentiment, and finally, Close prices, which were 90% correlated."
+    }
+    if(input$constituent_corr=='Commerzbank'){
+      str = "Open, Close, High and Low prices all have greater than 50% correlations to News sentiment. News sentiment had the greatest correlations to Highs and Close Prices, which were both 99% correlated, followed by Lows, which was 91% correlated to sentiment, and finally, Open prices, which was 84% correlated."
+    }
+    if(input$constituent_corr=='Deutsche Bank'){
+      str = "Open, Close, High and Low prices all have greater than 50% correlations to News sentiment. News sentiment had the greatest correlations to Open and Close Prices, which were 93% correlated, followed by Lows, which was 90% correlated to sentiment, and finally, Highs, which was 71% correlated."
+    }
+    if(input$constituent_corr=='EON'){
+      str = "Only Close, Open and Lows have greater than 50% correlations to News sentiment. News sentiment had the greatest correlation to Lows, which had a 100% correlation, followed by Close, which was 93% correlated to sentiment, and finally, Open Prices, which were 54% correlated."
+    }
+    str
+  })
+  output$twitter_annotation<- renderText({
+    if(input$constituent_corr=='Adidas'){
+      str = "Only Adidas open prices seem to have greater than 50% correlation to Twitter sentiment. Open prices have a 78% correlation to Twitter sentiment for the total time period shown.
+"
+    }
+    if(input$constituent_corr=='BMW'){
+      str = "Open, Close, High and Low prices all have greater than 50% correlations to Twitter sentiment. Twitter sentiment had the greatest correlations to Close prices, which had a 99% correlation, followed by Open and lows, which both were 95% correlated to sentiment, and finally, Highs, which were 92% correlated."
+    }
+    if(input$constituent_corr=='Commerzbank'){
+      str = "Open, Close, High and Low prices all have greater than 50% correlations to Twitter sentiment. Twitter sentiment had the greatest correlation to Open Prices, which was 98% correlated, followed by Highs, which was 90% correlated to sentiment. Close prices were 89 percent correlated and Lows were 69% correlated."
+    }
+    if(input$constituent_corr=='Deutsche Bank'){
+      str = "Only Close, High and Low prices have greater than 50% correlations to Twitter sentiment. Twitter sentiment had the greatest correlations to Highs, which had a 98% correlation, followed by Low, which was 86% correlated to sentiment, and finally, Close Prices, which were 83% correlated."
+    }
+    if(input$constituent_corr=='EON'){
+      str = "Only Open and Highs have greater than 50% correlations to Twitter sentiment. Twitter sentiment had the greatest correlation to Open prices, which had a 99% correlation, while Highs were 94% correlated."
+    }
+    str
+  })
+  
   
 }
 

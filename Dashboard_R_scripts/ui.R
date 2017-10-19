@@ -11,12 +11,12 @@ ui <- dashboardPage(
     title = 'iGenie Analytics'),
   dashboardSidebar(
     sidebarMenu(
-      actionButton(inputId = "reload_box4", label = "Refresh",icon=icon('refresh'),width='85%'),
+      actionButton(inputId = "reload", label = "Refresh",icon=icon('refresh'),width='85%'),
       menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
       menuItem("Twitter Sentiment", tabName = "twitter_analysis", icon = icon("th")),
       menuItem("News Sentiment", tabName = "news_analysis", icon = icon("th")),
-      #menuItem("Price vs. Sentiment Correlation", tabName = "correlation", icon = icon("th")),
-      menuItem("Market Sentiment", tabName = "analyst_prediction", icon = icon("th")),
+      menuItem("Price vs. Sentiment", tabName = "correlation", icon = icon("th")),
+      menuItem("Market & Analysts", tabName = "analyst_prediction", icon = icon("th")),
       menuItem("Fundamental", tabName = "fundamental_analysis", icon = icon("th"))
     )
   ),
@@ -160,24 +160,27 @@ ui <- dashboardPage(
               ),
       
       ############################ CORRELATION PAGE ####################################
-      #tabItem(tabName = 'correlation',
-              #selectInput('constituent_corr', "Select constituent", c('Adidas','BMW','Deutsche Bank','Commerzbank','EON'), selected = 'adidas', multiple = FALSE,
-                          #selectize = TRUE, width = NULL, size = NULL),
-              #fluidRow(
+      tabItem(tabName = 'correlation',
+              selectInput('constituent_corr', "Select constituent", c('Adidas','BMW','Deutsche Bank','Commerzbank','EON'), selected = 'adidas', multiple = FALSE,
+                          selectize = TRUE, width = NULL, size = NULL),
+              fluidRow(
                 
-               # box(title='News Sentiment vs. Stock Price Behavior',
-                #   height=600,
-                #   plotlyOutput('news_behavior_line',height="80%")
-                #   ),
+                box(title='News Sentiment vs. Stock Price Behavior',
+                  height=620,
+                   plotlyOutput('news_behavior_line',height="80%"),
+                    h6("   "),
+                   textOutput('news_annotation')
+                   ),
           
-                #box(title='Twitter Sentiment vs. Stock Price Behavior',
-                #    height=600,
-               #     plotlyOutput('twitter_behavior_line',height="80%") 
-               #     #DT::dataTableOutput('target_price_table') 
-               # )
-             # )
+                box(title='Twitter Sentiment vs. Stock Price Behavior',
+                    height=620,
+                    plotlyOutput('twitter_behavior_line',height="80%"),
+                    h6("    "),
+                    textOutput('twitter_annotation')
+                  )
+              )
               
-     # ),
+            ),
       
       ############################ TWITTER PAGE ####################################
       tabItem(tabName = 'twitter_analysis',
