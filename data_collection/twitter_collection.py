@@ -86,7 +86,7 @@ def get_tweets(language, tweetsPerQry, maxTweets, data_connection_string, databa
 def save_tweets(constituent_name, tweets, connection_string, database):
     client = MongoClient(connection_string)
     db = client[database]
-    collection = db["tweet_logs"]
+    collection = db["tweets_test"]
 
     try:
         result = collection.insert_many(tweets, ordered=False)
