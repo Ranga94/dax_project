@@ -6,13 +6,13 @@ from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 import string
 from google.cloud import translate
-import time
 from datetime import datetime
 import time
 from nltk.sentiment.vader import SentimentIntensityAnalyzer as SIA
 from nltk.tag import StanfordNERTagger
 import os
 import smtplib
+import sys
 
 def main(arguments):
     script_directory = os.path.dirname(os.path.realpath(__file__))
