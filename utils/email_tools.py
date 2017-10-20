@@ -1,6 +1,7 @@
 import smtplib
 import project_config
 from DB import DB
+from pymongo import MongoClient
 import time
 
 def send_mail(connection_string, database, toaddrs):
@@ -15,8 +16,6 @@ def send_mail(connection_string, database, toaddrs):
     subject = "Twitter collection logs: {}".format(time.strftime("%d/%m/%Y"))
 
     message = 'Subject: {}\n\n{}'.format(subject, body)
-
-
 
     # Credentials (if needed)
     username = project_config.mail_username
