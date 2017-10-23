@@ -36,7 +36,7 @@ def get_tweets(language, tweetsPerQry, maxTweets, data_connection_string, databa
         #For now, pass data_connection string. Later change it to param_connection_string
         searchQuery = get_search_string(constituent_id, data_connection_string)
 
-        sinceId = get_max_id(data_connection_string,database,collection)
+        sinceId = get_max_id(constituent_name,data_connection_string,database,collection)
         max_id = -1
         tweetCount = 0
 
@@ -66,7 +66,8 @@ def get_tweets(language, tweetsPerQry, maxTweets, data_connection_string, databa
                 max_id = max(sinceId, max_id, new_tweets[-1].id)
 
                 #save tweets
-                save_tweets(constituent_name, new_tweets, data_connection_string, database)
+                tweets = [tweet._json for tweet in new_tweets]
+                save_tweets(constituent_name, tweets, data_connection_string, database)
 
             except tweepy.TweepError as e:
                 # Just exit if any error
@@ -75,7 +76,8 @@ def get_tweets(language, tweetsPerQry, maxTweets, data_connection_string, databa
 
         #logging
         if logging_flag:
-            logging(constituent_name, constituent_id, tweetCount, language, data_connection_string, database)
+            pass
+            #logging(constituent_name, constituent_id, tweetCount, language, data_connection_string, database)
 
     return "Downloaded tweets"
 
@@ -86,6 +88,7 @@ def save_tweets(constituent_name, tweets, connection_string, database):
 
     try:
         result = collection.insert_many(tweets, ordered=False)
+        print(result)
     except errors.BulkWriteError as e:
         print(str(e.details['writeErrors']))
         result = None
