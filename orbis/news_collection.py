@@ -93,12 +93,13 @@ def find_with_strategy(token, strategy, database):
 
     FindWithStrategy = ET.fromstring(response.text)
     SelectionResult_token = FindWithStrategy[0][0][0][0].text
-    SelectionResult_token = FindWithStrategy[0][0][0][1].text
+    SelectionResult_count = FindWithStrategy[0][0][0][1].text
     print(SelectionResult_token)
     print(SelectionResult_count)
     return SelectionResult_token, SelectionResult_count
 
 def get_data(token, SelectionResult_token,SelectionResult_count ,query, field, constituent,database):
+    print("helo")
     url = 'https://webservices.bvdep.com/{}/remoteaccess.asmx'.format(database)
     headers = {'Content-Type': 'text/xml'}
     data = """<?xml version="1.0" encoding="utf-8"?>
@@ -119,6 +120,7 @@ def get_data(token, SelectionResult_token,SelectionResult_count ,query, field, c
 </soap12:Envelope>""".format(token, SelectionResult_token,SelectionResult_count, query)
 
     response = requests.post(url, headers=headers, data=data, stream=True)
+    print(response.status_code)
 
     if response.status_code != requests.codes.ok:
         return None
@@ -188,7 +190,9 @@ def get_zephyr_data(user,pwd):
         selection_token, selection_count = find_with_strategy(token, strategy, "zephyr")
 
         try:
-            get_data_result = get_data(token, selection_token, selection_count, long_query, data, name, "orbis")
+            print("Getting data")
+            get_data_result = get_data(token, selection_token, selection_count, long_query, data, name, "zephyr")
+            print("Got data")
         except:
             pass
         finally:
@@ -226,8 +230,6 @@ def main_rest(api_key):
         with open(str(directory), 'w') as f:
             f.write(result)
         return True
-
-
 
 if __name__ == "__main__":
     print(sys.argv)
