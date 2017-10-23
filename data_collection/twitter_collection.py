@@ -304,7 +304,7 @@ def send_mail(data_connection_string, param_connection_string):
     server.starttls()
     server.login(username, password)
     server.sendmail(fromaddr, toaddrs, message)
-    server.quit()
+    server.quit()--host
 
 if __name__ == "__main__":
     import argparse
