@@ -123,13 +123,14 @@ def get_data(token, SelectionResult_token,SelectionResult_count ,query, field, c
     response = requests.post(url, headers=headers, data=data)
     result = ET.fromstring(response.text)
     csv_result = result[0][0][0].text
+    pprint(csv_result)
 
     if response.status_code != requests.codes.ok:
         return None
 
     file_name = "{}_{}.csv".format(constituent, field)
     directory = os.path.join(".", "data", file_name)
-    with open(str(directory), 'wb') as f:
+    with open(str(directory), 'w') as f:
         f.write(csv_result)
 
     return True
@@ -221,6 +222,7 @@ def get_zephyr_data(user,pwd):
                 close_connection(token, "zephyr")
         except:
             close_connection(token, "zephyr")
+
 
 def save_to_cloud_storage(file_path):
     client = storage.Client()
