@@ -214,9 +214,11 @@ def get_zephyr_data(user,pwd):
     data = "all_deals"
 
     for strategy in strategies:
+        token = get_token(user, pwd, "zephyr")
+        if not token:
+            return None
+        selection_token, selection_count = find_with_strategy(token, strategy, "zephyr")
         try:
-            token = get_token(user, pwd, "zephyr")
-            selection_token, selection_count = find_with_strategy(token, strategy, "zephyr")
             get_data_result = get_data(token, selection_token, selection_count, long_query, data, strategy, "zephyr")
             if not get_data_result:
                 close_connection(token, "zephyr")
