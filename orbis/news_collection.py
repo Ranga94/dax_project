@@ -220,7 +220,6 @@ def get_zephyr_data(user,pwd):
         try:
             selection_token, selection_count = find_with_strategy(token, strategy, "zephyr")
             get_data_result = get_data(token, selection_token, selection_count, long_query, data, strategy, "zephyr")
-            close_connection(token, "zephyr")
         except Exception as e:
             print(str(e))
         finally:
