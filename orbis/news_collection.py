@@ -123,7 +123,7 @@ def get_data(token, SelectionResult_token,SelectionResult_count ,query, field, c
     response = requests.post(url, headers=headers, data=data)
     result = ET.fromstring(response.text)
     csv_result = result[0][0][0].text
-    pprint(csv_result)
+    #pprint(csv_result)
 
     if response.status_code != requests.codes.ok:
         return None
