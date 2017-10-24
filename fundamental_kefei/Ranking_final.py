@@ -3,7 +3,7 @@
 
 # # Collecting data For Ranking Analysis
 
-# In[57]:
+# In[1]:
 
 import pandas as pd
 import pymongo
@@ -24,15 +24,15 @@ from bs4 import BeautifulSoup
 import urllib
 
 
-# In[58]:
+# In[6]:
 
-client_new = MongoClient('mongodb://igenie_readwrite:igenie@35.189.101.142:27017/dax_gcp')
+client_new = MongoClient('mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp')
 db = client_new.dax_gcp
 collection1 = db['fundamental analysis']
 collection2 = db['price analysis']
 
 
-# In[3]:
+# In[7]:
 
 ## Check today's date and the date when results are collected
 today_date = str(datetime.date.today())
@@ -40,7 +40,7 @@ today_date = str(datetime.date.today())
 
 # ## Collecting fundamental analysis
 
-# In[59]:
+# In[14]:
 
 def fundamental_analysis_collection():
     industry_category_table= pd.DataFrame(list(collection1.find({'Table':'category analysis'})))
@@ -54,14 +54,14 @@ def fundamental_analysis_collection():
     return industry_category_table,ROCE_table,sales_table,dividend_table,profit_margin_table,PER_table,EPS_table,EBITDA_table
 
 
-# In[60]:
+# In[15]:
 
 industry_category_table,ROCE_table,sales_table,dividend_table,profit_margin_table,PER_table,EPS_table,EBITDA_table=fundamental_analysis_collection()
 
 
 # ## Collecting price analysis
 
-# In[61]:
+# In[12]:
 
 def price_analysis_collection(): 
     cumulative_returns_table = pd.DataFrame(list(collection2.find({'Table':'cumulative return analysis'})))
@@ -73,14 +73,24 @@ def price_analysis_collection():
     return cumulative_returns_table,quarter_mean_table,standard_dev_table,ATR_table,market_signal_table,dividend_table
 
 
-# In[62]:
+# In[13]:
 
 cumulative_returns_table,quarter_mean_table,standard_dev_table,ATR_table,market_signal_table,dividend_table=price_analysis_collection()
 
 
+# In[33]:
+
+cumulative_returns_table = cumulative_returns_table[cumulative_returns_table['Status']=='active']
+quarter_mean_table = quarter_mean_table[quarter_mean_table['Status']=='active']
+standard_dev_table = standard_dev_table[standard_dev_table['Status']=='active']
+ATR_table = ATR_table[ATR_table['Status']=='active']
+market_signal_table = market_signal_table[market_signal_table['Status']=='active']
+dividend_table = dividend_table[dividend_table['Status']=='active']
+
+
 # # Fundamental Growth Ranking 
 
-# In[63]:
+# In[17]:
 
 ## Scores the growth of fundamental values out of 12
 def fundamental_growth_scoring():
@@ -111,12 +121,12 @@ def fundamental_growth_scoring():
     return fundamental_score_board
 
 
-# In[64]:
+# In[18]:
 
 fundamental_score_board=fundamental_growth_scoring()
 
 
-# In[65]:
+# In[19]:
 
 fundamental_score_board
 
@@ -125,7 +135,7 @@ fundamental_score_board
 
 # ### Calculate the statistics for current fundamental values on all the DAX-30 constituents
 
-# In[66]:
+# In[34]:
 
 ## Calculate the mean and standard deviation on all the fundamental elements based on overall data of DAX-30 constituents. 
 def current_fundamental_stats():
@@ -153,24 +163,24 @@ def current_fundamental_stats():
     return fundamental_stats_table
 
 
-# In[67]:
+# In[35]:
 
 current_fundamental_stats_table=current_fundamental_stats()
 
 
-# In[68]:
+# In[36]:
 
 current_fundamental_stats_table
 
 
 # ### Creating a scoring system based on the statistics
 
-# In[69]:
+# In[37]:
 
 table_list = [ROCE_table,sales_table,profit_margin_table,PER_table,EPS_table,EBITDA_table]
 
 
-# In[70]:
+# In[38]:
 
 ## Scores the current fundamenal values out of 24. 
 def current_fundamental_scoring(stats_table,table_list):
@@ -226,21 +236,16 @@ def current_fundamental_scoring(stats_table,table_list):
     return current_fundamental_board
 
 
-# In[71]:
+# In[39]:
 
 current_fundamental_board=current_fundamental_scoring(current_fundamental_stats_table,table_list)
-
-
-# In[72]:
-
-current_fundamental_board
 
 
 # # Stock Price Growth Ranking
 
 # ### Scoring system based on statistics
 
-# In[73]:
+# In[41]:
 
 ## Calculate the mean and standard deviation on all the fundamental elements based on overall data of DAX-30 constituents. 
 def price_growth_stats():
@@ -268,19 +273,19 @@ def price_growth_stats():
     return price_stats_table
 
 
-# In[74]:
+# In[42]:
 
 price_stats_table=price_growth_stats()
 
 
-# In[75]:
+# In[43]:
 
 price_stats_table
 
 
-# In[76]:
+# In[44]:
 
-## Scores the growth of price out of 24. 
+## Scores the growth of price out of 30. 
 def price_growth_scoring(stats_table,price_table_list):
     #price_table_list = [cumulative_returns_table,cumulative_returns_table,quarter_mean_table,quarter_mean_table,market_signal_table]
     price_growth_list = ['1 year return','3 years return','Rate of change in price in the last 365 days/quarter','Rate of change in price in the last 3 years/quarter','Current RSI']
@@ -338,15 +343,15 @@ def price_growth_scoring(stats_table,price_table_list):
     return price_growth_board
 
 
-# In[77]:
+# In[45]:
 
 price_table_list = [cumulative_returns_table,cumulative_returns_table,quarter_mean_table,quarter_mean_table,market_signal_table]
 price_growth_board =price_growth_scoring(price_stats_table,price_table_list)
 
 
-# In[78]:
+# In[85]:
 
-price_growth_board
+price_growth_board['Status']='active'
 
 
 # # Golden cross and momentum measurement 
@@ -381,7 +386,7 @@ price_growth_board
 
 # ### Combine the score for Price growth, Current Fundamental values, and Fundamental growth
 
-# In[79]:
+# In[86]:
 
 ## Combined profitability scores the price growth and fundamental potential out of 60. 
 def combined_profitability_scoring(): 
@@ -394,29 +399,101 @@ def combined_profitability_scoring():
         temp = temp.merge(board_list[i+1],on='Constituent',how='left')
     
     temp['Total profitability score']=temp['Total price growth score']+temp['Current fundamental total score']+temp['Fundamental growth score']
-    combined_profitability_board = pd.DataFrame(temp[['Constituent','Total profitability score','Total price growth score','Current fundamental total score','Fundamental growth score']])
+    combined_profitability_board = pd.DataFrame(temp[['Constituent','Total profitability score','Total price growth score','Current fundamental total score','Fundamental growth score','Status']])
     #combined_profitability_board = combined_profitability_board.sort_values('Total profitability score',axis=0, ascending=False).reset_index(drop=True)
     return combined_profitability_board
 
 
-# In[80]:
+# In[87]:
 
 combined_profitability_board=combined_profitability_scoring()
 
 
-# In[81]:
+# In[88]:
 
 combined_profitability_board
 
 
+# In[89]:
+
+def combined_profitability_ranking(combined_profitability_board):
+    all_constituents_dict = {'Allianz':'Allianz', 'Adidas':'adidas', 'BASF':'BASF', 'Bayer':'Bayer', 'Beiersdorf':'Beiersdorf',
+                    'BMW':'BMW', 'Commerzbank':'Commerzbank', 'Continental':'Continental', 'Daimler':'Daimler',
+                    'Deutsche Bank':'Deutsche Bank', 'Deutsche Börse':u'Deutsche B\xf6rse', 'Deutsche Post':'Deutsche Post',
+                    'Deutsche Telekom':'Deutsche Telekom', 'EON':'EON', 'Fresenius Medical Care':'Fresenius Medical Care',
+                    'Fresenius':'Fresenius', 'HeidelbergCement':'HeidelbergCement', 'Infineon':'Infineon',
+                    'Linde':'Linde','Lufthansa':'Lufthansa', 'Merck':'Merck', 'Münchener Rückversicherungs-Gesellschaft': u'M\xfcnchener R\xfcckversicherungs-Gesellschaft',
+                    'ProSiebenSat1 Media':'ProSiebenSat1 Media', 'RWE':'RWE', 'Siemens':'Siemens', 'thyssenkrupp':'thyssenkrupp',
+                    'Volkswagen (VW) vz':'Volkswagen (VW) vz','Vonovia':'Vonovia'}
+    #all_constituents_dict = {'Allianz':'Allianz', 'Adidas':'adidas'}
+    profitability_ranking_table=pd.DataFrame()
+    combined_profitability_board = combined_profitability_board.sort_values('Total profitability score',axis=0, ascending=False).reset_index(drop=True)
+    for constituent in all_constituents_dict:
+        #print all_constituents_dict[constituent]
+        index = int(combined_profitability_board[combined_profitability_board['Constituent']==all_constituents_dict[constituent]].index[0])
+        price_growth_score= int(combined_profitability_board['Total price growth score'].loc[combined_profitability_board['Constituent']==all_constituents_dict[constituent]])
+        fundamental_growth_score=  int(combined_profitability_board['Fundamental growth score'].loc[combined_profitability_board['Constituent']==all_constituents_dict[constituent]])
+        if price_growth_score >=24 :
+            growth_price_status = 'High'
+        elif price_growth_score >=16 :
+            growth_price_status = 'Medium'
+        else :
+            growth_price_status = 'Low'
+            
+        if fundamental_growth_score >=10 :
+            growth_fundamental_status = 'High'
+        elif fundamental_growth_score >=6 :
+            growth_fundamental_status = 'Medium'
+        else :
+            growth_fundamental_status = 'Low'
+            
+        profitability_ranking_table=profitability_ranking_table.append(pd.DataFrame({'Constituent':constituent, 'Profitability rank':index, 'Price growth':growth_price_status,'Fundamental growth':growth_fundamental_status,'Date':str(datetime.date.today()),'Status':'active'},index=[0]),ignore_index=True)
+    profitability_ranking_table=profitability_ranking_table.sort_values('Profitability rank',axis=0, ascending=True).reset_index(drop=True)
+    return profitability_ranking_table
+
+
+# In[90]:
+
+profitability_ranking_table = combined_profitability_ranking(combined_profitability_board)
+profitability_ranking_table
+
+
+# ## Insert Profitability Ranking and Scoring result into Mongodb
+
+# In[91]:
+
+#Insert the profitability score into Mongodb
+import json
+client_new = MongoClient('mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp')
+db = client_new.dax_gcp
+combined_profitability_json = json.loads(combined_profitability_board.to_json(orient='records'))
+#db['profitability_ranking'].drop()
+#db['profitability_score'].drop()
+collection = db['profitability_score']
+#collection.update_many({}, {'$set': {'Status': 'active'}},True,True)
+collection.update_many({'Status':'active'}, {'$set': {'Status': 'inactive'}},True,True)
+collection.update_many({'Status':'NaN'}, {'$set': {'Status': 'inactive'}},True,True)
+db['profitability_score'].insert_many(combined_profitability_json)
+
+
+# In[92]:
+
+#Insert the profitability ranking into Mongodb
+profitability_rank_json = json.loads(profitability_ranking_table.to_json(orient='records'))
+collection2 = db['profitability_ranking']
+collection2.update_many({}, {'$set': {'Status': 'active'}},True,True)
+collection2.update_many({'Status':'active'}, {'$set': {'Status': 'inactive'}},True,True)
+db['profitability_ranking'].insert_many(profitability_rank_json)
+
+
 # # Volatility Ranking
 
-# In[ ]:
+# In[57]:
 
 ## Market Risk due to Volatility: Price volatility and crossing frequency
 
 
-# In[82]:
+# In[93]:
 
 ## gather the statistics
 def volatility_stats():
@@ -439,17 +516,17 @@ def volatility_stats():
     return volatility_stats_table
 
 
-# In[83]:
+# In[94]:
 
 volatility_stats_table=volatility_stats()
 
 
-# In[84]:
+# In[95]:
 
 volatility_stats_table
 
 
-# In[85]:
+# In[96]:
 
 #Scores out of 15. 
 def volatility_scoring(stats_table,volatility_table_list):
@@ -497,7 +574,7 @@ def volatility_scoring(stats_table,volatility_table_list):
     return volatility_score_board 
 
 
-# In[86]:
+# In[63]:
 
 volatility_table_list = [standard_dev_table,standard_dev_table,ATR_table,ATR_table,market_signal_table]
 volatility_score_board =volatility_scoring(volatility_stats_table,volatility_table_list)
@@ -505,7 +582,7 @@ volatility_score_board =volatility_scoring(volatility_stats_table,volatility_tab
 
 # # Color-allocation
 
-# In[88]:
+# In[69]:
 
 def color_coding(combined_profitability_board,volatility_score_board):
     color_coding_table = pd.DataFrame()
@@ -520,7 +597,7 @@ def color_coding(combined_profitability_board,volatility_score_board):
                     'Volkswagen (VW) vz':'Volkswagen (VW) vz','Vonovia':'Vonovia'}
     for constituent in all_constituents_dict:
         ##Combined profitability: out of 60, Volatility out of 15
-        print constituent
+        ##print constituent
         profitability_score = combined_profitability_board['Total profitability score'].loc[combined_profitability_board['Constituent']==all_constituents_dict[constituent]].values[0]
         volatility_score = volatility_score_board['Volatility score'].loc[volatility_score_board['Constituent']==all_constituents_dict[constituent]].values[0]
         
@@ -544,12 +621,12 @@ def color_coding(combined_profitability_board,volatility_score_board):
     return color_coding_table
 
 
-# In[89]:
+# In[70]:
 
 color_coding_table=color_coding(combined_profitability_board,volatility_score_board)
 
 
-# In[90]:
+# In[71]:
 
 color_coding_table.loc[color_coding_table['Constituent'].isin(['Adidas','Commerzbank','Deutsche Bank', 'EON', 'BMW'])]
 
@@ -571,14 +648,10 @@ def update_colors_mongodb(color_coding_table):
 update_colors_mongodb(color_coding_table)
 
 
-# In[93]:
+# In[99]:
 
-##checking if update has been saved in the result table. 
-#data=db.summary_box.find({'constituent':"EON"})
+#checking if update has been saved in the result table. 
+#data=db.profitability_score.find({'Constituent':"adidas"})
 #data=pd.DataFrame(list(data))
-
-
-# In[94]:
-
 #data
 

@@ -3,7 +3,7 @@
 
 # # Scraping Analyst Opinions
 
-# In[50]:
+# In[1]:
 
 import pandas as pd
 import pymongo
@@ -20,7 +20,7 @@ from bs4 import BeautifulSoup
 import urllib
 
 
-# In[51]:
+# In[2]:
 
 all_constituents = ['Allianz', 'Adidas', 'BASF', 'Bayer', 'Beiersdorf','BMW', 'Commerzbank', 'Continental', 'Daimler','Deutsche_Bank', 'Deutsche_Boerse', 'Deutsche_Post','Deutsche_Telekom', 'EON', 'Fresenius', 'HeidelbergCement', 'Infineon','Linde','Lufthansa', 'Merck', 'RWE', 'Siemens', 'Thyssenkrupp','Vonovia','Fresenius_Medical_Care','Munich_RE','ProSiebenSat1_Media','Volkswagen_vz']
 constituents_list=['Adidas', 'Commerzbank', 'BMW', 'Deutsche_Bank', 'EON']
@@ -37,7 +37,7 @@ all_constituents_dict_bi = {'Allianz':'Allianz', 'Adidas':'Adidas', 'BASF':'BASF
 
 # ## Business Insider Analyst Data - Major resource
 
-# In[52]:
+# In[3]:
 
 #Write a function that extract analyst data for all stocks
 def analyst_businessinsider(constituents_dict): 
@@ -90,8 +90,8 @@ def analyst_businessinsider(constituents_dict):
         else: 
             rating_result = 'Strong sell'
         
-        analyst_opinion_table = analyst_opinion_table.append(pd.DataFrame({'Constituent':constituent,'Analyst rating': rating, 'Analyst recommendation': rating_result,'Buy':buy_count,'Hold':hold_count,'Sell':sell_count,'% Buy':round(buy_count*1.0/total,3),'% Hold':round(hold_count*1.0/total,3),'% Sell':round(sell_count*1.0/total,3),'Median target price':median_target, 'Highest target price':highest_target,'Lowest target price':lowest_target,'Date':datetime.date.today(),'Table':'Analyst opinions'},index=[0],),ignore_index=True)
-    columnsTitles = ['Constituent','Analyst rating','Analyst recommendation', 'Buy','Hold','Sell','% Buy','% Hold','% Sell','Median target price','Highest target price','Lowest target price','Table','Date']
+        analyst_opinion_table = analyst_opinion_table.append(pd.DataFrame({'Constituent':constituent,'Analyst rating': rating, 'Analyst recommendation': rating_result,'Buy':buy_count,'Hold':hold_count,'Sell':sell_count,'% Buy':round(buy_count*1.0/total,3),'% Hold':round(hold_count*1.0/total,3),'% Sell':round(sell_count*1.0/total,3),'Median target price':median_target, 'Highest target price':highest_target,'Lowest target price':lowest_target,'Date':datetime.date.today(),'Table':'Analyst opinions','Status':'active'},index=[0],),ignore_index=True)
+    columnsTitles = ['Constituent','Analyst rating','Analyst recommendation', 'Buy','Hold','Sell','% Buy','% Hold','% Sell','Median target price','Highest target price','Lowest target price','Table','Status','Date']
     analyst_opinion_table =analyst_opinion_table.reindex(columns=columnsTitles)
     return analyst_opinion_table
 
@@ -126,7 +126,7 @@ def analyst_businessinsider(constituents_dict):
 
 # ## Wall Street Journal - Five selected constituents
 
-# In[53]:
+# In[4]:
 
 def analyst_wallstreet():
     analyst_opinions_table = pd.DataFrame()
@@ -153,15 +153,15 @@ def analyst_wallstreet():
         highest_target = target_prices[0]
         lowest_target = target_prices[2]
         median_target = target_prices[1]
-        analyst_opinions_table = analyst_opinions_table.append(pd.DataFrame({'Constituent':constituent,'Buy':buy_count,'Hold':hold_count,'Sell':sell_count,'% Buy':round(buy_count*1.0/total,3),'% Hold':round(hold_count*1.0/total,3),'% Sell':round(sell_count*1.0/total,3),'Median target price':median_target, 'Highest target price':highest_target,'Lowest target price':lowest_target,'Date':datetime.date.today(),'Table':'Analyst opinions'},index=[0],),ignore_index=True)
-    columnsTitles = ['Constituent', 'Buy','Hold','Sell','% Buy','% Hold','% Sell','Median target price','Highest target price','Lowest target price','Table','Date']
+        analyst_opinions_table = analyst_opinions_table.append(pd.DataFrame({'Constituent':constituent,'Buy':buy_count,'Hold':hold_count,'Sell':sell_count,'% Buy':round(buy_count*1.0/total,3),'% Hold':round(hold_count*1.0/total,3),'% Sell':round(sell_count*1.0/total,3),'Median target price':median_target, 'Highest target price':highest_target,'Lowest target price':lowest_target,'Date':datetime.date.today(),'Table':'Analyst opinions','Status':'active'},index=[0],),ignore_index=True)
+    columnsTitles = ['Constituent', 'Buy','Hold','Sell','% Buy','% Hold','% Sell','Median target price','Highest target price','Lowest target price','Table','Status','Date']
     analyst_opinions_table =analyst_opinions_table.reindex(columns=columnsTitles)
     return analyst_opinions_table
 
 
 # ## Combining Wall Street and Business Insider for 5 constituents
 
-# In[54]:
+# In[5]:
 
 def combined_analyst(ws_analyst_table, bi_analyst_table):
     constituent_list = ['Adidas','Commerzbank','Deutsche Bank', 'EON', 'BMW']
@@ -185,8 +185,8 @@ def combined_analyst(ws_analyst_table, bi_analyst_table):
         
         rating = bi_analyst_table['Analyst rating'].loc[bi_analyst_table['Constituent']==constituent].values[0]
         recommendation = bi_analyst_table['Analyst recommendation'].loc[bi_analyst_table['Constituent']==constituent].values[0]
-        combined_analyst_table = combined_analyst_table.append(pd.DataFrame({'Constituent':constituent, 'Analyst rating': rating,'Analyst recommendation': recommendation,'Buy':buy,'Hold':hold,'Sell':sell,'% Buy':round(buy*1.0/total,3),'% Hold':round(hold/total,3),'% Sell':round(sell/total,3),'Median target price':round(mean_median_target,2), 'Highest target price':round(mean_highest_target,2),'Lowest target price':round(mean_lowest_target,2),'Date': str(datetime.date.today()),'Table':'Analyst opinions'},index=[0]),ignore_index=True)
-    columnsTitles = ['Constituent', 'Buy','Hold','Sell','% Buy','% Hold','% Sell','Analyst rating','Analyst recommendation','Median target price','Highest target price','Lowest target price','Table','Date']
+        combined_analyst_table = combined_analyst_table.append(pd.DataFrame({'Constituent':constituent, 'Analyst rating': rating,'Analyst recommendation': recommendation,'Buy':buy,'Hold':hold,'Sell':sell,'% Buy':round(buy*1.0/total,3),'% Hold':round(hold/total,3),'% Sell':round(sell/total,3),'Median target price':round(mean_median_target,2), 'Highest target price':round(mean_highest_target,2),'Lowest target price':round(mean_lowest_target,2),'Date': str(datetime.date.today()),'Table':'Analyst opinions','Status':'active'},index=[0]),ignore_index=True)
+    columnsTitles = ['Constituent', 'Buy','Hold','Sell','% Buy','% Hold','% Sell','Analyst rating','Analyst recommendation','Median target price','Highest target price','Lowest target price','Table','Status','Date']
     combined_analyst_table = combined_analyst_table.reindex(columns=columnsTitles)
     return combined_analyst_table
 
@@ -198,7 +198,7 @@ def combined_analyst(ws_analyst_table, bi_analyst_table):
 #analyst_opinions_selected.to_csv('analyst_opinions_selected.csv', encoding = 'utf-8', index = False)
 
 
-# In[60]:
+# In[6]:
 
 #Running the scraping for all the websites and combine to produce combined analyst table for five selected constituents
 bi_analyst_table = analyst_businessinsider(all_constituents_dict_bi)
@@ -206,167 +206,47 @@ ws_analyst_table = analyst_wallstreet()
 combined_analyst_table = combined_analyst(ws_analyst_table, bi_analyst_table)
 
 
-# In[62]:
+# In[7]:
 
 import json
 combined_analyst_json = json.loads(combined_analyst_table.to_json(orient='records'))
+bi_analyst_json = json.loads(bi_analyst_table.to_json(orient='records'))
 
 
 # # Uploading results onto MongoDB
 
-# In[63]:
+# In[9]:
 
-client_new = MongoClient('mongodb://igenie_readwrite:igenie@35.189.101.142:27017/dax_gcp')
+client_new = MongoClient('mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp')
 db = client_new.dax_gcp
-#db['analyst_opinions'].drop()
-#db['analyst_opinions'].insert_many(combined_analyst_json)
+collection1  = db['analyst_opinions']
+collection2 =  db['analyst_opinions_all']
+##Append the status into existing data (not repeated)
+#collection1.update_many({}, {'$set': {'Status': 'active'}},True,True)
+#collection2.update_many({}, {'$set': {'Status': 'active'}},True,True)
 
 
-# In[81]:
+# In[10]:
 
-##Or update the existing database with new values. 
-def update_analyst(combined_analyst_json):
-    constituent_list = ['Adidas','Commerzbank','Deutsche Bank', 'EON', 'BMW']
-    i=0
-    for constituent in constituent_list:
-        
-        db['analyst_opinions'].update_one({"constituent":constituent}, {"$set":combined_analyst_json[i]})
-        i=i+1
-
-
-# In[82]:
-
-update_analyst(combined_analyst_json)
+##alter the status of collection
+collection1.update_many({'Status':'active'}, {'$set': {'Status': 'inactive'}},True,True)
+collection2.update_many({'Status':'active'}, {'$set': {'Status': 'inactive'}},True,True)
+db['analyst_opinions'].insert_many(combined_analyst_json)
+db['analyst_opinions_all'].insert_many(bi_analyst_json)
 
 
 # # Check if data has been udpated
 
-# In[84]:
+# In[14]:
+
+#client_new = MongoClient('mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp')
+#db = client_new.dax_gcp
+#data = list(db['analyst_opinions_all'].find())
+#data=  pd.DataFrame(list(data))
+#data
 
 
-# In[85]:
+# In[15]:
 
-#analyst_retrieved 
-
-
-# # Visualising the Analyst Data
-
-# ## Horizontal stacked bar for analyst opinions
-
-# In[326]:
-
-#Plot horizontal barchart using data in the table, presenting only the selected constituents in constituent_list
-def barh_opinions(constituent_list,analyst_opinions_table,ht): 
-    # the width of the bars,usually 0.35 for five selected constituents displayed
-    constituents_list=['Adidas', 'Commerzbank', 'BMW', 'Deutsche_Bank', 'EON']
-    analyst_opinions_table = analyst_opinions_table[analyst_opinions_table['Constituent'].isin(constituents_list)]
-    N = len(analyst_opinions_table['Constituent'])
-    buy_pct = analyst_opinions_table['% Buy']*100
-    hold_pct = analyst_opinions_table['% Hold']*100
-    sell_pct = analyst_opinions_table['% Sell']*100
-    fig = plt.clf()
-    fig,ax= plt.subplots(figsize=(8,N/1.5))
-    ind = np.arange(N)    # the x locations for the groups
-    p1 = ax.barh(ind, sell_pct,height=ht,color='r')
-    p2 = ax.barh(ind, hold_pct,height=ht, left=sell_pct,color='#ffc000')
-    p3 = ax.barh(ind, buy_pct,height=ht, left=hold_pct+sell_pct,color='g')
-    
-    i=0
-    for p in p1.patches:
-            if sell_pct.iloc[i]==0: 
-                ax.annotate('', (p.get_width()/3,p.xy[1]+0.1))
-            else:
-                ax.annotate(str(sell_pct.iloc[i])+'%', (p.get_width()/6,p.xy[1]+0.1))
-            i=i+1
-    i=0
-    for p in p2.patches:
-        ax.annotate(str(hold_pct.iloc[i])+'%', (p.xy[0]+p.get_width()/3,p.xy[1]+0.1))
-        i=i+1
-    i=0
-    for p in p3.patches:
-        ax.annotate(str(buy_pct.iloc[i])+'%', (p.xy[0]+p.get_width()/3,p.xy[1]+0.1))
-        i=i+1
-    
-    
-    #plt.ylabel('Constituents')
-    plt.xlabel('Percentage of Analyst')
-    plt.title('Analyst Opinions')
-    plt.yticks(ind,analyst_opinions_table['Constituent'])
-    plt.xticks(np.arange(0,110,10))
-    # Put a legend below current axis
-    #ax.legend(loc='center left', bbox_to_anchor=(0.5, -0.05),fancybox=True, shadow=True, nrow=3)
-    box = ax.get_position()
-    ax.set_position([box.x0, box.y0, box.width, box.height])
-    ax.legend((p1[0], p2[0], p3[0]), ('% Sell', '% Hold','% Buy'),loc='center left', bbox_to_anchor=(1, 0.5)) 
-    
-    plt.show()
-
-
-# In[75]:
-
-#barh_opinions(constituents_list,analyst_opinions_table,ht=0.50) 
-
-
-# ## Analyst ratings and recommendation in vertical scatter plot
-
-# In[334]:
-
-#Presenting the target prices and analyst prediction in a scatter plot, only for selected constituents in the constituents_list
-def opinion_scatter(constituents_list,analyst_opinions_table):
-    colors = []
-    for constituent in constituents_list: # keys are the names of the boys
-        status = analyst_opinions_table['Analyst recommendation'].loc[analyst_opinions_table['Constituent']==constituent]
-        if status.values[0] == 'Strong buy':
-            colors.append('g')
-        elif status.values[0] == 'Moderate buy':
-            colors.append('#A9CE1D') #lime?
-        elif status.values[0] == 'Hold':
-            colors.append('#ffc000')
-        elif status.values[0] == 'Moderate sell':
-            colors.append('#FF8633')
-        else:
-            colors.append('r')
-            
-        plt.clf()
-        
-    constituents_list=['Adidas', 'Commerzbank', 'BMW', 'Deutsche_Bank', 'EON']
-    analyst_opinions_table = analyst_opinions_table[analyst_opinions_table['Constituent'].isin(constituents_list)]
-    X = analyst_opinions_table['Analyst rating']
-    fig, ax = plt.subplots(figsize=(1,8))
-    ax.scatter([1]*len(X),X, c=colors,
-           marker='s', s=100)
-
-    ax.yaxis.set_visible(True)
-    ax.xaxis.set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['left'].set_visible(False)
-    ax.spines['top'].set_visible(False)
-    ax.spines['bottom'].set_visible(False)
-    ax.yaxis.set_ticks_position('left')
-
-    #ax.get_yaxis().set_ticklabels(['what'])
-    plt.ylim(min(X)-0.4,(max(X+0.4)))
-    plt.ylabel('Rating')
-    #plt.title('Analyst recommendation')
-    plt.figtext(.5,.9,'Analyst Rating & Recommendation ', fontsize=12, ha='left')
-
-    for constituent in constituents_list: 
-        recommendation = analyst_opinions_table['Analyst recommendation'].loc[analyst_opinions_table['Constituent']==constituent]
-        ax.annotate('%s, %s'%(constituent,recommendation.values[0]), xy=(1.1,analyst_opinions_table['Analyst rating'].loc[analyst_opinions_table['Constituent']==constituent]), textcoords='data')
-        #ax.annotate('%s' , xy=(1.1,analyst_opinion_table['Analyst rating'].loc[analyst_opinion_table['Constituent']==constituent]-0.1), textcoords='data')
-    #for xy in zip([1]*len(X),X):
-        #print xy[1]
-        #ax.annotate('%s' %xy[1], xy=xy, textcoords='data')
-    
-    plt.show()
-
-
-# In[74]:
-
-#opinion_scatter(constituents_list,analyst_opinions_table)
-
-
-# In[ ]:
-
-
+#db.collection.update({}, {$rename: {'XUknown': 'XString'}}, {multi:true});
 
