@@ -222,8 +222,6 @@ def get_zephyr_data(user,pwd):
         except:
             close_connection(token, "zephyr")
 
-        break
-
 def save_to_cloud_storage(file_path):
     client = storage.Client()
     # The name for the new bucket
