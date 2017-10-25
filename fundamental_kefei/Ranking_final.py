@@ -26,8 +26,8 @@ import urllib
 
 # In[6]:
 
-client_new = MongoClient('mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp')
-db = client_new.dax_gcp
+#client = MongoClient('mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp')
+db = client.dax_gcp
 collection1 = db['fundamental analysis']
 collection2 = db['price analysis']
 
@@ -464,8 +464,8 @@ profitability_ranking_table
 
 #Insert the profitability score into Mongodb
 import json
-client_new = MongoClient('mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp')
-db = client_new.dax_gcp
+
+db = client.dax_gcp
 combined_profitability_json = json.loads(combined_profitability_board.to_json(orient='records'))
 #db['profitability_ranking'].drop()
 #db['profitability_score'].drop()

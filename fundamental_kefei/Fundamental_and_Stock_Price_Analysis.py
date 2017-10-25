@@ -36,10 +36,10 @@ import urllib
 
 #client = MongoClient('mongodb://igenie:igenie@ds019654.mlab.com:19654/dax')
 client_old = MongoClient('mongodb://admin:admin@ds019654.mlab.com:19654/dax')
-client_new = MongoClient('mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp')
+#client = MongoClient('mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp')
 #get dax database
 db_old = client_old.dax
-db = client_new.dax_gcp
+db = client.dax_gcp
 #collection = db['historical']
 
 

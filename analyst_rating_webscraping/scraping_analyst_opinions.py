@@ -217,8 +217,8 @@ bi_analyst_json = json.loads(bi_analyst_table.to_json(orient='records'))
 
 # In[9]:
 
-client_new = MongoClient('mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp')
-db = client_new.dax_gcp
+#client = MongoClient('mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp')
+db = client.dax_gcp
 collection1  = db['analyst_opinions']
 collection2 =  db['analyst_opinions_all']
 ##Append the status into existing data (not repeated)
