@@ -26,7 +26,7 @@ import urllib
 
 # In[6]:
 
-#client = MongoClient('mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp')
+client = MongoClient('mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp')
 db = client.dax_gcp
 collection1 = db['fundamental analysis']
 collection2 = db['price analysis']
