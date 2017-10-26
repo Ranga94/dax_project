@@ -18,19 +18,18 @@ class ParameterUtils:
             result = statement.execute()
             row = result.fetchone()
             result.close()
-            return row
-        
 
-        
+            return row
 
 if __name__ == "__main__":
     from sqlalchemy.sql import column
     p = ParameterUtils()
     x = ["PARAM_TWITTER_COLLECTION.LANGUAGE","PARAM_TWITTER_COLLECTION.DATABASE_NAME"]
 
-    p.get_parameters(sql_connection_string="mysql+pymysql://igenie_readwrite:igenie@35.197.246.202/dax_project",
+    r = p.get_parameters(sql_connection_string="mysql+pymysql://igenie_readwrite:igenie@35.197.246.202/dax_project",
         sql_table_name="PARAM_TWITTER_COLLECTION", 
         sql_column_list=x)
+    print(r)
     
 
     
