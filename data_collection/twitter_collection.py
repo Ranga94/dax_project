@@ -4,6 +4,7 @@ import tweepy
 from datetime import datetime
 import time
 import os
+print(os.environ["PYTHONPATH"])
 import smtplib
 import sys
 import jsonpickle
@@ -353,7 +354,6 @@ def save_to_cloud_storage(file_path):
     blob.upload_from_filename("./tweets.json")
 
 if __name__ == "__main__":
-    print(os.environ["PYTHONPATH"])
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('google_key_path', help='The path of the Google key')
