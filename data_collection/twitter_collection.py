@@ -356,8 +356,7 @@ if __name__ == "__main__":
     parser.add_argument('google_key_path', help='The path of the Google key')
     parser.add_argument('param_connection_string', help='The connection string')
     args = parser.parse_args()
-    os.environ["PYTHONPATH"] = args.python_path
-    print(os.environ["PYTHONPATH"])
+    sys.path.insert(0, args.python_path)
     from utils.TwitterDownloader import TwitterDownloader
     from utils.Storage import Storage
     from utils.ParameterUtils import ParameterUtils
