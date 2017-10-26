@@ -9,9 +9,9 @@ import sys
 import jsonpickle
 from bson.son import SON
 from google.cloud import storage
-from . import TwitterDownloader
-from . import Storage
-from . import ParameterUtils
+from data_collection import TwitterDownloader
+from data_collection import Storage
+from data_collection import ParameterUtils
 
 def main(arguments):
     return
