@@ -9,12 +9,11 @@ import sys
 import jsonpickle
 from bson.son import SON
 from google.cloud import storage
-from data_collection import TwitterDownloader
-from data_collection import Storage
-from data_collection import ParameterUtils
+from utils.TwitterDownloader import TwitterDownloader
+from utils.Storage import Storage
+from utils.ParameterUtils import ParameterUtils
 
 def main(arguments):
-    return
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = arguments.google_key_path
 
     param_connection_string = "mysql+pymysql://igenie_readwrite:igenie@35.197.246.202/dax_project"
@@ -353,6 +352,7 @@ def save_to_cloud_storage(file_path):
     blob.upload_from_filename("./tweets.json")
 
 if __name__ == "__main__":
+    #print(os.environ["PYTHONPATH"])
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('google_key_path', help='The path of the Google key')
