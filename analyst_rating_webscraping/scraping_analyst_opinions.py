@@ -22,6 +22,7 @@ import urllib
 
 # In[2]:
 
+
 all_constituents = ['Allianz', 'Adidas', 'BASF', 'Bayer', 'Beiersdorf','BMW', 'Commerzbank', 'Continental', 'Daimler','Deutsche_Bank', 'Deutsche_Boerse', 'Deutsche_Post','Deutsche_Telekom', 'EON', 'Fresenius', 'HeidelbergCement', 'Infineon','Linde','Lufthansa', 'Merck', 'RWE', 'Siemens', 'Thyssenkrupp','Vonovia','Fresenius_Medical_Care','Munich_RE','ProSiebenSat1_Media','Volkswagen_vz']
 constituents_list=['Adidas', 'Commerzbank', 'BMW', 'Deutsche_Bank', 'EON']
 all_constituents_dict_bi = {'Allianz':'Allianz', 'Adidas':'Adidas', 'BASF':'BASF', 'Bayer':'Bayer', 'Beiersdorf':'Beiersdorf',
@@ -33,7 +34,6 @@ all_constituents_dict_bi = {'Allianz':'Allianz', 'Adidas':'Adidas', 'BASF':'BASF
                     'ProSiebenSat1 Media':'ProSiebenSat1_Media', 'RWE':'RWE', 'Siemens':'Siemens', 'Thyssenkrupp':'thyssenkrupp',
                     'Volkswagen (VW) vz':'Volkswagen_vz','Vonovia':'Vonovia'}
 #,'Vonovia':'Vonovia'
-
 
 # ## Business Insider Analyst Data - Major resource
 
@@ -217,18 +217,17 @@ bi_analyst_json = json.loads(bi_analyst_table.to_json(orient='records'))
 
 # In[9]:
 
-#client = MongoClient('mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp')
-db = client.dax_gcp
-collection1  = db['analyst_opinions']
-collection2 =  db['analyst_opinions_all']
-##Append the status into existing data (not repeated)
-#collection1.update_many({}, {'$set': {'Status': 'active'}},True,True)
-#collection2.update_many({}, {'$set': {'Status': 'active'}},True,True)
-
+    ##Append the status into existing data (not repeated)
+    #collection1.update_many({}, {'$set': {'Status': 'active'}},True,True)
+    #collection2.update_many({}, {'$set': {'Status': 'active'}},True,True)
 
 # In[10]:
 
 ##alter the status of collection
+client = MongoClient('mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp')
+db = client.dax_gcp
+collection1  = db['analyst_opinions']
+collection2 =  db['analyst_opinions_all']
 collection1.update_many({'Status':'active'}, {'$set': {'Status': 'inactive'}},True,True)
 collection2.update_many({'Status':'active'}, {'$set': {'Status': 'inactive'}},True,True)
 db['analyst_opinions'].insert_many(combined_analyst_json)
@@ -239,7 +238,7 @@ db['analyst_opinions_all'].insert_many(bi_analyst_json)
 
 # In[14]:
 
-#client_new = MongoClient('mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp')
+
 #db = client_new.dax_gcp
 #data = list(db['analyst_opinions_all'].find())
 #data=  pd.DataFrame(list(data))
