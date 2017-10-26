@@ -4,7 +4,7 @@ class ParameterUtils:
     def __init__(self):
         pass
 
-    def get_parameters(self,sql_connection_string=None, sql_table_name=None,
+    def get_parameters(self, sql_connection_string=None, sql_table_name=None,
         mongo_connection_string=None, sql_column_list=None):
         if sql_connection_string:
             engine = create_engine(sql_connection_string)
@@ -12,14 +12,21 @@ class ParameterUtils:
 
             source_table = Table(sql_table_name, metadata, autoload=True)
 
-            projection_columns = [c for c in source_table.columns if str(c) in sql_column_list]
+            full_column_names = [sql_table_name + p for p in sql_column_list]
+
+            projection_columns = [c for c in source_table.columns if str(c) in full_column_names]
 
             statement = select(projection_columns)
             result = statement.execute()
             row = result.fetchone()
             result.close()
 
-            return row
+            parameters = {}
+
+            for i in range(0,len(sql_column_list)):
+                parameters[sql_column_list[i]] = row[i]
+
+            return parameters
 
 if __name__ == "__main__":
     from sqlalchemy.sql import column
