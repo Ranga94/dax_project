@@ -14,6 +14,7 @@ from data_collection import Storage
 from data_collection import ParameterUtils
 
 def main(arguments):
+    return
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = arguments.google_key_path
 
     param_connection_string = "mysql+pymysql://igenie_readwrite:igenie@35.197.246.202/dax_project"
