@@ -11,18 +11,36 @@ from bson.son import SON
 from google.cloud import storage
 from . import TwitterDownloader
 from . import Storage
+from . import ParameterUtils
 
 def main(arguments):
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = arguments.google_key_path
 
-    parameters = list(get_parameters(arguments.param_connection_string))
+    param_connection_string = "mysql+pymysql://igenie_readwrite:igenie@35.197.246.202/dax_project"
 
-    languages = parameters[0].split(',')
-    parameters.append(arguments.param_connection_string)
+    parameter_utility = ParameterUtils()
+
+    param_table = "PARAM_TWITTER_COLLECTION"
+    parameters_list = ["LANGUAGE", "TWEETS_PER_QUERY",
+                  "MAX_TWEETS", "CONNECTION_STRING",
+                  "DATABASE_NAME", "COLLECTION_NAME",
+                  "LOGGING_FLAG", "EMAIL_USERNAME",
+                  "EMAIL_PASSWORD", "TWITTER_API_KEY",
+                  "TWITTER_API_SECRET"]
+
+    parameters = parameter_utility.get_parameters(sql_connection_string="mysql+pymysql://igenie_readwrite:igenie@35.197.246.202/dax_project",
+                                                  sql_table_name=param_table,
+                                                  sql_column_list=parameters_list)
+
+    languages = parameters["LANGUAGE"].split(',')
+    parameters["PARAM_CONNECTION_STRING"] = param_connection_string
+
+    print(parameters)
+    return
 
     for lang in languages:
-        parameters[0] = lang
-        get_tweets(*parameters)
+        parameters["LANGUAGE"] = lang
+        get_tweets(**parameters)
 
     send_mail(parameters[3], arguments.param_connection_string)
 
