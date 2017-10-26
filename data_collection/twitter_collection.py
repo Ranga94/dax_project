@@ -4,15 +4,11 @@ import tweepy
 from datetime import datetime
 import time
 import os
-print(os.environ["PYTHONPATH"])
 import smtplib
 import sys
 import jsonpickle
 from bson.son import SON
 from google.cloud import storage
-from utils.TwitterDownloader import TwitterDownloader
-from utils.Storage import Storage
-from utils.ParameterUtils import ParameterUtils
 
 def main(arguments):
     return
@@ -356,7 +352,12 @@ def save_to_cloud_storage(file_path):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
+    parser.add_argument('python_path', help='The connection string')
     parser.add_argument('google_key_path', help='The path of the Google key')
     parser.add_argument('param_connection_string', help='The connection string')
     args = parser.parse_args()
+    os.environ["PYTHONPATH"] = args.python_path
+    from utils.TwitterDownloader import TwitterDownloader
+    from utils.Storage import Storage
+    from utils.ParameterUtils import ParameterUtils
     main(args)
