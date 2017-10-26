@@ -34,9 +34,8 @@ import operator
 from bs4 import BeautifulSoup
 import urllib
 
-#client = MongoClient('mongodb://igenie:igenie@ds019654.mlab.com:19654/dax')
 client_old = MongoClient('mongodb://admin:admin@ds019654.mlab.com:19654/dax')
-#client = MongoClient('mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp')
+client = MongoClient('mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp')
 #get dax database
 db_old = client_old.dax
 db = client.dax_gcp
@@ -1066,9 +1065,6 @@ def all_analysis(all_constituents_dict):
 industry_category_table, cumulative_returns_table,quarter_mean_table,standard_dev_table,ATR_table,ROCE_table, sales_table ,dividend_table,profit_margin_table,PER_table,EPS_table,EBITDA_table, market_signal_table =all_analysis(all_constituents_dict)
 
 
-# In[36]:
-
-dividend_table
 
 
 # ## Converting results to JSON files
@@ -1101,13 +1097,9 @@ EBITDA_json = json.loads(EBITDA_table.to_json(orient='records'))
 
 # In[51]:
 
-client_new = MongoClient('mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp')
-db = client_new.dax_gcp
 
 ##Empty the result database before updating it with new results. 
-#db['fundamental analysis'].drop()
-#db['price analysis'].drop()
-
+db = client.dax_gcp
 collection1 = db['fundamental analysis']
 collection2 = db['price analysis']
 

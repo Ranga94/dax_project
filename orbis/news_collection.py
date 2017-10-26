@@ -120,7 +120,7 @@ def get_data(token, SelectionResult_token,SelectionResult_count ,query, field, c
       </soap12:Body>
     </soap12:Envelope>""".format(token, SelectionResult_token, SelectionResult_count, query)
 
-    response = requests.post(url, headers=headers, data=data)
+    response = requests.post(url, headers=headers, data=data, timeout=30)
     result = ET.fromstring(response.text)
     csv_result = result[0][0][0].text
     #pprint(csv_result)
@@ -169,14 +169,15 @@ NEWS_ID USING [Parameters.RepeatingDimension=NewsDim] FROM RemoteAccess.A"""
 
     for name, bvdid in constituents:
         token = get_token(user, pwd, "orbis")
-        selection_token = find_by_bvd_id(token, bvdid, "orbis")
-
+        if not token:
+            return None
         try:
+            selection_token = find_by_bvd_id(token, bvdid, "orbis")
             get_data_result = get_data(token, selection_token, "1", query, data, name, "orbis")
-        except:
-            pass
+        except Exception as e:
+            print(str(e))
         finally:
-            close_connection(token, "orbis")
+            close_connection(token, "zephyr")
 
 def get_zephyr_data(user,pwd):
 
@@ -232,15 +233,14 @@ def save_to_cloud_storage(file_path):
     bucket_name = 'igenie-ma-deals'
     bucket = client.get_bucket(bucket_name)
 
-
-
-    blob = bucket.blob('2017/{}-BMW.json'.format(d))
-    blob.upload_from_filename("./tweets.json")
+    #blob = bucket.blob('2017/{}-BMW.json'.format(d))
+    #blob.upload_from_filename("./tweets.json")
 
 
 def main(args):
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.google_key_path
-    get_zephyr_data(args.user,args.pwd)
+    #get_zephyr_data(args.user,args.pwd)
+    get_orbis_news(args.user,args.pwd)
 
 
 def main_rest(api_key):
