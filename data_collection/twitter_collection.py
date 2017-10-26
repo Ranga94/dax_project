@@ -8,6 +8,9 @@ import smtplib
 import sys
 import jsonpickle
 from bson.son import SON
+from google.cloud import storage
+from . import TwitterDownloader
+from . import Storage
 
 def main(arguments):
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = arguments.google_key_path
@@ -24,7 +27,16 @@ def main(arguments):
     send_mail(parameters[3], arguments.param_connection_string)
 
 def get_tweets(language, tweetsPerQry, maxTweets, data_connection_string, database, collection, logging_flag, param_connection_string):
-    api = load_api(param_connection_string)
+    storage = Storage()
+
+
+    api_key = ""
+    api_secret = ""
+    google_key_path = ""
+    bucket_name = ""
+
+    downloader = TwitterDownloader(api_key, api_secret)
+    downloader.load_api()
 
     #For now pass data_connection_string, but in reality it should be param_connection_string
     all_constituents = get_constituents(data_connection_string)
@@ -36,52 +48,58 @@ def get_tweets(language, tweetsPerQry, maxTweets, data_connection_string, databa
         #For now, pass data_connection string. Later change it to param_connection_string
         searchQuery = get_search_string(constituent_id, data_connection_string)
 
+        #Get max id of all tweets to extract tweets with id highe than that
         sinceId = get_max_id(constituent_name,data_connection_string,database,collection)
         max_id = -1
         tweetCount = 0
 
+        #Set file name
+        date = str(datetime.now().date())
+        file_name = "{}_{}".format(date,constituent_name)
+        cloud_file_name = "2017/{}".format(file_name)
+
         print("Downloading max {0} tweets for {1} in {2}".format(maxTweets, constituent_name, language))
         while tweetCount < maxTweets:
-            try:
-                if (max_id <= 0):
-                    if (not sinceId):
-                        new_tweets = api.search(q=searchQuery, count=tweetsPerQry, lang=language)
-                    else:
-                        new_tweets = api.search(q=searchQuery, count=tweetsPerQry,
-                                                since_id=sinceId, lang=language)
-                else:
-                    if (not sinceId):
-                        new_tweets = api.search(q=searchQuery, count=tweetsPerQry,
-                                                max_id=str(max_id - 1), lang=language)
-                    else:
-                        new_tweets = api.search(q=searchQuery, count=tweetsPerQry,
-                                                max_id=str(max_id - 1),
-                                                since_id=sinceId, lang=language)
-                if not new_tweets:
-                    print("No more tweets found")
-                    break
+            tweets_to_save = []
 
-                tweetCount += len(new_tweets)
-                print("Downloaded {0} tweets".format(tweetCount))
-                max_id = max(sinceId, max_id, new_tweets[-1].id)
+            tweets, tmp_tweet_count, max_id = downloader.download(constituent_name, searchQuery,
+                                                                  language,tweetsPerQry,sinceId,max_id)
+            tweetCount += tmp_tweet_count
 
-                #save tweets
-                tweets = [tweet._json for tweet in new_tweets]
-                save_tweets(constituent_name, tweets, data_connection_string, database)
+            #Add
+            for tweet in tweets:
+                tweet._json['date'] = datetime.strptime(tweet._json['created_at'], '%a %b %d %H:%M:%S %z %Y')
+                tweet._json['constituent'] = constituent_name
+                tweets_to_save.append(tweet._json)
+                #tweet._json['constituent_name'] = constituent_name
+                #tweet._json['constituent_id'] = constituent_id
 
-            except tweepy.TweepError as e:
-                # Just exit if any error
-                print("some error : " + str(e))
-                break
+            #Save to MongoDB
+            storage.save_to_mongodb(data_connection_string, database, collection, tweets_to_save)
+
+            #Save to local file
+            if tweetCount == 0:
+                storage.save_to_local_file(tweets_to_save, file_name, "w")
+            else:
+                storage.save_to_local_file(tweets_to_save, file_name, "a")
+
+        #Upload file to cloud storage
+        if os.path.isfile(file_name):
+            if storage.upload_to_cloud_storage(google_key_path, bucket_name, file_name, cloud_file_name):
+                os.remove(file_name)
+            else:
+                print("File not uploaded to Cloud storage.")
+        else:
+            print("File does not exists in the local filesystem.")
 
         #logging
         if logging_flag:
             pass
-            #logging(constituent_name, constituent_id, tweetCount, language, data_connection_string, database)
+            logging(constituent_name, constituent_id, tweetCount, language, data_connection_string, database)
 
     return "Downloaded tweets"
 
-def save_tweets(constituent_name, tweets, connection_string, database):
+def save_tweets(constituent_name, tweets, connection_string=None, database=None, filename=None):
     client = MongoClient(connection_string)
     db = client[database]
     collection = db["tweets_test"]
@@ -305,6 +323,15 @@ def send_mail(data_connection_string, param_connection_string):
     server.login(username, password)
     server.sendmail(fromaddr, toaddrs, message)
     server.quit()--host
+
+def save_to_cloud_storage(file_path):
+    client = storage.Client()
+    # The name for the new bucket
+    bucket_name = 'igenie-ma-deals'
+    bucket = client.get_bucket(bucket_name)
+
+    blob = bucket.blob('2017/{}-BMW.json'.format(d))
+    blob.upload_from_filename("./tweets.json")
 
 if __name__ == "__main__":
     import argparse
