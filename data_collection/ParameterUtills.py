@@ -28,6 +28,7 @@ class ParameterUtils:
         return row
 
 if __name__ == "__main__":
+    from sqlalchemy.sql import column
     p = ParameterUtils()
     engine = create_engine("mysql+pymysql://igenie_readwrite:igenie@35.197.246.202/dax_project")
     metadata = MetaData(engine)
@@ -41,6 +42,6 @@ if __name__ == "__main__":
                         param_twitter_collection.c.COLLECTION_NAME,
                         param_twitter_collection.c.LOGGING_FLAG])
     print(type(statement))
-    #result = statement.execute()
-    #row = result.fetchone()
-    #result.close()
+    result = statement.execute()
+    row = result.fetchone()
+    result.close()
