@@ -11,8 +11,9 @@ class ParameterUtils:
             metadata = MetaData(engine)
 
             source_table = Table(sql_table_name, metadata, autoload=True)
+            print(type(source_table.columns))
 
-            full_column_names = [sql_table_name + p for p in sql_column_list]
+            full_column_names = [sql_table_name + "." + p for p in sql_column_list]
 
             projection_columns = [c for c in source_table.columns if str(c) in full_column_names]
 
@@ -29,24 +30,20 @@ class ParameterUtils:
             return parameters
 
     def get_param_data(self, sql_connection_string=None, sql_table_name=None,
-        mongo_connection_string=None, sql_column_list=None):
+        mongo_connection_string=None, sql_column_list=None, sql_where=None):
 
         if sql_connection_string:
             engine = create_engine(sql_connection_string)
             metadata = MetaData(engine)
 
             source_table = Table(sql_table_name, metadata, autoload=True)
-
-            full_column_names = [sql_table_name + p for p in sql_column_list]
-
+            full_column_names = [sql_table_name + "." + p for p in sql_column_list]
             projection_columns = [c for c in source_table.columns if str(c) in full_column_names]
 
-            for c in source_table.columns:
-                if "ACTIVE_STATE" in str(c):
-                    where_column = c
-                    break
-
-            statement = select(projection_columns).where(where_column == 1)
+            if sql_where:
+                statement = select(projection_columns).where(sql_where(source_table.columns))
+            else:
+                statement = select(projection_columns)
             result = statement.execute()
             rows = result.fetchall()
             result.close()
@@ -56,11 +53,14 @@ class ParameterUtils:
 if __name__ == "__main__":
     from sqlalchemy.sql import column
     p = ParameterUtils()
-    x = ["PARAM_TWITTER_COLLECTION.LANGUAGE","PARAM_TWITTER_COLLECTION.DATABASE_NAME"]
+    x = ["CONSTITUENT_ID","NAME"]
 
-    r = p.get_parameters(sql_connection_string="mysql+pymysql://igenie_readwrite:igenie@35.197.246.202/dax_project",
-        sql_table_name="PARAM_TWITTER_COLLECTION", 
-        sql_column_list=x)
+    where = lambda x: x["ACTIVE_STATE"] == 1
+
+    r = p.get_param_data(sql_connection_string="mysql+pymysql://igenie_readwrite:igenie@127.0.0.1/dax_project",
+        sql_table_name="CONSTITUENTS_MASTER",
+        sql_column_list=x,
+                         sql_where=where)
     print(r)
     
 
