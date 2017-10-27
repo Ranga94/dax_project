@@ -12,7 +12,7 @@ from google.cloud import storage
 
 def main(arguments):
     return
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = arguments.google_key_path
+    #os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = arguments.google_key_path
 
     param_connection_string = "mysql+pymysql://igenie_readwrite:igenie@35.197.246.202/dax_project"
 
@@ -24,7 +24,7 @@ def main(arguments):
                   "DATABASE_NAME", "COLLECTION_NAME",
                   "LOGGING_FLAG", "EMAIL_USERNAME",
                   "EMAIL_PASSWORD", "TWITTER_API_KEY",
-                  "TWITTER_API_SECRET"]
+                  "TWITTER_API_SECRET","BUCKET_NAME"]
 
     parameters = parameter_utility.get_parameters(sql_connection_string="mysql+pymysql://igenie_readwrite:igenie@35.197.246.202/dax_project",
                                                   sql_table_name=param_table,
@@ -32,6 +32,7 @@ def main(arguments):
 
     languages = parameters["LANGUAGE"].split(',')
     parameters["PARAM_CONNECTION_STRING"] = param_connection_string
+    parameters["GOOGLE_KEY_PATH"] = arguments.google_key_path
 
     print(parameters)
     return
@@ -42,23 +43,25 @@ def main(arguments):
 
     send_mail(parameters[3], arguments.param_connection_string)
 
-def get_tweets(language, tweetsPerQry, maxTweets, data_connection_string, database, collection, logging_flag, param_connection_string):
+def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABASE_NAME, COLLECTION_NAME,
+               LOGGING_FLAG, TWITTER_API_KEY, TWITTER_API_SECRET, PARAM_CONNECTION_STRING, BUCKET_NAME,
+               GOOGLE_KEY_PATH=None):
     storage = Storage()
 
-
-    api_key = ""
-    api_secret = ""
-    google_key_path = ""
-    bucket_name = ""
-
-    downloader = TwitterDownloader(api_key, api_secret)
+    downloader = TwitterDownloader(TWITTER_API_KEY, TWITTER_API_SECRET)
     downloader.load_api()
 
     #For now pass data_connection_string, but in reality it should be param_connection_string
-    all_constituents = get_constituents(data_connection_string)
+    all_constituents = storage.get_param_data(sql_connection_string="mysql+pymysql://igenie_readwrite:igenie@35.197.246.202/dax_project",
+                                              sql_table_name="CONSTITUENTS_MASTER",
+                                              sql_column_list=["CONSTITUENT_ID","NAME"])
 
-    if language != "en":
+    print(all_constituents)
+
+    if LANGUAGE != "en":
         tweetsPerQry = 7
+
+    return
 
     for constituent_id, constituent_name in all_constituents:
         #For now, pass data_connection string. Later change it to param_connection_string
@@ -98,10 +101,10 @@ def get_tweets(language, tweetsPerQry, maxTweets, data_connection_string, databa
                 storage.save_to_local_file(tweets_to_save, file_name, "w")
             else:
                 storage.save_to_local_file(tweets_to_save, file_name, "a")
-
+            google_key_path
         #Upload file to cloud storage
         if os.path.isfile(file_name):
-            if storage.upload_to_cloud_storage(google_key_path, bucket_name, file_name, cloud_file_name):
+            if storage.upload_to_cloud_storage(GOOGLE_KEY_PATH, bucket_name, file_name, cloud_file_name):
                 os.remove(file_name)
             else:
                 print("File not uploaded to Cloud storage.")
