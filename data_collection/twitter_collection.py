@@ -8,13 +8,6 @@ import sys
 from bson.son import SON
 
 def main(arguments):
-    #os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = arguments.google_key_path
-
-    #param_connection_string = "mysql+pymysql://igenie_readwrite:igenie@35.197.246.202/dax_project"
-    param_connection_string = "mysql+pymysql://igenie_readwrite:igenie@127.0.0.1/dax_project"
-
-    parameter_utility = ParameterUtils()
-
     param_table = "PARAM_TWITTER_COLLECTION"
     parameters_list = ["LANGUAGE", "TWEETS_PER_QUERY",
                   "MAX_TWEETS", "CONNECTION_STRING",
@@ -23,12 +16,10 @@ def main(arguments):
                   "EMAIL_PASSWORD", "TWITTER_API_KEY",
                   "TWITTER_API_SECRET","BUCKET_NAME"]
 
-    parameters = parameter_utility.get_parameters(sql_connection_string=param_connection_string,
-                                                  sql_table_name=param_table,
-                                                  sql_column_list=parameters_list)
+    parameters = get_parameters(arguments.param_connection_string, param_table, parameters_list)
 
     languages = parameters["LANGUAGE"].split(',')
-    parameters["PARAM_CONNECTION_STRING"] = param_connection_string
+    parameters["PARAM_CONNECTION_STRING"] = arguments.param_connection_string
     parameters["GOOGLE_KEY_PATH"] = arguments.google_key_path
 
     email_username = parameters.pop("EMAIL_USERNAME", None)
@@ -40,19 +31,29 @@ def main(arguments):
 
     #send_mail(parameters[3], arguments.param_connection_string)
 
+def get_parameters(connection_string, table, column_list):
+    storage = Storage()
+
+    data = storage.get_sql_data(connection_string, table, column_list)[0]
+    parameters = {}
+
+    for i in range(0, len(column_list)):
+        parameters[column_list[i]] = data[i]
+
+    return parameters
+
 def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABASE_NAME, COLLECTION_NAME,
                LOGGING_FLAG, TWITTER_API_KEY, TWITTER_API_SECRET, PARAM_CONNECTION_STRING, BUCKET_NAME,
                GOOGLE_KEY_PATH=None):
     storage = Storage()
-    parameter_utility = ParameterUtils()
 
     downloader = TwitterDownloader(TWITTER_API_KEY, TWITTER_API_SECRET)
     downloader.load_api()
 
     #For now pass data_connection_string, but in reality it should be param_connection_string
-    all_constituents = parameter_utility.get_param_data(sql_connection_string=PARAM_CONNECTION_STRING,
+    all_constituents = storage.get_sql_data(sql_connection_string=PARAM_CONNECTION_STRING,
                                               sql_table_name="CONSTITUENTS_MASTER",
-                                              sql_column_list=["CONSTITUENT_ID","NAME"])
+                                              sql_column_list=["CONSTITUENT_ID","NAME"])[0]
 
     if LANGUAGE != "en":
         tweetsPerQry = 7
@@ -154,18 +155,18 @@ def get_max_id(constituent_id, connection_string, database, table):
 
 def get_search_string(constituent_id, connection_string, table_keywords, table_exclusions):
     ''''
-    parameter_utility = ParameterUtils()
+    storage = Storage()
 
     where = lambda x: and_((x["ACTIVE_STATE"] == 1),(x["CONSTITUENT_ID"] == constituent_id))
 
-    keywords = parameter_utility.get_param_data(sql_connection_string=connection_string,
+    keywords = storage.get_sql_data(sql_connection_string=connection_string,
                                                   sql_table_name=table_keywords,
                                                   sql_column_list=["KEYWORD"],
                                                 sql_where=where)
 
     keywords_list = [key[0] for key in keywords]
 
-    exclusions = parameter_utility.get_param_data(sql_connection_string=connection_string,
+    exclusions = storage.get_sql_data(sql_connection_string=connection_string,
                                                 sql_table_name=table_exclusions,
                                                 sql_column_list=["EXCLUSION"],
                                                 sql_where=where)
@@ -271,5 +272,4 @@ if __name__ == "__main__":
     sys.path.insert(0, args.python_path)
     from utils.TwitterDownloader import TwitterDownloader
     from utils.Storage import Storage
-    from utils.ParameterUtils import ParameterUtils
     main(args)
