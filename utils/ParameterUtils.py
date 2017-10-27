@@ -28,6 +28,31 @@ class ParameterUtils:
 
             return parameters
 
+    def get_param_data(self, sql_connection_string=None, sql_table_name=None,
+        mongo_connection_string=None, sql_column_list=None):
+
+        if sql_connection_string:
+            engine = create_engine(sql_connection_string)
+            metadata = MetaData(engine)
+
+            source_table = Table(sql_table_name, metadata, autoload=True)
+
+            full_column_names = [sql_table_name + p for p in sql_column_list]
+
+            projection_columns = [c for c in source_table.columns if str(c) in full_column_names]
+
+            for c in source_table.columns:
+                if "ACTIVE_STATE" in str(c):
+                    where_column = c
+                    break
+
+            statement = select(projection_columns).where(where_column == 1)
+            result = statement.execute()
+            rows = result.fetchall()
+            result.close()
+            return rows
+
+
 if __name__ == "__main__":
     from sqlalchemy.sql import column
     p = ParameterUtils()
