@@ -11,7 +11,6 @@ from bson.son import SON
 from google.cloud import storage
 
 def main(arguments):
-    return
     #os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = arguments.google_key_path
 
     param_connection_string = "mysql+pymysql://igenie_readwrite:igenie@35.197.246.202/dax_project"
@@ -34,14 +33,11 @@ def main(arguments):
     parameters["PARAM_CONNECTION_STRING"] = param_connection_string
     parameters["GOOGLE_KEY_PATH"] = arguments.google_key_path
 
-    print(parameters)
-    return
-
     for lang in languages:
         parameters["LANGUAGE"] = lang
         get_tweets(**parameters)
 
-    send_mail(parameters[3], arguments.param_connection_string)
+    #send_mail(parameters[3], arguments.param_connection_string)
 
 def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABASE_NAME, COLLECTION_NAME,
                LOGGING_FLAG, TWITTER_API_KEY, TWITTER_API_SECRET, PARAM_CONNECTION_STRING, BUCKET_NAME,
@@ -57,11 +53,12 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
                                               sql_column_list=["CONSTITUENT_ID","NAME"])
 
     print(all_constituents)
+    return
 
     if LANGUAGE != "en":
         tweetsPerQry = 7
 
-    return
+
 
     for constituent_id, constituent_name in all_constituents:
         #For now, pass data_connection string. Later change it to param_connection_string
