@@ -93,25 +93,8 @@ class Storage:
         statement = source_table.insert().values(data)
         result = statement.execute()
 
-
-
-
 if __name__ == "__main__":
-    s = Storage()
-    x= ["LANGUAGE", "TWEETS_PER_QUERY",
-                  "MAX_TWEETS", "CONNECTION_STRING",
-                  "DATABASE_NAME", "COLLECTION_NAME",
-                  "LOGGING_FLAG", "EMAIL_USERNAME",
-                  "EMAIL_PASSWORD", "TWITTER_API_KEY",
-                  "TWITTER_API_SECRET","BUCKET_NAME"]
-    ''''
-    data = s.get_sql_data(sql_connection_string="mysql+pymysql://igenie_readwrite:igenie@127.0.0.1/dax_project",
-                          sql_table_name="PARAM_TWITTER_COLLECTION",
-                          sql_column_list=x)
-    '''
-
-    s.insert_to_sql(sql_connection_string="mysql+pymysql://igenie_readwrite:igenie@127.0.0.1/dax_project",
-                    sql_table_name="PARAM_TWITTER_COLLECTION")
+    pass
 
 
 

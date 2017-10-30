@@ -8,8 +8,8 @@ LOCATIONS = ["eu", "oxford", "britain"]
 locations_set = set(LOCATIONS)
 
 
-def main():
-    client = MongoClient("mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp")
+def main(args):
+    client = MongoClient(args.connection_string)
     db = client["dax_gcp"]
     collection = db["all_news"]
 
@@ -116,5 +116,9 @@ def process_tags(tags):
     # pprint(all_tags)
     return all_tags
 
-if __name__=="__main__":
-    main()
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('connection_string', help='The connection string')
+    args = parser.parse_args()
+    main(args)
