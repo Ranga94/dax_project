@@ -116,9 +116,10 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
               "NEWS_LANGUAGE_NewsDim", "NEWS_SOURCE_NewsDim", "NEWS_PUBLICATION_NewsDim", "NEWS_ID_NewsDim"]
 
     columns = ["NAME", "ISIN"]
+    table = "CONSTITUENTS_MASTER"
 
     constituents = storage.get_sql_data(sql_connection_string=param_connection_string,
-                          sql_table_name="CONSTITUENTS_MASTER",
+                          sql_table_name=table,
                           sql_column_list=columns)
 
     constituents = [('Allianz', 'DEFEI1007380')]
@@ -186,9 +187,10 @@ def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_
               "NEWS_LANGUAGE_NewsDim", "NEWS_SOURCE_NewsDim", "NEWS_PUBLICATION_NewsDim", "NEWS_ID_NewsDim"]
 
     columns = ["NAME", "ISIN"]
+    table = "CONSTITUENTS_MASTER"
 
     constituents = storage.get_sql_data(sql_connection_string=param_connection_string,
-                                        sql_table_name="CONSTITUENTS_MASTER",
+                                        sql_table_name=table,
                                         sql_column_list=columns)
 
     for name, bvdid in constituents:
