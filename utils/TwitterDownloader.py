@@ -54,31 +54,7 @@ class TwitterDownloader:
         return new_tweets, tweet_count, max_id
 
 if __name__ == "__main__":
-    from pprint import pprint
-    import os
-    from google.cloud import storage
-    from pathlib import Path
-    import jsonpickle
-    import tempfile
-
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "C:\\Users\\Uly\\Desktop\\Desktop\\DAX\\dax_project\\twitter_analytics\\igenie-project-key.json"
-
-    filename = "test.json"
-
-    t = TwitterDownloader("fAFENmxds3YFgUqHt974ZGsov", 'zk8IRc6WQPZ8dc2yGh8gJClEMDlL6I3L4DYIC4ZkoHvjIw4QgN')
-    t.load_api()
-    tweets, _, _ = t.download("BMW", "BMW", "en", 10, None, -1)
-
-    with open(filename, "w") as f:
-        for item in tweets:
-            f.write(jsonpickle.encode(item._json, unpicklable=False) + '\n')
-
-    client = storage.Client()
-    bucket = client.get_bucket("igenie-tweets")
-    blob = bucket.blob("2017/{}".format(filename))
-    blob.upload_from_filename(filename)
-
-    os.remove(filename)
+    pass
 
 
 

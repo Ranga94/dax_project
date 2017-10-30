@@ -7,8 +7,8 @@ import sys
 import time
 from sner import Ner
 
-def main(argv):
-    client = MongoClient("mongodb://igenie_readwrite:igenie@35.197.204.103:27017/dax_gcp")
+def main(args):
+    client = MongoClient(args.connection_string)
     db = client["dax_gcp"]
     collection = db["tweets"]
 
@@ -80,4 +80,8 @@ def get_tags(text, tagger):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('connection_string', help='The connection string')
+    args = parser.parse_args()
+    main(args)
