@@ -22,11 +22,10 @@ def main(args):
 
     if args.all:
         for c in all_constituents.keys():
+            #print(c)
             extract_meta_data(db, c)
     else:
         extract_meta_data(db, args.constituent)
-
-
 
 def extract_meta_data(database, constituent):
     webpages = defaultdict(list)
@@ -36,14 +35,51 @@ def extract_meta_data(database, constituent):
 
     insert_data = []
 
+    data = {"CONSTITUENT_ID":None, "CONSTITUENT_NAME":None, "BVDID":None, "INDUSTRY":None,
+            "COUNTRY":None, "SYMBOL":None, "ACTIVE_STATE":None, "LISTED_SINCE":None, "MARKET_SECTOR":None,
+            "MARKET_SUBSECTOR":None, "TRADING_MODEL":None, "REUTERS_INSTRUMENT_CODE":None,
+            "SHARE_TYPE":None, "MINIMUM_TRADE_UNIT":None, "WEBSITE":None, "LAST_UPDATE_DATE":None,
+            "LAST_UPDATE_BY":None}
+
+    fields = ["ISIN", "Country", "Exchange Symbol", "Admission Date", "Sector",
+              "Subsector", "Trading Model", "Reuters Instrument Code", "Share Type",
+              "Minimum tradeable Unit", "Web"]
+    '''
+     ISIN| varchar(225) | NO | | NULL | |
+    | INDUSTRY | varchar(255) | NO | | NULL | |
+    | COUNTRY | varchar(255) | NO | | NULL | |
+    | SYMBOL | varchar(255) | NO | | NULL | |
+    | ACTIVE_STATE | tinyint(1) | NO | | NULL | |
+    | LISTED_SINCE | date | NO | | NULL | |
+    | MARKET_SECTOR | varchar(255) | NO | | NULL | |
+    | MARKET_SUBSECTOR | varchar(255) | YES | | NULL | |
+    | TRADING_MODEL | varchar(255) | YES | | NULL | |
+    | REUTERS_INSTRUMENT_CODE | varchar(255) | NO | | NULL | |
+    | SHARE_TYPE | varchar(255) | NO | | NULL | |
+    | MINIMUM_TRADE_UNIT | float | NO | | NULL | |
+    | WEBSITE | varchar(255) | YES | | NULL | |
+    | LAST_UPDATE_DATE | timestamp | NO | | CURRENT_TIMESTAMP | on
+    update
+    CURRENT_TIMESTAMP |
+    | LAST_UPDATE_BY | varchar(255) | NO | | NULL | |
+    | NAME | varchar(255) | NO | | NULL | |
+    | BVDID
+    '''
+
+    company_name = None
+
     for page in webpages.keys():
         url = page.format(all_constituents[constituent])
         response = requests.get(url)
         soup = BeautifulSoup(response.text, 'lxml')
 
+        if not company_name:
+            company_name = soup.find(class_='stock-headline')
+            print(company_name.string)
 
         for section in webpages[page]:
             if section == 'Historical Key Data':
+                continue
                 table = soup.find(class_='table balance-sheet')
                 if table is None:
                     continue
@@ -57,6 +93,7 @@ def extract_meta_data(database, constituent):
                             {'table': section, 'constituent': constituent, 'year': year, header.string.replace('.', ''): items[year - 2012].string})
 
             elif section == 'Dividend':
+                continue
                 master_data = soup.find('h2', string=section)
                 if master_data is None:
                     continue
@@ -73,6 +110,7 @@ def extract_meta_data(database, constituent):
                                             'ISIN': data[3].string.strip()})
 
             elif section == 'Company Events':
+                continue
                 master_data = soup.find('a', href='/aktien/unternehmenskalender/{}'.format(all_constituents[constituent]))
                 if master_data is None:
                     continue
@@ -89,6 +127,7 @@ def extract_meta_data(database, constituent):
 
 
             elif section == 'Recent Report':
+                continue
                 master_data = soup.find('a', href="/aktien/unternehmensberichte/{}".format(all_constituents[constituent]))
                 if master_data is None:
                     continue
@@ -112,10 +151,18 @@ def extract_meta_data(database, constituent):
                 for row in master_data_rows:
                     data = row.find_all('td')
                     if data:
+                        key = data[0].string.strip().replace('.', '')
+                        value = data[1].string.strip()
+                        if key in fields:
+                            print("{}:{}".format(key, value))
+
+
+                        '''
                         insert_data.append({'table': section, 'constituent': constituent,
                                             data[0].string.strip().replace('.', ''): data[1].string.strip()})
+                        '''
 
-    bulk_insert(database.company_data, insert_data)
+    #bulk_insert(database.company_data, insert_data)
 
 
 def bulk_insert(collection, documents):

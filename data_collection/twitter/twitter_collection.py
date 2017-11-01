@@ -1,75 +1,69 @@
 from sqlalchemy import *
-from pymongo import MongoClient, errors
-import tweepy
+from pymongo import MongoClient
 from datetime import datetime
 import time
 import os
-print(os.environ["PYTHONPATH"])
 import smtplib
 import sys
-import jsonpickle
 from bson.son import SON
-from google.cloud import storage
-from utils.TwitterDownloader import TwitterDownloader
-from utils.Storage import Storage
-from utils.ParameterUtils import ParameterUtils
 
 def main(arguments):
-    return
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = arguments.google_key_path
-
-    param_connection_string = "mysql+pymysql://igenie_readwrite:igenie@35.197.246.202/dax_project"
-
-    parameter_utility = ParameterUtils()
-
     param_table = "PARAM_TWITTER_COLLECTION"
     parameters_list = ["LANGUAGE", "TWEETS_PER_QUERY",
                   "MAX_TWEETS", "CONNECTION_STRING",
                   "DATABASE_NAME", "COLLECTION_NAME",
                   "LOGGING_FLAG", "EMAIL_USERNAME",
                   "EMAIL_PASSWORD", "TWITTER_API_KEY",
-                  "TWITTER_API_SECRET"]
+                  "TWITTER_API_SECRET","BUCKET_NAME"]
 
-    parameters = parameter_utility.get_parameters(sql_connection_string="mysql+pymysql://igenie_readwrite:igenie@35.197.246.202/dax_project",
-                                                  sql_table_name=param_table,
-                                                  sql_column_list=parameters_list)
+    parameters = get_parameters(arguments.param_connection_string, param_table, parameters_list)
 
     languages = parameters["LANGUAGE"].split(',')
-    parameters["PARAM_CONNECTION_STRING"] = param_connection_string
+    parameters["PARAM_CONNECTION_STRING"] = arguments.param_connection_string
+    parameters["GOOGLE_KEY_PATH"] = arguments.google_key_path
 
-    print(parameters)
-    return
+    email_username = parameters.pop("EMAIL_USERNAME", None)
+    email_pwd = parameters.pop("EMAIL_PASSWORD", None)
 
     for lang in languages:
         parameters["LANGUAGE"] = lang
         get_tweets(**parameters)
 
-    send_mail(parameters[3], arguments.param_connection_string)
+    #send_mail(parameters[3], arguments.param_connection_string)
 
-def get_tweets(language, tweetsPerQry, maxTweets, data_connection_string, database, collection, logging_flag, param_connection_string):
+def get_parameters(connection_string, table, column_list):
     storage = Storage()
 
+    data = storage.get_sql_data(connection_string, table, column_list)[0]
+    parameters = {}
 
-    api_key = ""
-    api_secret = ""
-    google_key_path = ""
-    bucket_name = ""
+    for i in range(0, len(column_list)):
+        parameters[column_list[i]] = data[i]
 
-    downloader = TwitterDownloader(api_key, api_secret)
+    return parameters
+
+def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABASE_NAME, COLLECTION_NAME,
+               LOGGING_FLAG, TWITTER_API_KEY, TWITTER_API_SECRET, PARAM_CONNECTION_STRING, BUCKET_NAME,
+               GOOGLE_KEY_PATH=None):
+    storage = Storage()
+
+    downloader = TwitterDownloader(TWITTER_API_KEY, TWITTER_API_SECRET)
     downloader.load_api()
 
     #For now pass data_connection_string, but in reality it should be param_connection_string
-    all_constituents = get_constituents(data_connection_string)
+    all_constituents = storage.get_sql_data(sql_connection_string=PARAM_CONNECTION_STRING,
+                                              sql_table_name="CONSTITUENTS_MASTER",
+                                              sql_column_list=["CONSTITUENT_ID","NAME"])[0]
 
-    if language != "en":
+    if LANGUAGE != "en":
         tweetsPerQry = 7
 
     for constituent_id, constituent_name in all_constituents:
         #For now, pass data_connection string. Later change it to param_connection_string
-        searchQuery = get_search_string(constituent_id, data_connection_string)
+        search_query = get_search_string(constituent_id, CONNECTION_STRING, None, None)
 
         #Get max id of all tweets to extract tweets with id highe than that
-        sinceId = get_max_id(constituent_name,data_connection_string,database,collection)
+        sinceId = get_max_id(constituent_name, CONNECTION_STRING, DATABASE_NAME, COLLECTION_NAME)
         max_id = -1
         tweetCount = 0
 
@@ -78,24 +72,25 @@ def get_tweets(language, tweetsPerQry, maxTweets, data_connection_string, databa
         file_name = "{}_{}".format(date,constituent_name)
         cloud_file_name = "2017/{}".format(file_name)
 
-        print("Downloading max {0} tweets for {1} in {2}".format(maxTweets, constituent_name, language))
-        while tweetCount < maxTweets:
+        print("Downloading max {0} tweets for {1} in {2}".format(MAX_TWEETS, constituent_name, LANGUAGE))
+        while tweetCount < MAX_TWEETS:
             tweets_to_save = []
 
-            tweets, tmp_tweet_count, max_id = downloader.download(constituent_name, searchQuery,
-                                                                  language,tweetsPerQry,sinceId,max_id)
+            tweets, tmp_tweet_count, max_id = downloader.download(constituent_name, search_query,
+                                                                  LANGUAGE,tweetsPerQry,sinceId,max_id)
             tweetCount += tmp_tweet_count
 
             #Add
             for tweet in tweets:
                 tweet._json['date'] = datetime.strptime(tweet._json['created_at'], '%a %b %d %H:%M:%S %z %Y')
                 tweet._json['constituent'] = constituent_name
+                tweet._json['source'] = "Twitter"
                 tweets_to_save.append(tweet._json)
                 #tweet._json['constituent_name'] = constituent_name
                 #tweet._json['constituent_id'] = constituent_id
 
             #Save to MongoDB
-            storage.save_to_mongodb(data_connection_string, database, collection, tweets_to_save)
+            storage.save_to_mongodb(CONNECTION_STRING, DATABASE_NAME, COLLECTION_NAME, tweets_to_save)
 
             #Save to local file
             if tweetCount == 0:
@@ -105,7 +100,7 @@ def get_tweets(language, tweetsPerQry, maxTweets, data_connection_string, databa
 
         #Upload file to cloud storage
         if os.path.isfile(file_name):
-            if storage.upload_to_cloud_storage(google_key_path, bucket_name, file_name, cloud_file_name):
+            if storage.upload_to_cloud_storage(GOOGLE_KEY_PATH, BUCKET_NAME, file_name, cloud_file_name):
                 os.remove(file_name)
             else:
                 print("File not uploaded to Cloud storage.")
@@ -113,26 +108,12 @@ def get_tweets(language, tweetsPerQry, maxTweets, data_connection_string, databa
             print("File does not exists in the local filesystem.")
 
         #logging
-        if logging_flag:
+        if LOGGING_FLAG:
             pass
-            logging(constituent_name, constituent_id, tweetCount, language, data_connection_string, database)
+            logging(constituent_name, constituent_id, tweetCount, LANGUAGE,
+                    CONNECTION_STRING, DATABASE_NAME)
 
     return "Downloaded tweets"
-
-def save_tweets(constituent_name, tweets, connection_string=None, database=None, filename=None):
-    client = MongoClient(connection_string)
-    db = client[database]
-    collection = db["tweets_test"]
-
-    try:
-        result = collection.insert_many(tweets, ordered=False)
-        print(result)
-    except errors.BulkWriteError as e:
-        print(str(e.details['writeErrors']))
-        result = None
-    except Exception as e:
-        print(str(e))
-        result = None
 
 def logging(constituent_name, constituent_id, tweetCount, language, connection_string, database):
     client = MongoClient(connection_string)
@@ -172,48 +153,25 @@ def get_max_id(constituent_id, connection_string, database, table):
 
     return res[0]["max_id"]
 
-def get_constituents(connection_string):
+def get_search_string(constituent_id, connection_string, table_keywords, table_exclusions):
     ''''
-    engine = create_engine(connection_string)
-    metadata = MetaData(engine)
+    storage = Storage()
 
-    constituents_master = Table('CONSTITUENTS_MASTER', metadata, autoload=True)
-    statement = select([constituents_master.c.CONSTITUENT_ID, constituents_master.c.NAME]).where(
-            constituents_master.c.ACTIVE_STATE == 1)
-    result = statement.execute()
-    rows = result.fetchall()
-    result.close()
-    return rows
-    '''
+    where = lambda x: and_((x["ACTIVE_STATE"] == 1),(x["CONSTITUENT_ID"] == constituent_id))
 
-    result = []
+    keywords = storage.get_sql_data(sql_connection_string=connection_string,
+                                                  sql_table_name=table_keywords,
+                                                  sql_column_list=["KEYWORD"],
+                                                sql_where=where)
 
-    current_constituent = ['BMW', 'adidas', 'Deutsche Bank', 'EON', 'Commerzbank']
-
-    for item in current_constituent:
-        result.append((item, item))
-
-    return result
-
-def get_search_string(constituent_id, connection_string):
-    ''''
-    engine = create_engine(connection_string)
-    metadata = MetaData(engine)
-    keywords_table = Table('PARAM_TWITTER_KEYWORDS', metadata, autoload=True)
-    statement = select([keywords_table.c.KEYWORD]).where((keywords_table.c.ACTIVE_STATE == 1) &
-                                                         (keywords_table.c.CONSTITUENT_ID == constituent_id))
-    result = statement.execute()
-    keywords = result.fetchall()
     keywords_list = [key[0] for key in keywords]
 
-    exclusions_table = Table('PARAM_TWITTER_EXCLUSIONS', metadata, autoload=True)
-    statement = select([exclusions_table.c.EXCLUSIONS],
-                       (exclusions_table.c.ACTIVE_STATE == 1) & (exclusions_table.c.CONSTITUENT_ID == constituent_id))
-    result = statement.execute()
-    exclusions = result.fetchall()
-    exclusions_list = ["-" + key[0] for key in exclusions]
+    exclusions = storage.get_sql_data(sql_connection_string=connection_string,
+                                                sql_table_name=table_exclusions,
+                                                sql_column_list=["EXCLUSION"],
+                                                sql_where=where)
 
-    result.close()
+    exclusions_list = ["-" + key[0] for key in exclusions]
 
     all_words = keywords_list + exclusions_list
 
@@ -231,46 +189,6 @@ def get_search_string(constituent_id, connection_string):
     searchQuery = k + " " + ex
 
     return searchQuery
-
-def get_parameters(sql_connection_string):
-    engine = create_engine(sql_connection_string)
-    metadata = MetaData(engine)
-
-    param_twitter_collection = Table('PARAM_TWITTER_COLLECTION', metadata, autoload=True)
-    statement = select([param_twitter_collection.c.LANGUAGE,
-                        param_twitter_collection.c.TWEETS_PER_QUERY,
-                        param_twitter_collection.c.MAX_TWEETS,
-                        param_twitter_collection.c.CONNECTION_STRING,
-                        param_twitter_collection.c.DATABASE_NAME,
-                        param_twitter_collection.c.COLLECTION_NAME,
-                        param_twitter_collection.c.LOGGING_FLAG])
-    result = statement.execute()
-    row = result.fetchone()
-    result.close()
-    return row
-
-def load_api(sql_connection_string):
-    engine = create_engine(sql_connection_string)
-    metadata = MetaData(engine)
-
-    param_twitter_collection = Table('PARAM_TWITTER_COLLECTION', metadata, autoload=True)
-    statement = select([param_twitter_collection.c.TWITTER_API_KEY, param_twitter_collection.c.TWITTER_API_SECRET])
-    # statement = param_twitter_collection.select([param_twitter_collection.c.TWITTER_API_KEY,
-    #                                            param_twitter_collection.c.TWITTER_API_SECRET])
-    result = statement.execute()
-    api_key, api_secret = result.fetchone()
-    result.close()
-
-    auth = tweepy.AppAuthHandler(api_key, api_secret)
-
-    api = tweepy.API(auth, wait_on_rate_limit=True,
-                     wait_on_rate_limit_notify=True)
-
-    if (not api):
-        print("Can't Authenticate")
-        sys.exit(-1)
-    else:
-        return api
 
 def send_mail(data_connection_string, param_connection_string):
     engine = create_engine(param_connection_string)
@@ -344,19 +262,14 @@ def send_mail(data_connection_string, param_connection_string):
     server.sendmail(fromaddr, toaddrs, message)
     server.quit()--host
 
-def save_to_cloud_storage(file_path):
-    client = storage.Client()
-    # The name for the new bucket
-    bucket_name = 'igenie-ma-deals'
-    bucket = client.get_bucket(bucket_name)
-
-    blob = bucket.blob('2017/{}-BMW.json'.format(d))
-    blob.upload_from_filename("./tweets.json")
-
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
+    parser.add_argument('python_path', help='The connection string')
     parser.add_argument('google_key_path', help='The path of the Google key')
     parser.add_argument('param_connection_string', help='The connection string')
     args = parser.parse_args()
+    sys.path.insert(0, args.python_path)
+    from utils.TwitterDownloader import TwitterDownloader
+    from utils.Storage import Storage
     main(args)

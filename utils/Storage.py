@@ -3,6 +3,7 @@ from google.cloud import storage
 from google.cloud.exceptions import GoogleCloudError, NotFound
 import os
 import jsonpickle
+from sqlalchemy import *
 
 class Storage:
     def __init__(self):
@@ -59,6 +60,42 @@ class Storage:
                 with open(destination, mode) as f:
                     for item in data:
                         f.write(jsonpickle.encode(item, unpicklable=False) + '\n')
+
+    def mongo_aggregation_query(self, connection_string, database_name, collection_name, pipeline):
+        client = MongoClient(connection_string)
+        db = client[database_name]
+        collection = db[collection_name]
+
+        return list(collection.aggregate(pipeline))
+
+    def get_sql_data(self, sql_connection_string=None, sql_table_name=None,
+                     sql_column_list=None, sql_where=None):
+        engine = create_engine(sql_connection_string)
+        metadata = MetaData(engine)
+
+        source_table = Table(sql_table_name, metadata, autoload=True)
+        projection_columns = [source_table.columns[name] for name in sql_column_list]
+
+        if sql_where:
+            statement = select(projection_columns).where(sql_where(source_table.columns))
+        else:
+            statement = select(projection_columns)
+        result = statement.execute()
+        rows = result.fetchall()
+        result.close()
+        return rows
+
+    def insert_to_sql(self, sql_connection_string=None, sql_table_name=None, data=None):
+        engine = create_engine(sql_connection_string)
+        metadata = MetaData(engine)
+
+        source_table = Table(sql_table_name, metadata, autoload=True)
+        statement = source_table.insert().values(data)
+        result = statement.execute()
+
+if __name__ == "__main__":
+    pass
+
 
 
 
