@@ -1,7 +1,7 @@
 import requests
 import xml.etree.ElementTree as ET
 import os
-from datetime import datetime
+import datetime
 from io import StringIO
 import pandas as pd
 import sys
@@ -189,9 +189,12 @@ def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_
     columns = ["NAME", "ISIN"]
     table = "CONSTITUENTS_MASTER"
 
+    '''
     constituents = storage.get_sql_data(sql_connection_string=param_connection_string,
                                         sql_table_name=table,
                                         sql_column_list=columns)
+    '''
+    constituents = [('Allianz', 'DEFEI1007380')]
 
     for name, bvdid in constituents:
         file_name = "{}_{}".format(name, str(datetime.datetime.today().date()))
@@ -206,6 +209,7 @@ def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_
         finally:
             soap.close_connection(token, database)
 
+        #print(get_report_section_result)
         result = ET.fromstring(get_report_section_result)
         csv_result = result[0][0][0].text
 
@@ -227,6 +231,7 @@ def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_
             cloud_destination = "2017/{}".format(file_name)
             if storage.upload_to_cloud_storage(google_key_path,"igenie-news", file_name,cloud_destination):
                 os.remove(file_name)
+                print("File uploaded to cloud storage")
             else:
                 print("File not uploaded to Cloud storage.")
         else:
@@ -265,7 +270,8 @@ def main_rest(api_key):
 def main(args):
     #get_zephyr_data(args.user,args.pwd)
     #get_orbis_news(args.user,args.pwd)
-    get_historical_orbis_news(args.user,args.pwd, "orbis", args.google_key_path)
+    #get_historical_orbis_news(args.user,args.pwd, "orbis", args.google_key_path)
+    get_daily_orbis_news(args.user,args.pwd,"orbis",args.google_key_path,args.param_connection_string)
 
 if __name__ == "__main__":
     import argparse
@@ -279,4 +285,4 @@ if __name__ == "__main__":
     sys.path.insert(0, args.python_path)
     from utils.Storage import Storage
     from utils.SOAPUtils import SOAPUtils
-main(args)
+    main(args)

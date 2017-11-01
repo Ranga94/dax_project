@@ -27,9 +27,11 @@ class SOAPUtils:
 
         OpenResponse = ET.fromstring(response.text)
         token = OpenResponse[0][0][0].text
+        print(token)
         return token
 
     def close_connection(self, token, database):
+        print("Closing connection")
         # get access token
         url = 'https://webservices.bvdep.com/{}/remoteaccess.asmx'.format(database)
         headers = {'Content-Type': 'text/xml'}
@@ -96,7 +98,7 @@ class SOAPUtils:
         print(SelectionResult_count)
         return SelectionResult_token, SelectionResult_count
 
-    def get_data(self, token, SelectionResult_token, SelectionResult_count, query, field, constituent, database):
+    def get_data(self, token, SelectionResult_token, SelectionResult_count, query, database):
         url = 'https://webservices.bvdep.com/{}/remoteaccess.asmx'.format(database)
         headers = {'Content-Type': 'text/xml'}
         data = """<?xml version="1.0" encoding="utf-8"?>
@@ -118,6 +120,7 @@ class SOAPUtils:
 
         response = requests.post(url, headers=headers, data=data, timeout=60)
         return response.text
+
         result = ET.fromstring(response.text)
         csv_result = result[0][0][0].text
 
@@ -153,9 +156,9 @@ class SOAPUtils:
 
         response = requests.post(url, headers=headers, data=data, timeout=60)
         if response.status_code != requests.codes.ok:
-            return response.text
-        else:
             return None
+        else:
+            return response.text
 
 
 if __name__=="__main__":
