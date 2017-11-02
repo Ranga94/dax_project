@@ -148,8 +148,8 @@ def main(arguments):
     storage = Storage()
     
     #save the result: combined - analyst_opinions, bi - analyst_opinions_all
-    storage.save_to_mongodb(connection_string=args.param_connection_string, database=args.database,collection=args.collection[0], data=combined_analyst_json)
-    storage.save_to_mongodb(connection_string=args.param_connection_string, database=args.database,collection=args.collection[1], data=bi_analyst_json)
+    storage.save_to_mongodb(connection_string=args.param_connection_string, database=args.database,collection=args.collection_selected, data=combined_analyst_json)
+    storage.save_to_mongodb(connection_string=args.param_connection_string, database=args.database,collection=args.collection_all, data=bi_analyst_json)
     
     
 if __name__ == "__main__":
@@ -161,7 +161,8 @@ if __name__ == "__main__":
     parser.add_argument('param_connection_string', help='The connection string') #mongodb connection string
     #parser.add_argument('constituent_list', help='constituents on DAX') #constituents
     parser.add_argument('database', help='database for storage') #collection name
-    parser.add_argument('collection', help='collection for storage') #collection name for storage
+    parser.add_argument('collection_selected', help='collection for storing selected constituents') #collection name for storage
+    parser.add_argument('collection_all', help='collection for storing all constituents') #collection name for storage
     args = parser.parse_args()
     
     #sys.path.insert(0, args.python_path)#for inserting new function? 
