@@ -217,11 +217,10 @@ bi_analyst_json = json.loads(bi_analyst_table.to_json(orient='records'))
 
 # In[9]:
 
-<<<<<<< HEAD
     ##Append the status into existing data (not repeated)
     #collection1.update_many({}, {'$set': {'Status': 'active'}},True,True)
     #collection2.update_many({}, {'$set': {'Status': 'active'}},True,True)
-=======
+
 client = MongoClient('mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp')
 db = client.dax_gcp
 collection1  = db['analyst_opinions']
@@ -229,8 +228,6 @@ collection2 =  db['analyst_opinions_all']
 ##Append the status into existing data (not repeated)
 #collection1.update_many({}, {'$set': {'Status': 'active'}},True,True)
 #collection2.update_many({}, {'$set': {'Status': 'active'}},True,True)
-
->>>>>>> 7d87e9168068be8024151273d62b38c07a6dbbce
 
 # In[10]:
 
