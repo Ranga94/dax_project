@@ -50,17 +50,19 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
     downloader = TwitterDownloader(TWITTER_API_KEY, TWITTER_API_SECRET)
     downloader.load_api()
 
-    #For now pass data_connection_string, but in reality it should be param_connection_string
     all_constituents = storage.get_sql_data(sql_connection_string=PARAM_CONNECTION_STRING,
-                                              sql_table_name="CONSTITUENTS_MASTER",
-                                              sql_column_list=["CONSTITUENT_ID","NAME"])[0]
+                                              sql_table_name="MASTER_CONSTITUENTS",
+                                              sql_column_list=["CONSTITUENT_ID","CONSTITUENT_NAME"])[0]
+
+    all_constituents = [all_constituents]
 
     if LANGUAGE != "en":
-        tweetsPerQry = 7
+        TWEETS_PER_QUERY = 7
 
     for constituent_id, constituent_name in all_constituents:
         #For now, pass data_connection string. Later change it to param_connection_string
-        search_query = get_search_string(constituent_id, CONNECTION_STRING, None, None)
+        search_query = get_search_string(constituent_id, PARAM_CONNECTION_STRING, "PARAM_TWITTER_KEYWORDS",
+                                         "PARAM_TWITTER_EXCLUSIONS")
 
         #Get max id of all tweets to extract tweets with id highe than that
         sinceId = get_max_id(constituent_name, CONNECTION_STRING, DATABASE_NAME, COLLECTION_NAME)
@@ -69,7 +71,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
 
         #Set file name
         date = str(datetime.now().date())
-        file_name = "{}_{}".format(date,constituent_name)
+        file_name = "{}_{}.json".format(constituent_id, date)
         cloud_file_name = "2017/{}".format(file_name)
 
         print("Downloading max {0} tweets for {1} in {2}".format(MAX_TWEETS, constituent_name, LANGUAGE))
@@ -77,20 +79,19 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
             tweets_to_save = []
 
             tweets, tmp_tweet_count, max_id = downloader.download(constituent_name, search_query,
-                                                                  LANGUAGE,tweetsPerQry,sinceId,max_id)
+                                                                  LANGUAGE,TWEETS_PER_QUERY,sinceId,max_id)
             tweetCount += tmp_tweet_count
 
             #Add
             for tweet in tweets:
                 tweet._json['date'] = datetime.strptime(tweet._json['created_at'], '%a %b %d %H:%M:%S %z %Y')
-                tweet._json['constituent'] = constituent_name
                 tweet._json['source'] = "Twitter"
                 tweets_to_save.append(tweet._json)
-                #tweet._json['constituent_name'] = constituent_name
-                #tweet._json['constituent_id'] = constituent_id
+                tweet._json['constituent_name'] = constituent_name
+                tweet._json['constituent_id'] = constituent_id
 
             #Save to MongoDB
-            storage.save_to_mongodb(CONNECTION_STRING, DATABASE_NAME, COLLECTION_NAME, tweets_to_save)
+            #storage.save_to_mongodb(CONNECTION_STRING, DATABASE_NAME, COLLECTION_NAME, tweets_to_save)
 
             #Save to local file
             if tweetCount == 0:
@@ -101,6 +102,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
         #Upload file to cloud storage
         if os.path.isfile(file_name):
             if storage.upload_to_cloud_storage(GOOGLE_KEY_PATH, BUCKET_NAME, file_name, cloud_file_name):
+                print("File uploaded to Cloud Storage")
                 os.remove(file_name)
             else:
                 print("File not uploaded to Cloud storage.")
@@ -154,7 +156,6 @@ def get_max_id(constituent_id, connection_string, database, table):
     return res[0]["max_id"]
 
 def get_search_string(constituent_id, connection_string, table_keywords, table_exclusions):
-    ''''
     storage = Storage()
 
     where = lambda x: and_((x["ACTIVE_STATE"] == 1),(x["CONSTITUENT_ID"] == constituent_id))
@@ -168,7 +169,7 @@ def get_search_string(constituent_id, connection_string, table_keywords, table_e
 
     exclusions = storage.get_sql_data(sql_connection_string=connection_string,
                                                 sql_table_name=table_exclusions,
-                                                sql_column_list=["EXCLUSION"],
+                                                sql_column_list=["EXCLUSIONS"],
                                                 sql_where=where)
 
     exclusions_list = ["-" + key[0] for key in exclusions]
@@ -188,7 +189,9 @@ def get_search_string(constituent_id, connection_string, table_keywords, table_e
     ex = " ".join(exclusions)
     searchQuery = k + " " + ex
 
+
     return searchQuery
+    '''
 
 def send_mail(data_connection_string, param_connection_string):
     engine = create_engine(param_connection_string)
