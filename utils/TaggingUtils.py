@@ -10,39 +10,24 @@ class TaggingUtils:
         self.proc_obj = None
         self.tagger = None
 
-    def start_tagger(self):
+    def get_named_entities(self, text):
+        new_text = text.replace('€', '$')
+        classified_text = self.tagger.get_entities(new_text)
+        return classified_text
+
+    def start(self):
         command = "java -Djava.ext.dirs=./lib -cp {0} edu.stanford.nlp.ie.NERServer " \
                   "-port 9199 -loadClassifier {1}  -tokenizerFactory edu.stanford.nlp.process.WhitespaceTokenizer " \
                   "-tokenizerOptions tokenizeNLs=false".format(self.sner_jar_path, self.sner_class_path)
-        if not self.proc_obj:
-            try:
-                self.proc_obj = Popen(args=command)
-                print(self.proc_obj.pid)
-                self.tagger = Ner(host='localhost', port=9199)
-                print("Tagger was started.")
-                text = "Google, headquartered in Mountain View, unveiled the new Android phone at the Consumer Electronic Show.  Sundar Pichai said in his keynote that users love their new Android phones."
-                classified = self.tagger.get_entities(text)
-                print(classified)
-                self.proc_obj.terminate()
-            except OSError as e:
-                print(str(e))
-        else:
-            print("Tagger has already been started.")
+        self.stop()
+        self.proc_obj = Popen(args=command)
+        self.tagger = Ner(host='localhost', port=9199)
 
-    def stop_tagger(self):
+    def stop(self):
         if self.proc_obj:
-            if self.proc_obj.poll():
-                self.proc_obj.terminate()
-            else:
-                print("Tagger is not running...")
-        else:
-            print("Tagger has not been started.")
-
-    def tag(self, text):
-        if self.proc_obj and self.proc_obj.poll() and self.tagger:
-            new_text = text.replace('€', '$')
-            classified_text = self.tagger.get_entities(new_text)
-            return classified_text
+            self.proc_obj.kill()
+            self.proc_obj.wait()
+            self.proc_obj = None
 
 if __name__=="__main__":
     import argparse
@@ -51,10 +36,11 @@ if __name__=="__main__":
     parser.add_argument('c')
     args = parser.parse_args()
     t = TaggingUtils(args.jar, args.c)
-    t.start_tagger()
-    #text = "Google, headquartered in Mountain View, unveiled the new Android phone at the Consumer Electronic Show.  Sundar Pichai said in his keynote that users love their new Android phones."
-    #classified = t.tag(text)
-    #print(classified)
-    #t.stop_tagger()
+    text1 = "Google, headquartered in Mountain View, unveiled the new Android phone at the Consumer Electronic Show.  Sundar Pichai said in his keynote that users love their new Android phones."
+    text2 = "I went to California with my family"
+    t.start()
+    print(t.get_named_entities(text1))
+    print(t.get_named_entities(text2))
+    t.stop()
 
 
