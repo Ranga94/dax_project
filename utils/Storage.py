@@ -13,7 +13,7 @@ class Storage:
         if connection_string and database and collection:
             client = MongoClient(connection_string)
             db = client[database]
-            collection = [collection]
+            collection = db[collection]
 
             result = None
 
