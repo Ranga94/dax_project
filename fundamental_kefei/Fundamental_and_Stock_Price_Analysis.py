@@ -16,7 +16,7 @@
 
 # In[1]:
 
-import pandas as pd
+
 import pymongo
 from re import sub
 from decimal import Decimal
@@ -27,12 +27,13 @@ import matplotlib.pyplot as plt
 import pylab
 import scipy
 from scipy import stats
-from statsmodels.tsa.stattools import adfuller
-from odo import odo
+#from statsmodels.tsa.stattools import adfuller
+#from odo import odo
 from decimal import Decimal
 import operator
 from bs4 import BeautifulSoup
 import urllib
+import pandas as pd
 
 client_old = MongoClient('mongodb://admin:admin@ds019654.mlab.com:19654/dax')
 client = MongoClient('mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp')
@@ -231,31 +232,7 @@ def Bollinger(his):
 # In[10]:
 
 ## Calculate the mean Standard Deviation quarterly in the last 18 months
-def standard_dev_collection():
-    n=0
-    collection = db['historical']
-    standard_dev_table = pd.DataFrame()
-    all_constituents = ['Allianz', 'adidas', 'BASF', 'Bayer', 'Beiersdorf','BMW', 'Commerzbank', 'Continental', 'Daimler','Deutsche Bank', 'Deutsche Börse', 'Deutsche Post','Deutsche Telekom', 'EON', 'Fresenius', 'HeidelbergCement', 'Infineon','Linde','Lufthansa', 'Merck', 'RWE', 'SAP', 'Siemens', 'thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media','Volkswagen (VW) vz']
-    for constituent in all_constituents:
-        n=n+1
-        his = collection.find({"constituent":constituent})
-        his = pd.DataFrame(list(his))
-        his = his.iloc[::-1]
-        
-        #print constituent
-        above,below,standard_dev=Bollinger(his)
-        std_3 = standard_dev[-63:].mean()
-        std_3yrs = standard_dev[-756:].mean()
-        std_1yr = standard_dev[-252:].mean()
-        ##Set a parameter to measure the stability of the stocks for the last 18 months
-        #std_mean = (std_3+std_3_to_6+std_6_to_9+std_9_to_12+std_12_to_15+std_15_to_18)/6.0
-        #standard_dev_table = standard_dev_table.append(pd.DataFrame({'Constituent': constituent, 'Last 3 months': round(std_3,3), 'Last 3-6 months':round(std_3_to_6,3),'Last 6-9 months': round(std_6_to_9,3),'Last 9-12 months':round(std_9_to_12,3), 'Last 12-15 months':round(std_12_to_15,3),'Last 15-18 months':round(std_15_to_18,3),'Mean std dev(quarterly)':round(std_mean,3)}, index=[0]), ignore_index=True)
-        standard_dev_table = standard_dev_table.append(pd.DataFrame({'Constituent': constituent,'Last 12 months':round(std_1yr,2),'Last 3 years':round(std_3yrs,2),'Table': 'standard deviation analysis','Date':str(datetime.date.today()),'Status':"active"},index=[0]),ignore_index=True)
-    columnsTitles=['Constituent','Last 12 months','Last 3 years','Table','Status','Date']
-    #standard_dev_table = standard_dev_table.sort_values('Mean std dev(quarterly)',axis=0, ascending=True).reset_index(drop=True)
-    standard_dev_table =standard_dev_table.reindex(columns=columnsTitles)
-    #standard_dev_table.to_csv('standard_dev_table.csv', encoding = 'utf-8', index = False)
-    return standard_dev_table
+
 
 
 # ## Average True Range
@@ -341,7 +318,6 @@ def ROCE_calculate(master):
 
 # ## Sales Revenue
 
-# In[14]:
 
 def sales_calculate(master):
     table= master[['Sales in Mio','year']].dropna(thresh=2)
@@ -353,9 +329,8 @@ def sales_calculate(master):
     return float(pct_sales_last_year), float(pct_sales_four_years), table['Sales in Mio']
 
 
-# ## ROCE and Sales analysis
+## ROCE and Sales analysis
 
-# In[15]:
 
 ##Table for company performance, ROCE and Sales Revenue
 def ROCE_and_sales_collection():
@@ -395,9 +370,8 @@ def ROCE_and_sales_collection():
     return ROCE_coll_table, sales_coll_table
 
 
-# ## Dividend and Dividend Yield Analysis
+## Dividend and Dividend Yield Analysis
 
-# In[16]:
 
 #Computes the linear regression model for dividend, and produce list of years where dividend is offered. 
 def dividend_analysis(div):

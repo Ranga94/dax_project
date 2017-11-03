@@ -5,7 +5,7 @@
 
 # In[1]:
 
-import pandas as pd
+
 import pymongo
 from re import sub
 from decimal import Decimal
@@ -16,12 +16,13 @@ import matplotlib.pyplot as plt
 import pylab
 import scipy
 from scipy import stats
-from statsmodels.tsa.stattools import adfuller
-from odo import odo
+#from statsmodels.tsa.stattools import adfuller
+#from odo import odo
 from decimal import Decimal
 import operator
 from bs4 import BeautifulSoup
 import urllib
+import pandas as pd
 
 
 # In[6]:
