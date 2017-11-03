@@ -4,6 +4,7 @@ from google.cloud.exceptions import GoogleCloudError, NotFound
 import os
 import jsonpickle
 from sqlalchemy import *
+import json
 
 class Storage:
     def __init__(self):
@@ -13,7 +14,7 @@ class Storage:
         if connection_string and database and collection:
             client = MongoClient(connection_string)
             db = client[database]
-            collection = [collection]
+            collection = db[collection]
 
             result = None
 
@@ -59,7 +60,8 @@ class Storage:
             if data and isinstance(data[0], dict):
                 with open(destination, mode) as f:
                     for item in data:
-                        f.write(jsonpickle.encode(item, unpicklable=False) + '\n')
+                        #f.write(jsonpickle.encode(item, unpicklable=False) + '\n')
+                        f.write(json.dumps(item, cls=MongoEncoder) + '\n')
 
     def mongo_aggregation_query(self, connection_string, database_name, collection_name, pipeline):
         client = MongoClient(connection_string)
@@ -93,8 +95,22 @@ class Storage:
         statement = source_table.insert().values(data)
         result = statement.execute()
 
+class MongoEncoder(json.JSONEncoder):
+    def default(self, v):
+        types = {
+            'ObjectId': lambda v: str(v),
+            'datetime': lambda v: v.isoformat()
+        }
+        vtype = type(v).__name__
+        if vtype in types:
+            return types[type(v).__name__](v)
+        else:
+            return json.JSONEncoder.default(self, v)
+
 if __name__ == "__main__":
     pass
+
+
 
 
 
