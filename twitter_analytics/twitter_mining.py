@@ -13,7 +13,18 @@ from datetime import datetime
 
 
 #current_constituent = ['BMW','adidas']
-current_constituent = ['BMW','adidas','Deutsche Bank', 'EON', 'Commerzbank']
+current_constituent = ['Allianz', 
+                    'BASF', 'Bayer', 'Beiersdorf',
+                    'Continental',
+                    'Daimler',
+                    'Deutsche Börse',
+                    'Deutsche Post', 'Deutsche Telekom', 'EON',
+                    'Fresenius Medical Care', 'Fresenius', 'HeidelbergCement',
+                    'Henkel vz', 'Infineon', 'Linde',
+                    'Lufthansa', 'Merck',
+                    'Münchener Rückversicherungs-Gesellschaft', 'ProSiebenSat1 Media',
+                    'RWE', 'SAP', 'Siemens',
+                    'thyssenkrupp', 'Volkswagen (VW) vz','Vonovia']
 
 
 all_constituents = ['Allianz', 'adidas',
