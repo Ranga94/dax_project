@@ -257,7 +257,7 @@ def send_mail(data_connection_string, param_connection_string):
             break
         i += 1
 
-    body = "Tweets collected today\n" + str(result[:i])
+    body = "Tweets collected today\n" + str(daily[:i])
     subject = "Twitter collection logs: {}".format(time.strftime("%d/%m/%Y"))
 
     message = 'Subject: {}\n\n{}'.format(subject, body)
