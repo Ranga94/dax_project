@@ -56,6 +56,9 @@ class Storage:
         if isinstance(data, str):
             with open(destination, mode) as f:
                 f.write(data)
+        elif isinstance(data, dict):
+            with open(destination, mode) as f:
+                f.write(json.dumps(data, cls=MongoEncoder) + '\n')
         elif isinstance(data,list):
             if data and isinstance(data[0], dict):
                 with open(destination, mode) as f:

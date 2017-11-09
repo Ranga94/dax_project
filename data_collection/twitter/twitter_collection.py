@@ -1,5 +1,6 @@
 from sqlalchemy import *
 from pymongo import MongoClient
+from pymongo.results import InsertOneResult, InsertManyResult
 from datetime import datetime
 import time
 import os
@@ -29,7 +30,7 @@ def main(arguments):
         parameters["LANGUAGE"] = lang
         get_tweets(**parameters)
 
-    #send_mail(parameters[3], arguments.param_connection_string)
+    send_mail(parameters[3], arguments.param_connection_string)
 
 def get_parameters(connection_string, table, column_list):
     storage = Storage()
@@ -73,6 +74,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
         date = str(datetime.now().date())
         file_name = "{}_{}.json".format(constituent_id, date)
         cloud_file_name = "2017/{}".format(file_name)
+        saved_tweets = 0
 
         print("Downloading max {0} tweets for {1} in {2}".format(MAX_TWEETS, constituent_name, LANGUAGE))
         while tweetCount < MAX_TWEETS:
@@ -91,14 +93,21 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
                 tweet._json['constituent_id'] = constituent_id
 
             #Save to MongoDB
-            #storage.save_to_mongodb(CONNECTION_STRING, DATABASE_NAME, COLLECTION_NAME, tweets_to_save)
+            result = storage.save_to_mongodb(CONNECTION_STRING, DATABASE_NAME, COLLECTION_NAME, tweets_to_save)
+            if isinstance(result, InsertOneResult):
+                saved_tweets += 1
+            elif isinstance(result, InsertManyResult):
+                saved_tweets += len(result.inserted_ids)
 
+            ''''
             #Save to local file
             if tweetCount == 0:
                 storage.save_to_local_file(tweets_to_save, file_name, "w")
             else:
                 storage.save_to_local_file(tweets_to_save, file_name, "a")
+            '''
 
+        '''
         #Upload file to cloud storage
         if os.path.isfile(file_name):
             if storage.upload_to_cloud_storage(GOOGLE_KEY_PATH, BUCKET_NAME, file_name, cloud_file_name):
@@ -108,6 +117,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
                 print("File not uploaded to Cloud storage.")
         else:
             print("File does not exists in the local filesystem.")
+        '''
 
         #logging
         if LOGGING_FLAG:
@@ -263,7 +273,7 @@ def send_mail(data_connection_string, param_connection_string):
     server.starttls()
     server.login(username, password)
     server.sendmail(fromaddr, toaddrs, message)
-    server.quit()--host
+    server.quit()
 
 if __name__ == "__main__":
     import argparse
