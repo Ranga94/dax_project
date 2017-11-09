@@ -30,7 +30,7 @@ def main(arguments):
         parameters["LANGUAGE"] = lang
         get_tweets(**parameters)
 
-    send_mail(parameters[3], arguments.param_connection_string)
+    send_mail(parameters["CONNECTION_STRING"], arguments.param_connection_string)
 
 def get_parameters(connection_string, table, column_list):
     storage = Storage()
