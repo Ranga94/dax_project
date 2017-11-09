@@ -22,8 +22,10 @@ class Storage:
             try:
                 result = collection.insert_many(data, ordered=False)
             except errors.BulkWriteError as e:
+                pass
                 #print(str(e.details['writeErrors']))
             except Exception as e:
+                pass
                 #print(str(e))
             finally:
                 return result
