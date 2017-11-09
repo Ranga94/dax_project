@@ -53,9 +53,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
 
     all_constituents = storage.get_sql_data(sql_connection_string=PARAM_CONNECTION_STRING,
                                               sql_table_name="MASTER_CONSTITUENTS",
-                                              sql_column_list=["CONSTITUENT_ID","CONSTITUENT_NAME"])[0]
-
-    all_constituents = [all_constituents]
+                                              sql_column_list=["CONSTITUENT_ID","CONSTITUENT_NAME"])
 
     if LANGUAGE != "en":
         TWEETS_PER_QUERY = 7
@@ -230,12 +228,13 @@ def send_mail(data_connection_string, param_connection_string):
             "$project": {
                 "constituent_name": 1,
                 "day": {"$dayOfYear": "$date"},
+                "date":1,
                 "downloaded_tweets": 1
             }
         },
         {
             "$group": {
-                "_id": {"constituent_name": "$constituent_name", "day": "$day"},
+                "_id": {"constituent_name": "$constituent_name", "day": "$day", "date":"$date"},
                 "tweets": {"$sum": "$downloaded_tweets"}
             }
         },
@@ -243,6 +242,7 @@ def send_mail(data_connection_string, param_connection_string):
             "$project": {
                 "constituent": "$_id.constituent_name",
                 "day": "$_id.day",
+                "date":"$_id.date",
                 "tweets": 1,
                 "_id": 0
             }
