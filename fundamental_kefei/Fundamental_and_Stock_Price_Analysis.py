@@ -159,10 +159,8 @@ def quarter_mean_analysis(his):
     return z[0],z[1],z_3yrs[0],z_3yrs[1],z_1yr[0],z_1yr[1],quarter_mean
 
 
-# In[7]:
 
 def quarter_mean_collection(): 
-    n=0
     collection1 = db['historical']
     quarter_mean_table = pd.DataFrame()
     all_constituents = ['Allianz', 'adidas', 'BASF', 'Bayer', 'Beiersdorf','BMW', 'Commerzbank', 'Continental', 'Daimler','Deutsche Bank', 'Deutsche Börse', 'Deutsche Post','Deutsche Telekom', 'EON', 'Fresenius', 'HeidelbergCement', 'Infineon','Linde','Lufthansa', 'Merck', 'RWE', 'SAP', 'Siemens', 'thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media','Volkswagen (VW) vz']
@@ -333,9 +331,8 @@ def sales_calculate(master):
 
 
 ##Table for company performance, ROCE and Sales Revenue
-def ROCE_and_sales_collection():
-    collection = db_old['company_data']
-    ROCE_coll_table = pd.DataFrame()
+def sales_main():
+    
     sales_coll_table = pd.DataFrame()
     #'Commerzbank' after 'BMW', all debt NaN,Deutsche Bank' after'Daimler',no data avaliable for 'Volkswagen (VW) vz'ranked last
     all_constituents = ['Allianz', 'adidas', 'BASF', 'Bayer', 'Beiersdorf','BMW', 'Continental', 'Daimler', 'Deutsche Börse', 'Deutsche Post','Deutsche Telekom', 'EON', 'Fresenius', 'HeidelbergCement', 'Infineon','Linde','Lufthansa', 'Merck', 'RWE', 'SAP', 'Siemens', 'thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media']
@@ -458,9 +455,8 @@ dividend_yield_table['Dividend yield %']=dividend_yield_table['Dividend yield %'
 dividend_yield_table['Dividend yield %']=dividend_yield_table['Dividend yield %'].replace('', np.nan)
 
 
-# ## Profit Margin Analysis
+## Profit Margin Analysis
 
-# In[20]:
 
 def profit_margin_calculator(master):
     sales = master[['Sales in Mio','year']].dropna(thresh=2)
@@ -471,8 +467,6 @@ def profit_margin_calculator(master):
     profit_margin_calculation = [float(net_profit['Net profit'].iloc[i])*100.0/float(sales['Sales in Mio'].iloc[i]) for i in range (sales.shape[0])]
     return profit_margin_calculation
 
-
-# In[21]:
 
 def profit_margin_collection():
     collection = db_old['company_data']
@@ -913,7 +907,7 @@ all_constituents_dict = {'Allianz':'Allianz', 'adidas':'adidas', 'BASF':'BASF', 
 #Data for SAP is missing. 
 
 
-# In[31]:
+
 
 #Write a function that extract analyst data for all stocks
 def analyst_businessinsider(constituents_dict): 
@@ -974,9 +968,6 @@ def analyst_businessinsider(constituents_dict):
 
 
 # # Categorising companies by industry
-
-# In[29]:
-
 def industry_categorisation():
     category_table = pd.DataFrame()
     array = ['adidas','Clothing','Allianz','Insurance','BASF','Chemicals','Bayer','Pharmaceuticals','Beiersdorf','Chemicals',

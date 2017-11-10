@@ -12,7 +12,7 @@ import json
 import sys
 
 
-#!python Igenie/dax_project/fundamental_kefei/sales_analysis.py '/Users/kefei/Igenie/dax_project/fundamental_kefei' 'mongodb://admin:admin@ds019654.mlab.com:19654/dax' 'dax' 'company_data' 'fundamental analysis' -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Continental','Daimler','Deutsche Börse','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Linde','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media' 'Sales analysis'
+#!python Igenie/dax_project/fundamental_kefei/sales_analysis.py '/Users/kefei/Igenie/dax_project/fundamental_kefei' 'mongodb://admin:admin@ds019654.mlab.com:19654/dax' 'dax' 'company_data' 'mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp' 'dax_gcp' 'fundamental analysis' -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Continental','Daimler','Deutsche Börse','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Linde','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media' 'Sales analysis'
 
 def sales_main(args):
     sales_coll_table = pd.DataFrame()
@@ -23,10 +23,11 @@ def sales_main(args):
         pct_sales_last_year, pct_sales_four_years, sales_table,score = sales_calculate(master)
         sales_coll_table = sales_coll_table.append(pd.DataFrame({'Constituent': constituent,'Current sales in Mio':round(sales_table.iloc[-1],2), '%change in Sales from previous year':round(pct_sales_last_year,2),'%change in Sales from 4 years ago':round(pct_sales_four_years,2),'Sales score':score,'Table':'Sales analysis','Date':str(datetime.date.today()),'Status':"active"},index=[0]),ignore_index=True)
         
-    #status_update(args)
+    status_update(args)
     #store the analysis
     #storage = Storage()
-    #storage.save_to_mongodb(connection_string=args.connection_string, database=args.database,collection=args.collection_store_analysis, data=quarter_mean_json)
+    sales_json = json.loads(sales_coll_table.to_json(orient='records'))
+    Storage.storage.save_to_mongodb(connection_string=args.connection_string_upload, database=args.database_upload,collection=args.collection_store_analysis, data=sales_json)
 
 def sales_calculate(master):
     table= master[['Sales in Mio','year']].dropna(thresh=2)
@@ -70,16 +71,18 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('python_path', help='The directory connection string') 
-    parser.add_argument('connection_string', help='The mongodb connection string')
-    parser.add_argument('database',help='Name of the database')
+    parser.add_argument('connection_string', help='The mongodb connection string for collection')
+    parser.add_argument('database',help='Name of the database for collection')
     parser.add_argument('collection_get_master', help='The collection from which company data is extracted')
+    parser.add_argument('connection_string_upload', help='The mongodb connection string for uploading result')
+    parser.add_argument('database_upload',help='Name of the database for collection for uploadding result')
     parser.add_argument('collection_store_analysis', help='The collection where the analysis will be stored')
     parser.add_argument('-l', '--constituents_list',help='List of all DAX 30 constituents avaliable',type=str)
-    parser.add_argument('table_store_analysis', help='Name of table for stroing the analysis')
+    parser.add_argument('table_store_analysis', help='Name of table for storing the analysis')
 
     args = parser.parse_args()
     
-    #sys.path.insert(0, args.python_path)
-    #from utils.Storage import Storage
+    sys.path.insert(0, args.python_path)
+    from utils.Storage import Storage
     
     sales_main(args)
