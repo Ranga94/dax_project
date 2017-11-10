@@ -22,9 +22,11 @@ class Storage:
             try:
                 result = collection.insert_many(data, ordered=False)
             except errors.BulkWriteError as e:
-                print(str(e.details['writeErrors']))
+                pass
+                #print(str(e.details['writeErrors']))
             except Exception as e:
-                print(str(e))
+                pass
+                #print(str(e))
             finally:
                 return result
         else:
@@ -56,6 +58,9 @@ class Storage:
         if isinstance(data, str):
             with open(destination, mode) as f:
                 f.write(data)
+        elif isinstance(data, dict):
+            with open(destination, mode) as f:
+                f.write(json.dumps(data, cls=MongoEncoder) + '\n')
         elif isinstance(data,list):
             if data and isinstance(data[0], dict):
                 with open(destination, mode) as f:

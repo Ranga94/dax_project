@@ -1,5 +1,6 @@
 from sqlalchemy import *
 from pymongo import MongoClient
+from pymongo.results import InsertOneResult, InsertManyResult
 from datetime import datetime
 import time
 import os
@@ -29,7 +30,7 @@ def main(arguments):
         parameters["LANGUAGE"] = lang
         get_tweets(**parameters)
 
-    #send_mail(parameters[3], arguments.param_connection_string)
+    send_mail(parameters["CONNECTION_STRING"], arguments.param_connection_string)
 
 def get_parameters(connection_string, table, column_list):
     storage = Storage()
@@ -52,9 +53,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
 
     all_constituents = storage.get_sql_data(sql_connection_string=PARAM_CONNECTION_STRING,
                                               sql_table_name="MASTER_CONSTITUENTS",
-                                              sql_column_list=["CONSTITUENT_ID","CONSTITUENT_NAME"])[0]
-
-    all_constituents = [all_constituents]
+                                              sql_column_list=["CONSTITUENT_ID","CONSTITUENT_NAME"])
 
     if LANGUAGE != "en":
         TWEETS_PER_QUERY = 7
@@ -73,6 +72,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
         date = str(datetime.now().date())
         file_name = "{}_{}.json".format(constituent_id, date)
         cloud_file_name = "2017/{}".format(file_name)
+        saved_tweets = 0
 
         print("Downloading max {0} tweets for {1} in {2}".format(MAX_TWEETS, constituent_name, LANGUAGE))
         while tweetCount < MAX_TWEETS:
@@ -91,14 +91,21 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
                 tweet._json['constituent_id'] = constituent_id
 
             #Save to MongoDB
-            #storage.save_to_mongodb(CONNECTION_STRING, DATABASE_NAME, COLLECTION_NAME, tweets_to_save)
+            result = storage.save_to_mongodb(CONNECTION_STRING, DATABASE_NAME, COLLECTION_NAME, tweets_to_save)
+            if isinstance(result, InsertOneResult):
+                saved_tweets += 1
+            elif isinstance(result, InsertManyResult):
+                saved_tweets += len(result.inserted_ids)
 
+            ''''
             #Save to local file
             if tweetCount == 0:
                 storage.save_to_local_file(tweets_to_save, file_name, "w")
             else:
                 storage.save_to_local_file(tweets_to_save, file_name, "a")
+            '''
 
+        '''
         #Upload file to cloud storage
         if os.path.isfile(file_name):
             if storage.upload_to_cloud_storage(GOOGLE_KEY_PATH, BUCKET_NAME, file_name, cloud_file_name):
@@ -108,6 +115,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
                 print("File not uploaded to Cloud storage.")
         else:
             print("File does not exists in the local filesystem.")
+        '''
 
         #logging
         if LOGGING_FLAG:
@@ -220,12 +228,13 @@ def send_mail(data_connection_string, param_connection_string):
             "$project": {
                 "constituent_name": 1,
                 "day": {"$dayOfYear": "$date"},
+                "date":1,
                 "downloaded_tweets": 1
             }
         },
         {
             "$group": {
-                "_id": {"constituent_name": "$constituent_name", "day": "$day"},
+                "_id": {"constituent_name": "$constituent_name", "day": "$day", "date":"$date"},
                 "tweets": {"$sum": "$downloaded_tweets"}
             }
         },
@@ -233,6 +242,7 @@ def send_mail(data_connection_string, param_connection_string):
             "$project": {
                 "constituent": "$_id.constituent_name",
                 "day": "$_id.day",
+                "date":"$_id.date",
                 "tweets": 1,
                 "_id": 0
             }
@@ -247,7 +257,7 @@ def send_mail(data_connection_string, param_connection_string):
             break
         i += 1
 
-    body = "Tweets collected today\n" + str(result[:i])
+    body = "Tweets collected today\n" + str(daily[:i])
     subject = "Twitter collection logs: {}".format(time.strftime("%d/%m/%Y"))
 
     message = 'Subject: {}\n\n{}'.format(subject, body)
@@ -263,7 +273,7 @@ def send_mail(data_connection_string, param_connection_string):
     server.starttls()
     server.login(username, password)
     server.sendmail(fromaddr, toaddrs, message)
-    server.quit()--host
+    server.quit()
 
 if __name__ == "__main__":
     import argparse
