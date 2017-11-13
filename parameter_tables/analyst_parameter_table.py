@@ -106,7 +106,6 @@ def data_analyst_parameter():
 
 
 if __name__ == "__main__":
-    url_df_ws = data_analyst_parameter()
-    url_df_bi = data_analyst_parameter()
+    url_df_ws, url_df_bi = data_analyst_parameter()
     insert_to_sql(sql_connection_string=sql_string, sql_table_name='PARAM_ANALYST_COLLECTION', data=url_df_bi)
     insert_to_sql(sql_connection_string=sql_string, sql_table_name='PARAM_ANALYST_COLLECTION', data=url_df_ws)
