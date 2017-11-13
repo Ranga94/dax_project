@@ -112,4 +112,8 @@ if __name__ == "__main__":
     dict_bi = url_df_bi.to_dict(orient='records')
     insert_to_sql(sql_connection_string=sql_string, sql_table_name='PARAM_ANALYST_COLLECTION', data=dict_bi)
     insert_to_sql(sql_connection_string=sql_string, sql_table_name='PARAM_ANALYST_COLLECTION', data= dict_ws )
+<<<<<<< HEAD
    
+=======
+   
+>>>>>>> f98b2133f09c7be57cfd6c0adfbd5cf540495ab1
