@@ -108,8 +108,8 @@ def data_analyst_parameter():
 if __name__ == "__main__":
     sql_string = 'mysql+pymysql://igenie_readwrite:igenie@35.197.246.202/dax_project'
     url_df_ws,url_df_bi = data_analyst_parameter()
-    dict_ws = url_df_ws.set_index('CONSTITUENT_NAME').T.to_dict('list')
-    dict_bi = url_df_bi.set_index('CONSTITUENT_NAME').T.to_dict('list')
+    dict_ws = url_df_ws.T.to_dict('list')
+    dict_bi = url_df_bi.T.to_dict('list')
     insert_to_sql(sql_connection_string=sql_string, sql_table_name='PARAM_ANALYST_COLLECTION', data=dict_bi)
     insert_to_sql(sql_connection_string=sql_string, sql_table_name='PARAM_ANALYST_COLLECTION', data= dict_ws )
    
