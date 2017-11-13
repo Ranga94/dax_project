@@ -4,7 +4,7 @@ from google.cloud import bigquery
 import datetime
 import json
 
-def main(args):
+def update_from_cloud_storage(args):
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.google_key_path
     client = bigquery.Client()
 
@@ -96,6 +96,31 @@ def main(args):
             update_tags(result)
 
             f.write(json.dumps(result, cls=MongoEncoder) + '\n')
+
+def main(args):
+    #load data
+    tweets = []
+
+    for tweet in tweets:
+        # Extra attributes
+        #Replace old 'constituent' field by new 'constituent_id', 'constituent_name'
+        if "constituent" in tweet.keys():
+            constituent_id, constituent_name = get_constituent_id_name(row.constituent)
+            tweet['constituent_id'] = constituent_id
+            tweet['constituent_name'] = constituent_name
+
+        # created at - date
+        if isinstance(tweet["created_at"], str):
+            tweet['date'] = datetime.strptime(tweet["created_at"], '%a %b %d %H:%M:%S %z %Y')
+
+        if "relevance" not in tweet.keys():
+            tweet["relevance"] = -1
+
+        # sentiment score
+        tweet["sentiment_score"] = get_nltk_sentiment(tweet["text"])
+
+        #TO DO
+        tweet = update_tags(tweet)
 
 if __name__ == "__main__":
     import argparse
