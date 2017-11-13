@@ -106,6 +106,9 @@ def data_analyst_parameter():
 
 
 if __name__ == "__main__":
-    url_df_ws, url_df_bi = data_analyst_parameter()
-    insert_to_sql(sql_connection_string=sql_string, sql_table_name='PARAM_ANALYST_COLLECTION', data=url_df_bi)
-    insert_to_sql(sql_connection_string=sql_string, sql_table_name='PARAM_ANALYST_COLLECTION', data=url_df_ws)
+    url_df_ws,url_df_bi = data_analyst_parameter()
+    dict_ws = url_df_ws.set_index('CONSTITUENT_NAME').T.to_dict('list')
+    dict_bi = url_df_bi.set_index('CONSTITUENT_NAME').T.to_dict('list')
+    insert_to_sql(sql_connection_string=sql_string, sql_table_name='PARAM_ANALYST_COLLECTION', data=dict_bi)
+    insert_to_sql(sql_connection_string=sql_string, sql_table_name='PARAM_ANALYST_COLLECTION', data= dict_ws )
+   
