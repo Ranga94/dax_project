@@ -80,7 +80,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
 
             tweets, tmp_tweet_count, max_id = downloader.download(constituent_name, search_query,
                                                                   LANGUAGE,TWEETS_PER_QUERY,sinceId,max_id)
-            if not tweet:
+            if not tweets:
                 break
 
             tweetCount += tmp_tweet_count
