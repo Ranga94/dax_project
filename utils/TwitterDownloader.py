@@ -43,9 +43,10 @@ class TwitterDownloader:
                                                   since_id=since_id, lang=language)
             if not new_tweets:
                 print("No more tweets found")
+                return None, None, None
 
             tweet_count += len(new_tweets)
-            print("Downloaded {0} tweets".format(tweet_count))
+            #print("Downloaded {0} tweets".format(tweet_count))
             max_id = new_tweets[-1].id
         except tweepy.TweepError as e:
             # Just exit if any error

@@ -8,6 +8,7 @@ import time
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from . import TaggingUtils
+import spacy
 
 def get_constituent_id_name(old_constituent_name):
     mapping = {}
@@ -173,13 +174,19 @@ def preprocess_tweet(text):
 
     return {'semi_processed_text': no_url_joined, 'processed_text': stemmed_tokens}
 
-def get_tags(text, st, tokenizer):
+def get_tags(tagger, text):
+    '''
     new_text = text.replace('€','$')
     tokenized_text = tokenizer.tokenize(new_text)
     classified_text = st.tag(tokenized_text)
     return classified_text
+    '''
+    return tagger(text.decode('utf-8'))
 
-def update_tags(dict_object, taggged_text):
+def get_tagger():
+    return spacy.load('en')
+
+def update_tags(dict_object, tagged_text):
     tags = {}
     tags["PERSON_TAGS"] = []
     tags["NORP_TAGS"] = []
@@ -199,10 +206,12 @@ def update_tags(dict_object, taggged_text):
     tags["ORDINAL_TAGS"] = []
     tags["CARDINAL_TAGS"] = []
 
-    for ent in doc.ents:
-        print(ent.label_, ent.text)
+    for ent in tagged_text.ents:
+        tags["{}_TAGS".format(ent.label_)].append(ent.text)
 
-    return None
+    dict_object.update(tags)
+
+    return dict_object
 
 
 if __name__ == "__main__":
