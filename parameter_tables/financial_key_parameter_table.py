@@ -29,7 +29,7 @@ def financial_parameter():
     mongodb_string_storage = 'mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp'
     database_storage = 'dax_gcp'
     collection_storage = 'fundamental analysis'
-    param_financial_df = param_financial_df.append(pd.DataFrame({'MONGODB_CONNECTION_STRING_QUERY':mongodb_string_query,'CONSTITUENT_LIST':constituent_list,'DATABASE_FOR_QUERY':database_query,'COLLECTION_FOR_QUERY':collection_query,'MONGODB_CONNECTION_STORAGE':mongodb_string_storage,'DATABASE_FOR_STORAGE':database_storage,'COLLECTION_FOR_STORAGE':collection_storage},index=[0]),ignore_index=True)
+    param_financial_df = param_financial_df.append(pd.DataFrame({'MONGODB_CONNECTION_STRING_QUERY':mongodb_string_query,'CONSTITUENT_LIST':constituent_list,'DATABASE_FOR_QUERY':database_query,'COLLECTION_FOR_QUERY':collection_query,'MONGODB_CONNECTION_STRING_STORAGE':mongodb_string_storage,'DATABASE_FOR_STORAGE':database_storage,'COLLECTION_FOR_STORAGE':collection_storage},index=[0]),ignore_index=True)
     
     ##Update the second row: Price analysis
     mongodb_string_query = 'mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp' 
@@ -39,7 +39,7 @@ def financial_parameter():
     mongodb_string_storage = 'mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp'
     database_storage = 'dax_gcp'
     collection_storage = 'price analysis'
-    param_financial_df = param_financial_df.append(pd.DataFrame({'MONGODB_CONNECTION_STRING_QUERY':mongodb_string_query,'CONSTITUENT_LIST':constituent_list,'DATABASE_FOR_QUERY':database_query,'COLLECTION_FOR_QUERY':collection_query,'MONGODB_CONNECTION_STORAGE':mongodb_string_storage,'DATABASE_FOR_STORAGE':database_storage,'COLLECTION_FOR_STORAGE':collection_storage},index=[0]),ignore_index=True)
+    param_financial_df = param_financial_df.append(pd.DataFrame({'MONGODB_CONNECTION_STRING_QUERY':mongodb_string_query,'CONSTITUENT_LIST':constituent_list,'DATABASE_FOR_QUERY':database_query,'COLLECTION_FOR_QUERY':collection_query,'MONGODB_CONNECTION_STRING_STORAGE':mongodb_string_storage,'DATABASE_FOR_STORAGE':database_storage,'COLLECTION_FOR_STORAGE':collection_storage},index=[0]),ignore_index=True)
     return param_financial_df
 
 
