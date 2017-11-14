@@ -17,7 +17,7 @@ def get_sql_data(args,sql_where=None):
     metadata = MetaData(engine)
 
     source_table = Table(args.sql_table_name, metadata, autoload=True)
-    projection_columns = [source_table.columns[name] for name in sql_column_list]
+    projection_columns = [source_table.columns[name] for name in args.sql_column_list]
 
     if sql_where:
         statement = select(projection_columns).where(sql_where(source_table.columns))
@@ -26,6 +26,7 @@ def get_sql_data(args,sql_where=None):
     result = statement.execute()
     rows = result.fetchall()
     result.close()
+    print rows
     return rows
 
 
@@ -35,5 +36,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('sql_connection_string', help='The sql connection string')
     parser.add_argument('sql_table_name', help='The name of sql table')
+    parser.add_argument('sql_column_list',help='Name of the column list')
     args = parser.parse_args()
-    get_sql_data(args, sql_where=None)
+    rows=get_sql_data(args, sql_where=None)
+    df = pd.DataFrame(list(rows))
+    print df.head()
