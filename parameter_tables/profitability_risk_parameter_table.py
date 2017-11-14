@@ -28,7 +28,7 @@ def assessment_parameter():
     collection_store_profitability_ranking = 'Profitability ranking'
     collection_store_risk_scores = 'Risk scores'
     assessment_param_table  = assessment_param_table.append(pd.DataFrame({'MONGDB_CONNECTION_STRING':mongodb_string,'CONSTITUENT_LIST':constituent_list,'DATABASE':database,'COLLECTION_GET_FUNDAMENTAL':collection_get_fundamental_scores,'COLLECTION_GET_PRICE':collection_get_price_scores,'COLLECTION_STORE_PROFITABILITY_SCORES':collection_store_profitability_scores,'COLLECTION_STORE_PROFITABILITY_RANKING':collection_store_profitability_ranking,'COLLECTION_STORE_RISK_SCORES':collection_store_risk_scores},index=[0]),ignore_index=True)
-return assessment_param_table
+    return assessment_param_table
 
 if __name__ == "__main__":
     sql_string = 'mysql+pymysql://igenie_readwrite:igenie@35.197.246.202/dax_project'
