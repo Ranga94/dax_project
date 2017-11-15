@@ -36,3 +36,4 @@ if __name__ == "__main__":
     parser.add_argument('sql_connection_string', help='The sql connection string')
     parser.add_argument('sql_table_name', help='The name of sql table')
     get_sql_data(args, sql_where=None)
+    
