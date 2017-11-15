@@ -27,7 +27,7 @@ def summary_parameter():
     collection_get_profitability = 'Profitability scores'
     collection_get_risk = 'Risk scores'
     collection_store_summary = 'summary_box'
-    summary_param_table=summary_param_table.append(pd.DataFrame({'MONGDB_CONNECTION_STRING':mongodb_string,'CONSTITUENT_LIST':constituent_list,'DATABASE':database,'COLLECTION_GET_PROFITABILITY_SCORE':collection_get_profitability,'COLLECTION_GET_RISK_SCORE':collection_get_risk,'COLLECTION_STORE_SUMMARY':collection_store_summary},index=[0]),ignore_index=True)
+    summary_param_table=summary_param_table.append(pd.DataFrame({'MONGODB_CONNECTION_STRING':mongodb_string,'CONSTITUENT_LIST':constituent_list,'DATABASE':database,'COLLECTION_GET_PROFITABILITY_SCORE':collection_get_profitability,'COLLECTION_GET_RISK_SCORE':collection_get_risk,'COLLECTION_STORE_SUMMARY':collection_store_summary},index=[0]),ignore_index=True)
     return summary_param_table
 
 

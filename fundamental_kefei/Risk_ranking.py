@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-##This script does ranking (fundamental ranking, price growth ranking and risk ranking)
+##This script ranks the risk of stocks based on result from VaR Analysis. 
 import pandas as pd
 import pymongo
 from re import sub
@@ -18,7 +18,7 @@ import urllib
 import json
 import sys
 
-#!python Igenie/dax_project/fundamental_kefei/Risk_ranking.py '/Users/kefei/DIgenie/dax_project/fundamental_kefei' 'mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp' 'dax_gcp' 'price analysis' -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Commerzbank','Continental','Daimler','Deutsche Bank','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Linde','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','ProSiebenSat1 Media','Volkswagen (VW) vz' 'Risk ranking'
+#!python Igenie/dax_project/fundamental_kefei/Risk_ranking.py '/Users/kefei/DIgenie/dax_project/fundamental_kefei' 'mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp' 'dax_gcp' 'price analysis' -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Commerzbank','Continental','Daimler','Deutsche Bank','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Linde','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','ProSiebenSat1 Media','Volkswagen (VW) vz' 'Risk scores'
 
 #u'Deutsche B\xf6rse'
 #u'M\xfcnchener R\xfcckversicherungs-Gesellschaft'
