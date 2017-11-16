@@ -62,7 +62,6 @@ daily_news_sent<-function(url_mongo,constituent){
   ggplot(data=df, aes(x=df$date, y=df$scorescore,group=1))+geom_line()+
     geom_point()+
     labs(y="Average news sentiment",x="Date")+
-    labs(title = title_str)+
     ylim(-1,1)+
     labs(title = paste("Daily News Sentiment for ",constituent,sep=""))+
     theme(plot.title = element_text(hjust = 0.5))+theme(plot.title = element_text(lineheight=.8, face="bold"))
