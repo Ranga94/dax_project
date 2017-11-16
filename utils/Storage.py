@@ -5,6 +5,8 @@ import os
 import jsonpickle
 from sqlalchemy import *
 import json
+from google.cloud import datastore
+from google.cloud import bigquery
 
 class Storage:
     def __init__(self):
@@ -28,6 +30,7 @@ class Storage:
                 pass
                 #print(str(e))
             finally:
+                client.close()
                 return result
         else:
             try:
@@ -35,6 +38,7 @@ class Storage:
             except Exception as e:
                 print(str(e))
             finally:
+                client.close()
                 return result
 
     def upload_to_cloud_storage(self, google_key_path, bucket_name, source, destination):
@@ -100,6 +104,43 @@ class Storage:
         statement = source_table.insert().values(data)
         result = statement.execute()
 
+    def insert_to_datastore(self, project_id,google_key_path, data, kind, key_name):
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_key_path
+        client = datastore.Client(project_id)
+
+        if isinstance(data, list):
+            for item in data:
+                with client.batch() as batch:
+                    # batch isnert
+                    # The name/ID for the new entity
+                    name = item[key_name]
+                    item.pop(key_name)
+                    # The Cloud Datastore key for the new entity
+                    key = client.key(kind, name)
+
+                    # Prepares the new entity
+                    entity = datastore.Entity(key=key)
+                    entity.update(item)
+                    batch.put(entity)
+
+    def get_bigquery_data(self, google_key_path, query, timeout=None, iterator_flag=True):
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_key_path
+        client = bigquery.Client()
+
+        query_job = client.query(query)
+        print(query_job.state)
+
+        if query_job.state == 'RUNNING':
+            print("Running query...")
+            iterator = query_job.result(timeout=timeout)
+
+            if iterator_flag:
+                return iterator
+            else:
+                return list(iterator)
+
+
+
 class MongoEncoder(json.JSONEncoder):
     def default(self, v):
         types = {
@@ -113,7 +154,20 @@ class MongoEncoder(json.JSONEncoder):
             return json.JSONEncoder.default(self, v)
 
 if __name__ == "__main__":
-    pass
+    s = Storage()
+    q = "SELECT id_str from `pecten_dataset.tweets_raw`"
+    it = s.get_bigquery_data("C:\\Users\\Uly\\Desktop\\Desktop\\DAX\\dax_project\\keys\\igenie-project-key.json",
+                             q)
+
+    i = 0
+    j = 0
+
+    for item in it:
+        i += 1
+        j += 1
+        if i == 2000:
+            print(j)
+            i = 0
 
 
 
