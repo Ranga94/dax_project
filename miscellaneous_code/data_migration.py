@@ -46,10 +46,12 @@ def tweet_table(args):
     print("Writing local file")
     with open(file_name, "w") as f:
         for tweet in cursor:
-            id, name = tap.get_constituent_id_name(tweet["constituent"])
-            tweet["constituent_name"] = name
-            tweet["constituent_id"] = id
-            tweet.pop("date")
+            if 'constituent' in tweet:
+                id, name = tap.get_constituent_id_name(tweet["constituent"])
+                tweet["constituent_name"] = name
+                tweet["constituent_id"] = id
+            if 'date' in tweet:
+                tweet.pop("date")
             f.write(json.dumps(tweet, cls=MongoEncoder) + '\n')
 
     return

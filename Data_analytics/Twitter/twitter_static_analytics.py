@@ -101,7 +101,7 @@ def update_from_bigquery(args):
     #load data
     storage = Storage()
 
-    query =
+    query = ""
 
 
 
