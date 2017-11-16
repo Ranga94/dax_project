@@ -97,9 +97,13 @@ def update_from_cloud_storage(args):
 
             f.write(json.dumps(result, cls=MongoEncoder) + '\n')
 
-def main(args):
+def update_from_bigquery(args):
     #load data
-    tweets = []
+    storage = Storage()
+
+    query =
+
+
 
     for tweet in tweets:
         # Extra attributes
@@ -130,6 +134,6 @@ if __name__ == "__main__":
     parser.add_argument('param_connection_string', help='The connection string')
     args = parser.parse_args()
     sys.path.insert(0, args.python_path)
-    from utils.Storage import Storage, MongoEncoder
+    from utils.Storage import Storage
     from utils.twitter_analytics_helpers import *
-    main(args)
+    #main(args)

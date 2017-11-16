@@ -103,7 +103,7 @@ def get_zephyr_ma_deals(user,pwd):
         finally:
             soap.close_connection(token, "zephyr")
 
-def get_historical_orbis_news(user, pwd, database, google_key_path, param_connection_string):
+def get_historical_orbis_news2(user, pwd, database, google_key_path, param_connection_string):
     soap = SOAPUtils()
     storage = Storage()
 
@@ -168,6 +168,110 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
         if os.path.isfile(file_name):
             cloud_destination = "2017/{}".format(file_name)
             if storage.upload_to_cloud_storage(google_key_path,"igenie-news", file_name,cloud_destination):
+                os.remove(file_name)
+            else:
+                print("File not uploaded to Cloud storage.")
+        else:
+            print("File does not exists in the local filesystem.")
+
+def get_historical_orbis_news(user, pwd, database, google_key_path, param_connection_string):
+    soap = SOAPUtils()
+    storage = Storage()
+
+    fields = ["NEWS_DATE", "NEWS_TITLE", "NEWS_ARTICLE_TXT",
+              "NEWS_COMPANIES", "NEWS_TOPICS", "NEWS_COUNTRY", "NEWS_REGION",
+              "NEWS_LANGUAGE", "NEWS_SOURCE", "NEWS_PUBLICATION", "NEWS_ID"]
+
+    filter = ["NEWS_DATE_NewsDim", "NEWS_TITLE_NewsDim", "NEWS_ARTICLE_TXT_NewsDim",
+              "NEWS_COMPANIES_NewsDim", "NEWS_TOPICS_NewsDim", "NEWS_COUNTRY_NewsDim", "NEWS_REGION_NewsDim",
+              "NEWS_LANGUAGE_NewsDim", "NEWS_SOURCE_NewsDim", "NEWS_PUBLICATION_NewsDim", "NEWS_ID_NewsDim"]
+
+    columns = ["CONSTITUENT_ID"]
+    table = "MASTER_CONSTITUENTS"
+
+    constituents = storage.get_sql_data(sql_connection_string=param_connection_string,
+                                        sql_table_name=table,
+                                        sql_column_list=columns)
+
+    constituents = [constituents[0]]
+
+    for bvdid in constituents:
+        start = 0
+        end = 50
+
+        while True:
+            # token = soap.get_token(user, pwd, database)
+            query = "SELECT LINE BVDNEWS.NEWS_DATE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS NEWS_DATE, " \
+                    "LINE BVDNEWS.NEWS_TITLE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS NEWS_TITLE," \
+                    "LINE BVDNEWS.NEWS_ARTICLE_TXT USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS NEWS_ARTICLE_TXT, " \
+                    "LINE BVDNEWS.NEWS_COMPANIES USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS NEWS_COMPANIES, " \
+                    "LINE BVDNEWS.NEWS_TOPICS USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS NEWS_TOPICS," \
+                    "LINE BVDNEWS.NEWS_COUNTRY USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS NEWS_COUNTRY," \
+                    "LINE BVDNEWS.NEWS_REGION USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS NEWS_REGION," \
+                    "LINE BVDNEWS.NEWS_LANGUAGE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS NEWS_LANGUAGE," \
+                    "LINE BVDNEWS.NEWS_SOURCE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS NEWS_SOURCE," \
+                    "LINE BVDNEWS.NEWS_PUBLICATION USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS NEWS_PUBLICATION," \
+                    "LINE BVDNEWS.NEWS_ID USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS NEWS_ID FROM RemoteAccess.A".format(start,end)
+
+            selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, database)
+
+            try:
+                get_data_result = soap.get_data(token, selection_token, selection_count, query, database)
+            except Exception as e:
+                print(str(e))
+                continue
+            finally:
+                soap.close_connection(token, database)
+
+        result = ET.fromstring(get_data_result)
+        csv_result = result[0][0][0].text
+
+        TESTDATA = StringIO(csv_result)
+
+        if fields[i] == "NEWS_DATE":
+            all_df.append(pd.read_csv(TESTDATA, sep=",", parse_dates=["NEWS_DATE_NewsDim"]))
+        else:
+            all_df.append(pd.read_csv(TESTDATA, sep=","))
+
+
+        while i < len(fields):
+
+            token = soap.get_token(user, pwd, database)
+            query = "SELECT {} USING [Parameters.RepeatingDimension=NewsDim] FROM RemoteAccess.A".format(fields[i])
+            selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, database)
+            print("Getting {} data".format(fields[i]))
+            try:
+                get_data_result = soap.get_data(token, selection_token, selection_count, query, fields[i], name,
+                                                database)
+            except Exception as e:
+                print(str(e))
+                continue
+            finally:
+                soap.close_connection(token, database)
+
+            result = ET.fromstring(get_data_result)
+            csv_result = result[0][0][0].text
+
+            TESTDATA = StringIO(csv_result)
+
+            if fields[i] == "NEWS_DATE":
+                all_df.append(pd.read_csv(TESTDATA, sep=",", parse_dates=["NEWS_DATE_NewsDim"]))
+            else:
+                all_df.append(pd.read_csv(TESTDATA, sep=","))
+
+            i += 1
+
+        df = pd.concat(all_df, axis=1)
+        df = df[filter]
+        df.columns = fields
+        df.to_json(file_name, orient="records", date_format="iso")
+
+        # Save to MongoDB
+
+        # Save to cloud
+        if os.path.isfile(file_name):
+            cloud_destination = "2017/{}".format(file_name)
+            if storage.upload_to_cloud_storage(google_key_path, "igenie-news", file_name, cloud_destination):
                 os.remove(file_name)
             else:
                 print("File not uploaded to Cloud storage.")
@@ -270,8 +374,8 @@ def main_rest(api_key):
 def main(args):
     #get_zephyr_data(args.user,args.pwd)
     #get_orbis_news(args.user,args.pwd)
-    #get_historical_orbis_news(args.user,args.pwd, "orbis", args.google_key_path)
-    get_daily_orbis_news(args.user,args.pwd,"orbis",args.google_key_path,args.param_connection_string)
+    get_historical_orbis_news(args.user,args.pwd, "orbis", args.google_key_path, args.param_connection_string)
+    #get_daily_orbis_news(args.user,args.pwd,"orbis",args.google_key_path,args.param_connection_string)
 
 if __name__ == "__main__":
     import argparse
