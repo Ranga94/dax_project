@@ -24,7 +24,7 @@ source('News_subfunctions.R')
 source('Correlation_subfunctions.R')
 
 server <- function(input, output){
-  url_mongo <- "mongodb://igenie_readwrite:igenie@35.197.222.38:27017,35.197.238.147:27017/dax_gcp?replicaSet=rs0"
+  url_mongo <- "mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp"
   
 ######################################  Main content of the dashboard  ##############################################
   
