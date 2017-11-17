@@ -259,7 +259,7 @@ def cleanup(data):
 
 def scrub(d):
     # d.iteritems isn't used as you can't del or the iterator breaks.
-    for key, value in d.items():
+    for key, value in list(d.items()):
 
         if value is None:
             del d[key]
