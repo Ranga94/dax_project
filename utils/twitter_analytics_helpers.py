@@ -9,7 +9,7 @@ from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from . import TaggingUtils
 import spacy
-import collections
+from collections import defaultdict
 
 def get_constituent_id_name(old_constituent_name):
     mapping = {}
@@ -110,7 +110,7 @@ def analytics():
 
 def get_nltk_sentiment(text):
     sia = SIA()
-    return sia.polarity_scores(text)
+    return sia.polarity_scores(text)['compound']
 
 def do_translation(to_translate):
     translate_client = None
@@ -213,6 +213,20 @@ def update_tags(dict_object, tagged_text):
     dict_object.update(tags)
 
     return dict_object
+
+def get_spacey_tags(tagged_text):
+    data = defaultdict(list)
+    for ent in tagged_text.ents:
+        data[ent.label_].append(ent.text)
+
+    return data
+
+def convert_timestamp(str):
+    ts = time.strptime(str, '%a %b %d %H:%M:%S +0000 %Y')
+    ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+
+    return ts
+
 
 def flatten(lst):
     """Helper function used to massage the raw tweet data."""

@@ -8,13 +8,16 @@ from google.cloud.language import types
 import os
 
 class TaggingUtils:
-    def __init__(self, sner_jar_path, sner_class_path, google_key_path):
-        self.sner_jar_path = str(Path(sner_jar_path))
-        self.sner_class_path = str(Path(sner_class_path))
+    def __init__(self, sner_jar_path=None, sner_class_path=None, google_key_path=None):
+        if sner_jar_path:
+            self.sner_jar_path = str(Path(sner_jar_path))
+        if sner_class_path:
+            self.sner_class_path = str(Path(sner_class_path))
         self.proc_obj = None
         self.tagger = None
         self.nlp = spacy.load('en')
-        self.google_key_path = google_key_path
+        if google_key_path:
+            self.google_key_path = google_key_path
 
     def get_sner_entities(self, text):
         new_text = text.replace('€', '$')
