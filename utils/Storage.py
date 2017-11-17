@@ -12,7 +12,10 @@ class Storage:
     def __init__(self, google_key_path=None):
         if google_key_path:
             os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_key_path
-        self.bigquery_client = None
+            self.bigquery_client = bigquery.Client()
+        else:
+            self.bigquery_client = None
+
 
     def save_to_mongodb(self, connection_string=None, database=None,collection=None, data=None):
         if connection_string and database and collection:
@@ -143,15 +146,23 @@ class Storage:
             else:
                 return list(iterator)
 
-    def insert_bigquery_data(self, data):
+    def insert_bigquery_data(self, dataset_name, table_name, data):
         if self.bigquery_client:
             client = self.bigquery_client
         else:
             client = bigquery.Client()
 
+        dataset_ref = client.dataset(dataset_name)
+        dataset = bigquery.Dataset(dataset_ref)
+        table_ref = dataset.table(table_name)
+        table = client.get_table(table_ref)
 
-
-
+        errors = client.create_rows(table, data)  # API request
+        if not errors:
+            return True
+        else:
+            print(errors)
+            return None
 
 class MongoEncoder(json.JSONEncoder):
     def default(self, v):
