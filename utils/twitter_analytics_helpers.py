@@ -9,6 +9,7 @@ from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from . import TaggingUtils
 import spacy
+import collections
 
 def get_constituent_id_name(old_constituent_name):
     mapping = {}
@@ -212,6 +213,88 @@ def update_tags(dict_object, tagged_text):
     dict_object.update(tags)
 
     return dict_object
+
+def flatten(lst):
+    """Helper function used to massage the raw tweet data."""
+    for el in lst:
+        if (isinstance(el, collections.Iterable) and
+                not isinstance(el, str)):
+            for sub in flatten(el):
+                yield sub
+        else:
+            yield el
+
+def cleanup(data):
+    """Do some data massaging."""
+    if isinstance(data, dict):
+        newdict = {}
+        for k, v in data.items():
+            if (k == 'coordinates') and isinstance(v, list):
+                # flatten list
+                newdict[k] = list(flatten(v))
+            # temporarily, ignore some fields not supported by the
+            # current BQ schema.
+            # TODO: update BigQuery schema
+            elif (k == 'video_info' or k == 'scopes' or k == 'withheld_in_countries'
+                  or k == 'is_quote_status' or 'source_user_id' in k
+                  or 'quoted_status' in k or 'display_text_range' in k or 'extended_tweet' in k
+                  or 'retweeted_status' == k):
+                pass
+            elif v is False:
+                newdict[k] = v
+            else:
+                if k and v:
+                    newdict[k] = cleanup(v)
+        return newdict
+    elif isinstance(data, list):
+        newlist = []
+        for item in data:
+            newdata = cleanup(item)
+            if newdata:
+                newlist.append(newdata)
+        return newlist
+    else:
+        return data
+
+
+def scrub(d):
+    # d.iteritems isn't used as you can't del or the iterator breaks.
+    for key, value in d.items():
+
+        if value is None:
+            del d[key]
+        # maintain geo with lat/long
+        elif key == 'geo':
+            geo = d.get('geo', None)
+            if geo:
+
+                type = geo.get('type', None)
+                coordinates = geo.get('coordinates', None)
+                del geo['coordinates']
+
+                if type == 'Point':
+                    geo['lat'] = coordinates[0]
+                    geo['long'] = coordinates[1]
+                elif type == 'Polygon':
+                    geo['lat'] = sum(pair[1] for pair in coordinates[0]) / 4
+                    geo['long'] = sum(pair[0] for pair in coordinates[0]) / 4
+
+                    #                     print "\t\t\t FOUND", geo
+
+            d['geo'] = geo
+        # remove other coordinates that are 4-point bounding boxes
+        elif key == 'coordinates':
+            del d[key]
+        elif key == 'bounding_box':  # in 'place' object
+            del d[key]
+        elif key == 'attributes':  # in 'place' object
+            del d[key]
+        elif key == 'retweeted_status':
+            del d[key]
+        elif isinstance(value, dict):
+            scrub(value)
+
+    return d  # For convenience
 
 
 if __name__ == "__main__":

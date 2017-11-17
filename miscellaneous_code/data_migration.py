@@ -52,6 +52,7 @@ def tweet_table(args):
                 tweet["constituent_id"] = id
             if 'date' in tweet:
                 tweet.pop("date")
+            tweet = tap.scrub(tweet)
             f.write(json.dumps(tweet, cls=MongoEncoder) + '\n')
 
     return

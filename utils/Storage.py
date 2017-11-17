@@ -9,8 +9,10 @@ from google.cloud import datastore
 from google.cloud import bigquery
 
 class Storage:
-    def __init__(self):
-        pass
+    def __init__(self, google_key_path=None):
+        if google_key_path:
+            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_key_path
+        self.bigquery_client = None
 
     def save_to_mongodb(self, connection_string=None, database=None,collection=None, data=None):
         if connection_string and database and collection:
@@ -123,9 +125,11 @@ class Storage:
                     entity.update(item)
                     batch.put(entity)
 
-    def get_bigquery_data(self, google_key_path, query, timeout=None, iterator_flag=True):
-        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_key_path
-        client = bigquery.Client()
+    def get_bigquery_data(self, query, timeout=None, iterator_flag=True):
+        if self.bigquery_client:
+            client = self.bigquery_client
+        else:
+            client = bigquery.Client()
 
         query_job = client.query(query)
         print(query_job.state)
@@ -138,6 +142,14 @@ class Storage:
                 return iterator
             else:
                 return list(iterator)
+
+    def insert_bigquery_data(self, data):
+        if self.bigquery_client:
+            client = self.bigquery_client
+        else:
+            client = bigquery.Client()
+
+
 
 
 
