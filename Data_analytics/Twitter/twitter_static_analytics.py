@@ -105,7 +105,7 @@ def update_from_bigquery(args):
     query = "SELECT text, id,favorite_count, source, retweeted,entities," \
             "id_str,retweet_count,favorited,user,lang,created_at,place," \
             "constituent_name,constituent_id,search_term, relevance " \
-            "FROM `pecten_dataset.tweets_unmodified` LIMIT 2"
+            "FROM `pecten_dataset.tweets_unmodified`"
 
     tweets = storage.get_bigquery_data(query)
 
