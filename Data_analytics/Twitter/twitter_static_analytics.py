@@ -103,6 +103,10 @@ def update_from_bigquery(args):
 
     query = ""
 
+    tweets = storage.get_bigquery_data(args.google_key_path, query)
+
+
+
 
 
     for tweet in tweets:
