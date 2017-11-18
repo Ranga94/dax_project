@@ -161,7 +161,7 @@ class Storage:
         if not errors:
             return True
         else:
-            print(errors)
+            print(errors[0])
             return None
 
 class MongoEncoder(json.JSONEncoder):
