@@ -144,7 +144,7 @@ def update_from_bigquery(args):
         row["entity_tags"] = get_spacey_tags(tagged_text)
 
         operations.append(row)
-        print(row["sentiment_score"])
+        #print(row["sentiment_score"])
 
         if len(operations) == 1000:
             result = storage.insert_bigquery_data('pecten_dataset', 'tweets', operations)
