@@ -276,8 +276,12 @@ def get_spacey_tags(tagged_text):
     data["QUANTITY"] = []
     data["ORDINAL"] = []
     data["CARDINAL"] = []
+    data["FAC"] = []
     for ent in tagged_text.ents:
-        data[ent.label_].append(ent.text)
+        try:
+            data[ent.label_].append(ent.text)
+        except KeyError as e:
+            pass
 
     return data
 
@@ -286,7 +290,6 @@ def convert_timestamp(str):
     ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
 
     return ts
-
 
 def flatten(lst):
     """Helper function used to massage the raw tweet data."""
@@ -329,7 +332,6 @@ def cleanup(data):
         return newlist
     else:
         return data
-
 
 def scrub(d):
     # d.iteritems isn't used as you can't del or the iterator breaks.
