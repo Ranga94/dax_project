@@ -103,7 +103,8 @@ def get_zephyr_ma_deals(user,pwd):
         finally:
             soap.close_connection(token, "zephyr")
 
-def get_historical_orbis_news2(user, pwd, database, google_key_path, param_connection_string):
+#Deprecated
+def get_historical_orbis_news_old(user, pwd, database, google_key_path, param_connection_string):
     soap = SOAPUtils()
     storage = Storage()
 
@@ -174,19 +175,20 @@ def get_historical_orbis_news2(user, pwd, database, google_key_path, param_conne
         else:
             print("File does not exists in the local filesystem.")
 
+def get_sentiment_word(score):
+    if score > 0.25:
+        return "positive"
+    elif score < -0.25:
+        return "negative"
+    else:
+        return "neutral"
+
 def get_historical_orbis_news(user, pwd, database, google_key_path, param_connection_string):
     soap = SOAPUtils()
-    storage = Storage()
+    storage = Storage(google_key_path)
+    tagger = TU()
 
-    fields = ["NEWS_DATE", "NEWS_TITLE", "NEWS_ARTICLE_TXT",
-              "NEWS_COMPANIES", "NEWS_TOPICS", "NEWS_COUNTRY", "NEWS_REGION",
-              "NEWS_LANGUAGE", "NEWS_SOURCE", "NEWS_PUBLICATION", "NEWS_ID"]
-
-    filter = ["NEWS_DATE_NewsDim", "NEWS_TITLE_NewsDim", "NEWS_ARTICLE_TXT_NewsDim",
-              "NEWS_COMPANIES_NewsDim", "NEWS_TOPICS_NewsDim", "NEWS_COUNTRY_NewsDim", "NEWS_REGION_NewsDim",
-              "NEWS_LANGUAGE_NewsDim", "NEWS_SOURCE_NewsDim", "NEWS_PUBLICATION_NewsDim", "NEWS_ID_NewsDim"]
-
-    columns = ["CONSTITUENT_ID"]
+    columns = ["CONSTITUENT_ID", "CONSTITUENT_NAME", "BVDID"]
     table = "MASTER_CONSTITUENTS"
 
     constituents = storage.get_sql_data(sql_connection_string=param_connection_string,
@@ -195,12 +197,12 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
     constituents = [constituents[0]]
 
-    for bvdid in constituents:
+    for constituent_id, constituent_name, bvdid in constituents:
         start = 0
         end = 50
 
         while True:
-            # token = soap.get_token(user, pwd, database)
+            token = soap.get_token(user, pwd, database)
             query = "SELECT LINE BVDNEWS.NEWS_DATE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS NEWS_DATE, " \
                     "LINE BVDNEWS.NEWS_TITLE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS NEWS_TITLE," \
                     "LINE BVDNEWS.NEWS_ARTICLE_TXT USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS NEWS_ARTICLE_TXT, " \
@@ -227,56 +229,76 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
         csv_result = result[0][0][0].text
 
         TESTDATA = StringIO(csv_result)
+        df = pd.read_csv(TESTDATA, sep=",", parse_dates=["NEWS_DATE"])
 
-        if fields[i] == "NEWS_DATE":
-            all_df.append(pd.read_csv(TESTDATA, sep=",", parse_dates=["NEWS_DATE_NewsDim"]))
-        else:
-            all_df.append(pd.read_csv(TESTDATA, sep=","))
+        if pd.isnull(df.iloc[0, 2]):
+            break
+
+        # Remove duplicate columns
+        df.drop_duplicates(["NEWS_TITLE"], inplace=True)
+
+        # Get sentiment score
+        df["SCORE"] = df.apply(lambda row: get_nltk_sentiment(row["NEWS_ARTICLE_TXT"]))
+
+        # get sentiment word
+        df["SENTIMENT"] = df.apply(lambda row: get_sentiment_word(row["SCORE"]))
+
+        #add constituent name, id and old name
+        df["CONSITUENT_ID"] = constituent_id
+        df["CONSTITUENT_NAME"] = constituent_name
+        old_constituent_name = get_old_constituent_name(constituent_id)
+        df["CONSTITUENT"] = old_constituent_name
+
+        # add URL
+        df["ULR"] = None
+
+        #add entity tags
 
 
-        while i < len(fields):
 
-            token = soap.get_token(user, pwd, database)
-            query = "SELECT {} USING [Parameters.RepeatingDimension=NewsDim] FROM RemoteAccess.A".format(fields[i])
-            selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, database)
-            print("Getting {} data".format(fields[i]))
-            try:
-                get_data_result = soap.get_data(token, selection_token, selection_count, query, fields[i], name,
-                                                database)
-            except Exception as e:
-                print(str(e))
-                continue
-            finally:
-                soap.close_connection(token, database)
 
-            result = ET.fromstring(get_data_result)
-            csv_result = result[0][0][0].text
-
-            TESTDATA = StringIO(csv_result)
-
-            if fields[i] == "NEWS_DATE":
-                all_df.append(pd.read_csv(TESTDATA, sep=",", parse_dates=["NEWS_DATE_NewsDim"]))
-            else:
-                all_df.append(pd.read_csv(TESTDATA, sep=","))
-
-            i += 1
-
-        df = pd.concat(all_df, axis=1)
-        df = df[filter]
-        df.columns = fields
-        df.to_json(file_name, orient="records", date_format="iso")
+        #df.to_json(orient="records", date_format="iso")
 
         # Save to MongoDB
+        fields = ["NEWS_DATE", "NEWS_TITLE", "NEWS_ARTICLE_TXT","NEWS_SOURCE", "NEWS_PUBLICATION", "NEWS_TOPICS"]
 
-        # Save to cloud
-        if os.path.isfile(file_name):
-            cloud_destination = "2017/{}".format(file_name)
-            if storage.upload_to_cloud_storage(google_key_path, "igenie-news", file_name, cloud_destination):
-                os.remove(file_name)
-            else:
-                print("File not uploaded to Cloud storage.")
-        else:
-            print("File does not exists in the local filesystem.")
+        filter = ["NEWS_DATE_NewsDim", "NEWS_TITLE_NewsDim", "NEWS_ARTICLE_TXT_NewsDim",
+                  "NEWS_SOURCE_NewsDim", "NEWS_PUBLICATION_NewsDim", "categorised_tag"]
+
+        df_mongo = df.copy()
+        df_mongo = df_mongo[fields]
+        df_mongo.columns = filter
+
+
+
+
+
+
+
+
+        #change column names
+
+''''
+        "NEWS_TITLE_NewsDim": "Global Football Market Research Report by Players, Regions, Product Types &amp; Applications: Radiant Insights",
+        "NEWS_DATE_NewsDim": "9/15/2017",
+        "NEWS_SOURCE_NewsDim": "Acquire Media",
+        "NEWS_PUBLICATION_NewsDim": "M2 Communications - M2 PressWIRE",
+        "constituent": "adidas",
+        "categorised_tag": "NA",
+        "score": 0.614700856,
+        "sentiment": "positive",
+        "count": 2,
+        "show": true
+'''
+
+        #add necessary colmns
+
+        #save to mongodb
+
+        # Save to BigQuery unmodified table
+
+        #Save to BigQuery news
+
 
 def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_string):
     soap = SOAPUtils()
@@ -374,8 +396,9 @@ def main_rest(api_key):
 def main(args):
     #get_zephyr_data(args.user,args.pwd)
     #get_orbis_news(args.user,args.pwd)
-    get_historical_orbis_news(args.user,args.pwd, "orbis", args.google_key_path, args.param_connection_string)
+    #get_historical_orbis_news(args.user,args.pwd, "orbis", args.google_key_path, args.param_connection_string)
     #get_daily_orbis_news(args.user,args.pwd,"orbis",args.google_key_path,args.param_connection_string)
+    pass
 
 if __name__ == "__main__":
     import argparse
@@ -389,4 +412,11 @@ if __name__ == "__main__":
     sys.path.insert(0, args.python_path)
     from utils.Storage import Storage
     from utils.SOAPUtils import SOAPUtils
-    main(args)
+    from utils.twitter_analytics_helpers import *
+    from utils.TaggingUtils import TaggingUtils as TU
+    df = pd.DataFrame(data={"a":[0,1,2,3,1,4],"b":[1,1,1,1,1,1]})
+    print(df)
+    df.drop_duplicates(["a"],inplace=True)
+    print(df)
+
+
