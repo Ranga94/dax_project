@@ -216,7 +216,7 @@ def update_from_bigquery_file(args):
             tagged_text = tagger.get_spacy_entities(tweet["text"])
             row["entity_tags"] = get_spacey_tags(tagged_text)
 
-            f.write(json.dumps(tweet, cls=MongoEncoder) + '\n')
+            f.write(json.dumps(row, cls=MongoEncoder) + '\n')
             records += 1
 
             if records == 2000:
