@@ -196,7 +196,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
     constituents = storage.get_sql_data(sql_connection_string=param_connection_string,
                                         sql_table_name=table,
-                                        sql_column_list=columns)[3:]
+                                        sql_column_list=columns)[4:]
 
     for constituent_id, constituent_name, bvdid in constituents:
         records = 0
@@ -245,7 +245,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 df.drop_duplicates(["news_title"], inplace=True)
 
                 # Get sentiment score
-                df["score"] = df.apply(lambda row: get_nltk_sentiment(row["news_article_txt"]), axis=1)
+                df["score"] = df.apply(lambda row: get_nltk_sentiment(str(row["news_article_txt"])), axis=1)
 
                 # get sentiment word
                 df["sentiment"] = df.apply(lambda row: get_sentiment_word(row["score"]), axis=1)
