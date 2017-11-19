@@ -152,7 +152,13 @@ def analytics():
 
 def get_nltk_sentiment(text):
     sia = SIA()
-    return sia.polarity_scores(text)['compound']
+    sent = None
+    try:
+        sent = sia.polarity_scores(text)['compound']
+    except Exception as e:
+        sent = None
+
+    return sent
 
 def do_translation(to_translate):
     translate_client = None
