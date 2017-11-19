@@ -135,7 +135,7 @@ class Storage:
             client = bigquery.Client()
 
         query_job = client.query(query)
-        print(query_job.state)
+        #print(query_job.state)
 
         if query_job.state == 'RUNNING':
             print("Running query...")

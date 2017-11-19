@@ -111,14 +111,16 @@ def update_from_bigquery(args):
 
     start_time = time.time()
 
-    for constituent_id in constituents:
+    for item in constituents:
+        constituent_id = item[0]
+        print("Loading {}".format(constituent_id))
         while True:
 
             try:
                 # get max id inserted from target table
                 q = "SELECT max(id) as max_id " \
                     "FROM `pecten_dataset.tweets` " \
-                    "WHERE constituent_id = {}".format(constituent_id)
+                    "WHERE constituent_id = '{}'".format(constituent_id)
 
                 max_id = storage.get_bigquery_data(q, iterator_flag=False)[0]["max_id"]
 
@@ -127,7 +129,7 @@ def update_from_bigquery(args):
                             "id_str,retweet_count,favorited,user,lang,created_at,place," \
                             "constituent_name,constituent_id,search_term, relevance " \
                             "FROM `pecten_dataset.tweets_unmodified` " \
-                            "WHERE constituent_id = {} " \
+                            "WHERE constituent_id = '{}' " \
                             "ORDER BY id ASC".format(constituent_id)
 
                 else:
@@ -135,7 +137,7 @@ def update_from_bigquery(args):
                             "id_str,retweet_count,favorited,user,lang,created_at,place," \
                             "constituent_name,constituent_id,search_term, relevance " \
                             "FROM `pecten_dataset.tweets_unmodified` " \
-                            "WHERE id > {} AND constituent_id = {} " \
+                            "WHERE id > {} AND constituent_id = '{}' " \
                             "ORDER BY id ASC".format(max_id, constituent_id)
 
                 tweets = storage.get_bigquery_data(query)
