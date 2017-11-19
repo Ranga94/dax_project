@@ -9,17 +9,27 @@ from google.cloud import datastore
 from google.cloud import bigquery
 
 class Storage:
-    def __init__(self, google_key_path=None):
+    def __init__(self, google_key_path=None, mongo_connection_string=None):
         if google_key_path:
             os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_key_path
             self.bigquery_client = bigquery.Client()
         else:
             self.bigquery_client = None
 
+        if mongo_connection_string:
+            self.mongo_client = MongoClient(mongo_connection_string)
+        else:
+            self.mongo_client = None
 
-    def save_to_mongodb(self, connection_string=None, database=None,collection=None, data=None):
-        if connection_string and database and collection:
-            client = MongoClient(connection_string)
+
+    def save_to_mongodb(self, data, database=None, collection=None, connection_string=None):
+        if database and collection:
+            if self.mongo_client:
+                client = self.mongo_client
+            else:
+                self.mongo_client = MongoClient(connection_string)
+                client = self.mongo_client
+
             db = client[database]
             collection = db[collection]
 
@@ -150,19 +160,24 @@ class Storage:
         if self.bigquery_client:
             client = self.bigquery_client
         else:
-            client = bigquery.Client()
+            self.bigquery_client = bigquery.Client()
+            client = self.bigquery_client
 
-        dataset_ref = client.dataset(dataset_name)
-        dataset = bigquery.Dataset(dataset_ref)
-        table_ref = dataset.table(table_name)
-        table = client.get_table(table_ref)
 
-        errors = client.create_rows(table, data)  # API request
-        if not errors:
-            return True
-        else:
-            print(errors[0])
-            return None
+        try:
+            dataset_ref = client.dataset(dataset_name)
+            dataset = bigquery.Dataset(dataset_ref)
+            table_ref = dataset.table(table_name)
+            table = client.get_table(table_ref)
+
+            errors = client.create_rows(table, data)  # API request
+            if not errors:
+                return True
+            else:
+                print(errors[0])
+                return None
+        except Exception as e:
+            return -1
 
 class MongoEncoder(json.JSONEncoder):
     def default(self, v):
