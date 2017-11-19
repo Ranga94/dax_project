@@ -9,7 +9,7 @@ from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from . import TaggingUtils
 import spacy
-import collections
+from collections import defaultdict
 
 def get_constituent_id_name(old_constituent_name):
     mapping = {}
@@ -43,9 +43,51 @@ def get_constituent_id_name(old_constituent_name):
     mapping["DAX"] = ("DAX", "DAX")
     mapping["Fresenius Medical Care"] = ("FMEDE8110066557" , "FRESENIUS MEDICAL CARE AG & CO.KGAA")
     mapping["Volkswagen"] = ("VOW3DE2070000543" , "VOLKSWAGEN AG")
-    #("MUV2DEFEI1007130" , "MUNCHENER RUCKVERSICHERUNGS - GESELLSCHAFT AKTIENGESELLSCHAFT IN MUNCHEN")
+    mapping["Münchener Rückversicherungs-Gesellschaft"] = ("MUV2DEFEI1007130" , "MUNCHENER RUCKVERSICHERUNGS - GESELLSCHAFT AKTIENGESELLSCHAFT IN MUNCHEN")
 
-    return mapping[old_constituent_name]
+    if old_constituent_name in mapping:
+        return mapping[old_constituent_name]
+    else:
+        return old_constituent_name
+
+def get_old_constituent_name(constituent_id):
+    mapping = {}
+    mapping["BMWDE8170003036"] = "BMW"
+    mapping["ALVDEFEI1007380"] = "Allianz"
+    mapping["CBKDEFEB13190"] = "Commerzbank"
+    mapping["ADSDE8190216927"] = "adidas"
+    mapping["DBKDEFEB13216"] = "Deutsche Bank"
+    mapping["EOANDE5050056484"] = "EON"
+    mapping["LHADE5190000974"] = "Lufthansa"
+    mapping["CONDE2190001578"] = "Continental"
+    mapping["DAIDE7330530056"] = "Daimler"
+    mapping["SIEDE2010000581"] = "Siemens"
+    mapping["BASDE7150000030"] = "BASF"
+    mapping["BAYNDE5330000056"] = "Bayer"
+    mapping["BEIDE2150000164"] = "Beiersdorf"
+    mapping["DB1DEFEB54555"] = "Deutsche Börse"
+    mapping["DPWDE5030147191"] = "Deutsche Post"
+    mapping["DTEDE5030147137"] = "Deutsche Telekom"
+    mapping["FREDE6290014544"] = "Fresenius"
+    mapping["HEIDE7050000100"] = "HeidelbergCement"
+    mapping["HEN3DE5050001329"] = "Henkel vz"
+    mapping["IFXDE8330359160"] = "Infineon"
+    mapping["LINDE8170014684"] = "Linde"
+    mapping["MRKDE6050108507"] = "Merck"
+    mapping["PSMDE8330261794"] = "ProSiebenSat1 Media"
+    mapping["RWEDE5110206610"] = "RWE"
+    mapping["SAPDE7050001788"] = "SAP"
+    mapping["TKADE5110216866"] = "thyssenkrupp"
+    mapping["VNADE5050438829"] = "Vonovia"
+    mapping["DAX"] = "DAX"
+    mapping["FMEDE8110066557"] = "Fresenius Medical Care"
+    mapping["VOW3DE2070000543"] = "Volkswagen"
+    mapping["MUV2DEFEI1007130"] = "Münchener Rückversicherungs-Gesellschaft"
+
+    if constituent_id in mapping:
+        return mapping[constituent_id]
+    else:
+        return constituent_id
 
 def analytics():
     sia = SIA()
@@ -110,7 +152,7 @@ def analytics():
 
 def get_nltk_sentiment(text):
     sia = SIA()
-    return sia.polarity_scores(text)
+    return sia.polarity_scores(text)['compound']
 
 def do_translation(to_translate):
     translate_client = None
@@ -214,6 +256,41 @@ def update_tags(dict_object, tagged_text):
 
     return dict_object
 
+def get_spacey_tags(tagged_text):
+    data = {}
+    data["PERSON"] = []
+    data["NORP"] = []
+    data["FACILITY"] = []
+    data["ORG"] = []
+    data["GPE"] = []
+    data["LOC"] = []
+    data["PRODUCT"] = []
+    data["EVENT"] = []
+    data["WORK_OF_ART"] = []
+    data["LAW"] = []
+    data["LANGUAGE"] = []
+    data["DATE"] = []
+    data["TIME"] = []
+    data["PERCENT"] = []
+    data["MONEY"] = []
+    data["QUANTITY"] = []
+    data["ORDINAL"] = []
+    data["CARDINAL"] = []
+    data["FAC"] = []
+    for ent in tagged_text.ents:
+        try:
+            data[ent.label_].append(ent.text)
+        except KeyError as e:
+            pass
+
+    return data
+
+def convert_timestamp(str):
+    ts = time.strptime(str, '%a %b %d %H:%M:%S +0000 %Y')
+    ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+
+    return ts
+
 def flatten(lst):
     """Helper function used to massage the raw tweet data."""
     for el in lst:
@@ -255,7 +332,6 @@ def cleanup(data):
         return newlist
     else:
         return data
-
 
 def scrub(d):
     # d.iteritems isn't used as you can't del or the iterator breaks.
