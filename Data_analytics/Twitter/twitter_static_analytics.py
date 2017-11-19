@@ -265,6 +265,91 @@ def update_from_bigquery_file(args):
     print("--- %s seconds ---" % (time.time() - start_time))
     print("Processed {} records".format(records))
 
+def update_from_bigquery_split(args):
+    #load data
+    storage = Storage(args.google_key_path)
+    tagger = TU()
+
+    columns = ["CONSTITUENT_ID"]
+    table = "MASTER_CONSTITUENTS"
+
+    constituents = storage.get_sql_data(sql_connection_string=args.param_connection_string,
+                                        sql_table_name=table,
+                                        sql_column_list=columns)
+
+    start_time = time.time()
+
+    for item in constituents:
+        constituent_id = item[0]
+        print("Loading {}".format(constituent_id))
+
+        try:
+
+            query = "SELECT text, id,favorite_count, source, retweeted,entities," \
+                    "id_str,retweet_count,favorited,user,lang,created_at,place," \
+                    "constituent_name,constituent_id,search_term, relevance " \
+                    "FROM `pecten_dataset.tweets_unmodified` " \
+                    "WHERE constituent_id = '{}' ".format(constituent_id)
+
+            tweets = storage.get_bigquery_data(query)
+
+            operations = []
+            records = 0
+
+            for tweet in tweets:
+                row = {}
+                row["text"] = tweet["text"]
+                row["id"] = tweet["id"]
+                row["favorite_count"] = tweet["favorite_count"]
+                row["source"] = tweet["source"]
+                row["retweeted"] = tweet["retweeted"]
+                row["entities"] = tweet["entities"]
+                row["id_str"] = tweet["id_str"]
+                row["retweet_count"] = tweet["retweet_count"]
+                row["favorited"] = tweet["favorited"]
+                row["user"] = tweet["user"]
+                row["lang"] = tweet["lang"]
+                row["created_at"] = tweet["created_at"]
+                row["place"] = tweet["place"]
+                row["constituent_name"] = tweet["constituent_name"]
+                row["constituent_id"] = tweet["constituent_id"]
+                row["search_term"] = tweet["search_term"]
+                row["relevance"] = tweet["relevance"]
+
+                # Additional fields
+                if isinstance(tweet["created_at"], str):
+                    row['date'] = convert_timestamp(tweet["created_at"])
+
+                # sentiment score
+                row["sentiment_score"] = get_nltk_sentiment(tweet["text"])
+
+                # TO DO
+                tagged_text = tagger.get_spacy_entities(tweet["text"])
+                row["entity_tags"] = get_spacey_tags(tagged_text)
+
+                operations.append(row)
+                # print(row)
+
+                if len(operations) == 1000:
+                    result = storage.insert_bigquery_data('pecten_dataset', 'tweets', operations)
+                    records += 1000
+                    print("Performed bulk write of {} records".format(records))
+                    if not result:
+                        print("Records not inserted")
+
+                    operations = []
+
+            if len(operations) > 0:
+                result = storage.insert_bigquery_data('pecten_dataset', 'tweets', operations)
+                records += 1000
+                if not result:
+                    print("Records not inserted")
+
+        except Exception as e:
+            print(e)
+
+    print("--- %s seconds ---" % (time.time() - start_time))
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
@@ -277,4 +362,4 @@ if __name__ == "__main__":
     from utils.TaggingUtils import TaggingUtils as TU
     from utils.twitter_analytics_helpers import *
     #main(args)
-    update_from_bigquery(args)
+    update_from_bigquery_split(args)
