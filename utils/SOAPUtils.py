@@ -118,7 +118,7 @@ class SOAPUtils:
           </soap12:Body>
         </soap12:Envelope>""".format(token, SelectionResult_token, SelectionResult_count, query)
 
-        response = requests.post(url, headers=headers, data=data, timeout=60)
+        response = requests.post(url, headers=headers, data=data, timeout=120)
         return response.text
 
         result = ET.fromstring(response.text)

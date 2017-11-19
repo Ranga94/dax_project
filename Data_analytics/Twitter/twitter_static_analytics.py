@@ -273,9 +273,12 @@ def update_from_bigquery_split(args):
     columns = ["CONSTITUENT_ID"]
     table = "MASTER_CONSTITUENTS"
 
+    '''
     constituents = storage.get_sql_data(sql_connection_string=args.param_connection_string,
                                         sql_table_name=table,
                                         sql_column_list=columns)
+    '''
+    constituents = [("BMWDE8170003036", ) , ("LHADE5190000974", )]
 
     start_time = time.time()
 
