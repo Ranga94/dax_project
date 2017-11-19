@@ -334,7 +334,8 @@ def update_from_bigquery_split(args):
                 # print(row)
 
                 if len(operations) == 1000:
-                    result = storage.insert_bigquery_data('pecten_dataset', 'tweets', operations)
+                    result = None
+                    #result = storage.insert_bigquery_data('pecten_dataset', 'tweets', operations)
                     records += 1000
                     print("Performed bulk write of {} records".format(records))
                     if not result:
@@ -343,7 +344,8 @@ def update_from_bigquery_split(args):
                     operations = []
 
             if len(operations) > 0:
-                result = storage.insert_bigquery_data('pecten_dataset', 'tweets', operations)
+                result = None
+                #result = storage.insert_bigquery_data('pecten_dataset', 'tweets', operations)
                 records += 1000
                 if not result:
                     print("Records not inserted")
