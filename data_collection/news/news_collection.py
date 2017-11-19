@@ -196,118 +196,142 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
     constituents = storage.get_sql_data(sql_connection_string=param_connection_string,
                                         sql_table_name=table,
-                                        sql_column_list=columns)[4:]
+                                        sql_column_list=columns)[3:]
 
     for constituent_id, constituent_name, bvdid in constituents:
         records = 0
         start = 0
         end = 20
+        filename = "bq_news_{}.json".format(constituent_id)
         print("Constituent: {},{}".format(constituent_name,bvdid))
 
-        while True:
-            try:
-                token = soap.get_token(user, pwd, database)
-                query = "SELECT LINE BVDNEWS.NEWS_DATE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_date, " \
-                    "LINE BVDNEWS.NEWS_TITLE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_title," \
-                    "LINE BVDNEWS.NEWS_ARTICLE_TXT USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_article_txt, " \
-                    "LINE BVDNEWS.NEWS_COMPANIES USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_companies, " \
-                    "LINE BVDNEWS.NEWS_TOPICS USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_topics," \
-                    "LINE BVDNEWS.NEWS_COUNTRY USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_country," \
-                    "LINE BVDNEWS.NEWS_REGION USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_region," \
-                    "LINE BVDNEWS.NEWS_LANGUAGE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_language," \
-                    "LINE BVDNEWS.NEWS_SOURCE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_source," \
-                    "LINE BVDNEWS.NEWS_PUBLICATION USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_publication," \
-                    "LINE BVDNEWS.NEWS_ID USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_id FROM RemoteAccess.A".format(start,end)
+        with open(filename, "a") as f:
+            while True:
+                try:
+                    token = soap.get_token(user, pwd, database)
+                    query = "SELECT LINE BVDNEWS.NEWS_DATE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_date, " \
+                            "LINE BVDNEWS.NEWS_TITLE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_title," \
+                            "LINE BVDNEWS.NEWS_ARTICLE_TXT USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_article_txt, " \
+                            "LINE BVDNEWS.NEWS_COMPANIES USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_companies, " \
+                            "LINE BVDNEWS.NEWS_TOPICS USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_topics," \
+                            "LINE BVDNEWS.NEWS_COUNTRY USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_country," \
+                            "LINE BVDNEWS.NEWS_REGION USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_region," \
+                            "LINE BVDNEWS.NEWS_LANGUAGE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_language," \
+                            "LINE BVDNEWS.NEWS_SOURCE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_source," \
+                            "LINE BVDNEWS.NEWS_PUBLICATION USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_publication," \
+                            "LINE BVDNEWS.NEWS_ID USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_id FROM RemoteAccess.A".format(
+                        start, end)
 
-                selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, database)
+                    selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, database)
 
-                get_data_result = soap.get_data(token, selection_token, selection_count, query, database)
-                #print(get_data_result)
-            except Exception as e:
-                print(str(e))
-            finally:
-                if token:
-                    soap.close_connection(token, database)
+                    get_data_result = soap.get_data(token, selection_token, selection_count, query, database)
+                    # print(get_data_result)
+                except Exception as e:
+                    print(str(e))
+                finally:
+                    if token:
+                        soap.close_connection(token, database)
 
-            result = ET.fromstring(get_data_result)
-            csv_result = result[0][0][0].text
+                result = ET.fromstring(get_data_result)
+                csv_result = result[0][0][0].text
 
-            TESTDATA = StringIO(csv_result)
-            df = pd.read_csv(TESTDATA, sep=",", parse_dates=["news_date"])
+                TESTDATA = StringIO(csv_result)
+                df = pd.read_csv(TESTDATA, sep=",", parse_dates=["news_date"])
 
-            if pd.isnull(df.iloc[0, 2]):
-                break
+                if pd.isnull(df.iloc[0, 2]):
+                    break
 
-            # Remove duplicate columns
-            df.drop_duplicates(["news_title"], inplace=True)
+                # Remove duplicate columns
+                df.drop_duplicates(["news_title"], inplace=True)
 
-            # Get sentiment score
-            df["score"] = df.apply(lambda row: get_nltk_sentiment(str(row["news_article_txt"])), axis=1)
+                # Get sentiment score
+                df["score"] = df.apply(lambda row: get_nltk_sentiment(row["news_article_txt"]), axis=1)
 
-            # get sentiment word
-            df["sentiment"] = df.apply(lambda row: get_sentiment_word(row["score"]), axis=1)
+                # get sentiment word
+                df["sentiment"] = df.apply(lambda row: get_sentiment_word(row["score"]), axis=1)
 
-            # add constituent name, id and old name
-            df["constituent_id"] = constituent_id
-            df["constituent_name"] = constituent_name
-            old_constituent_name = get_old_constituent_name(constituent_id)
-            df["constituent"] = old_constituent_name
+                # add constituent name, id and old name
+                df["constituent_id"] = constituent_id
+                df["constituent_name"] = constituent_name
+                old_constituent_name = get_old_constituent_name(constituent_id)
+                df["constituent"] = old_constituent_name
 
-            # add URL
-            df["url"] = None
+                # add URL
+                df["url"] = None
 
-            # add show
-            df["show"] = True
+                # add show
+                df["show"] = True
 
-            # get entity tags
-            entity_tags = []
-            for text in df["news_title"]:
-                tags = get_spacey_tags(tagger.get_spacy_entities(text))
-                entity_tags.append(tags)
+                # get entity tags
+                entity_tags = []
+                for text in df["news_title"]:
+                    tags = get_spacey_tags(tagger.get_spacy_entities(text))
+                    entity_tags.append(tags)
 
-            fields = ["news_date", "news_title", "news_article_txt", "news_source", "news_publication", "news_topics",
-                      "score", "sentiment", "constituent_id", "constituent_name", "constituent", "url", "show"]
+                fields = ["news_date", "news_title", "news_article_txt", "news_source", "news_publication",
+                          "news_topics",
+                          "score", "sentiment", "constituent_id", "constituent_name", "constituent", "url", "show"]
 
-            # Save to MongoDB
-            filter = ["NEWS_DATE_NewsDim", "NEWS_TITLE_NewsDim", "NEWS_ARTICLE_TXT_NewsDim",
-                      "NEWS_SOURCE_NewsDim", "NEWS_PUBLICATION_NewsDim", "categorised_tag", "score", "sentiment",
-                      "constituent_id", "constituent_name", "constituent","url", "show"]
+                '''
+                # Save to MongoDB
+                filter = ["NEWS_DATE_NewsDim", "NEWS_TITLE_NewsDim", "NEWS_ARTICLE_TXT_NewsDim",
+                          "NEWS_SOURCE_NewsDim", "NEWS_PUBLICATION_NewsDim", "categorised_tag", "score", "sentiment",
+                          "constituent_id", "constituent_name", "constituent","url", "show"]
 
-            df_mongo = df[fields]
-            df_mongo.columns = filter
+                df_mongo = df[fields]
+                df_mongo.columns = filter
 
-            mongo_data = json.loads(df_mongo.to_json(orient="records", date_format="iso"))
+                mongo_data = json.loads(df_mongo.to_json(orient="records", date_format="iso"))
 
-            # set entity_tag field
-            i = 0
-            for i in range(0, len(mongo_data)):
-                mongo_data[i]["entity_tags"] = entity_tags[i]
-                date = mongo_data[i]["NEWS_DATE_NewsDim"]
-                #ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
-                ts = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
-                mongo_data[i]["NEWS_DATE_NewsDim"] = ts
+                # set entity_tag field
+                i = 0
+                for i in range(0, len(mongo_data)):
+                    mongo_data[i]["entity_tags"] = entity_tags[i]
+                    date = mongo_data[i]["NEWS_DATE_NewsDim"]
+                    #ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                    ts = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                    mongo_data[i]["NEWS_DATE_NewsDim"] = ts
 
-            storage.save_to_mongodb(mongo_data, "dax_gcp", "all_news")
+                #storage.save_to_mongodb(mongo_data, "dax_gcp", "all_news")
+                '''
 
-            # Save to BigQuery
-            df_bigquery = df[fields]
-            bigquery_data = json.loads(df_bigquery.to_json(orient="records", date_format="iso"))
+                # Save to BigQuery
+                df_bigquery = df[fields]
+                bigquery_data = json.loads(df_bigquery.to_json(orient="records", date_format="iso"))
 
-            # set entity_tag field
-            i = 0
-            for i in range(0, len(bigquery_data)):
-                bigquery_data[i]["entity_tags"] = entity_tags[i]
-                date = bigquery_data[i]["news_date"]
-                ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
-                ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
-                bigquery_data[i]["news_date"] = ts
+                fields = ["news_date", "news_title", "news_article_txt", "news_source", "news_publication",
+                          "news_topics",
+                          "score", "sentiment", "constituent_id", "constituent_name", "constituent", "url", "show"]
 
-            storage.insert_bigquery_data("pecten_dataset", "news", bigquery_data)
+                # set entity_tag field
+                i = 0
+                for i in range(0, len(bigquery_data)):
+                    bigquery_data[i]["entity_tags"] = entity_tags[i]
+                    date = bigquery_data[i]["news_date"]
+                    ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                    ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                    bigquery_data[i]["news_date"] = ts
 
-            start = end + 1
-            end  = start + 20
-            records += 20
-            print("Records saved: {}".format(records))
+                    bigquery_data[i]["news_title"] = str(bigquery_data[i]["news_title"])
+                    bigquery_data[i]["news_article_txt"] = str(bigquery_data[i]["news_article_txt"])
+                    bigquery_data[i]["news_source"] = str(bigquery_data[i]["news_source"])
+                    bigquery_data[i]["news_publication"] = str(bigquery_data[i]["news_publication"])
+                    bigquery_data[i]["news_topics"] = str(bigquery_data[i]["news_topics"])
+                    bigquery_data[i]["sentiment"] = str(bigquery_data[i]["sentiment"])
+                    bigquery_data[i]["constituent_id"] = str(bigquery_data[i]["constituent_id"])
+                    bigquery_data[i]["constituent_name"] = str(bigquery_data[i]["constituent_name"])
+                    bigquery_data[i]["constituent"] = str(bigquery_data[i]["constituent"])
+
+                    f.write(json.dumps(bigquery_data[i], cls=MongoEncoder) + '\n')
+
+                # storage.insert_bigquery_data("pecten_dataset", "news", bigquery_data)
+
+                start = end + 1
+                end = start + 20
+                records += 20
+                print("Records saved: {}".format(records))
+
+
 
 def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_string):
     soap = SOAPUtils()
@@ -418,7 +442,7 @@ if __name__ == "__main__":
     parser.add_argument('pwd', help='SOAP pwd')
     args = parser.parse_args()
     sys.path.insert(0, args.python_path)
-    from utils.Storage import Storage
+    from utils.Storage import Storage, MongoEncoder
     from utils.SOAPUtils import SOAPUtils
     from utils.twitter_analytics_helpers import *
     from utils.TaggingUtils import TaggingUtils as TU
