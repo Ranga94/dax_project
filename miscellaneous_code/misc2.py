@@ -14,6 +14,7 @@ def file_to_mongodb(args):
     operations = []
     storage = Storage(mongo_connection_string="mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp")
     with open(args.file1, "r") as f1:
+        records = 0
         for line in f1:
             data = json.loads(line)
             #change column names
@@ -29,8 +30,10 @@ def file_to_mongodb(args):
                 continue
 
             operations.append(data)
+            records += 1
 
             if len(operations) == 1000:
+                print("Saving {} records".format(records))
                 storage.save_to_mongodb(data, "dax_gcp", "all_news")
                 operations = []
 
