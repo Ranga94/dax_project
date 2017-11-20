@@ -196,7 +196,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
     constituents = storage.get_sql_data(sql_connection_string=param_connection_string,
                                         sql_table_name=table,
-                                        sql_column_list=columns)[6:]
+                                        sql_column_list=columns)[7:]
 
     for constituent_id, constituent_name, bvdid in constituents:
         records = 0
@@ -238,7 +238,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 TESTDATA = StringIO(csv_result)
                 df = pd.read_csv(TESTDATA, sep=",", parse_dates=["news_date"])
 
-                if pd.isnull(df.iloc[0, 2]):
+                if pd.isnull(df.iloc[0, 2]) or records == 1000:
                     break
 
                 # Remove duplicate columns
