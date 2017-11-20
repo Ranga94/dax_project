@@ -1,3 +1,4 @@
+options(scipen=1000)
 library(DT)
 library(shiny)
 library(shinydashboard)
