@@ -79,6 +79,7 @@ server <- function(input, output){
   
   
   
+  
   ## News Table - DataTable
   news_data_all <- eventReactive(input$reload, {
     all_news <- mongo(collection = 'all_news',
