@@ -336,7 +336,6 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 print("Records saved: {}".format(records))
 
 
-
 def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_string):
     soap = SOAPUtils()
     storage = Storage()

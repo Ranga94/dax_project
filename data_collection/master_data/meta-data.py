@@ -79,7 +79,6 @@ def extract_meta_data(database, constituent):
 
         for section in webpages[page]:
             if section == 'Historical Key Data':
-                continue
                 table = soup.find(class_='table balance-sheet')
                 if table is None:
                     continue
@@ -93,7 +92,6 @@ def extract_meta_data(database, constituent):
                             {'table': section, 'constituent': constituent, 'year': year, header.string.replace('.', ''): items[year - 2012].string})
 
             elif section == 'Dividend':
-                continue
                 master_data = soup.find('h2', string=section)
                 if master_data is None:
                     continue
@@ -110,7 +108,6 @@ def extract_meta_data(database, constituent):
                                             'ISIN': data[3].string.strip()})
 
             elif section == 'Company Events':
-                continue
                 master_data = soup.find('a', href='/aktien/unternehmenskalender/{}'.format(all_constituents[constituent]))
                 if master_data is None:
                     continue
@@ -127,7 +124,6 @@ def extract_meta_data(database, constituent):
 
 
             elif section == 'Recent Report':
-                continue
                 master_data = soup.find('a', href="/aktien/unternehmensberichte/{}".format(all_constituents[constituent]))
                 if master_data is None:
                     continue
