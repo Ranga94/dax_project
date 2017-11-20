@@ -168,19 +168,19 @@ correlation_twitter<-function(url_mongo,constituent){
 #This selects the annotation for News correlation graph
 news_annotation_selection<-function(constituent){
   if(constituent=='Adidas'){
-    str = "Correlations for all Adidas stock prices have less than 50% correlation to News sentiment"
+    str = "Only Highs, Open and Lows have greater than 50% correlations to News sentiment"
   }
   if(constituent=='BMW'){
-    str = "Open, Close, High and Low prices all have greater than 50% correlations to News sentiment. News sentiment had the greatest correlations to Highs, which had a 99% correlation, followed by Open and lows, which both were 97% correlated to sentiment, and finally, Close prices, which were 90% correlated."
+    str = "Correlations for all BMW stock prices have less than 50% correlation to News sentiment for the total time period shown."
   }
   if(constituent=='Commerzbank'){
-    str = "Open, Close, High and Low prices all have greater than 50% correlations to News sentiment. News sentiment had the greatest correlations to Highs and Close Prices, which were both 99% correlated, followed by Lows, which was 91% correlated to sentiment, and finally, Open prices, which was 84% correlated."
+    str = "Only Open prices have greater than 50% correlation to News sentiment for the total time period shown."
   }
   if(constituent=='Deutsche Bank'){
-    str = "Open, Close, High and Low prices all have greater than 50% correlations to News sentiment. News sentiment had the greatest correlations to Open and Close Prices, which were 93% correlated, followed by Lows, which was 90% correlated to sentiment, and finally, Highs, which was 71% correlated."
+    str = "Correlations for all Deutsche Bank stock prices have less than 50% correlation to News sentiment for the total time period shown."
   }
   if(constituent=='EON'){
-    str = "Only Close, Open and Lows have greater than 50% correlations to News sentiment. News sentiment had the greatest correlation to Lows, which had a 100% correlation, followed by Close, which was 93% correlated to sentiment, and finally, Open Prices, which were 54% correlated."
+    str = "Highs, Close, Open and Lows all have greater than 50% correlations to News sentiment."
   }
   str
 }
@@ -188,19 +188,19 @@ news_annotation_selection<-function(constituent){
 #This selects the annotation for Twitter correlation graph
 twitter_annotation_selection<-function(constituent){
   if(constituent=='Adidas'){
-    str = "Only Adidas open prices seem to have greater than 50% correlation to Twitter sentiment. Open prices have a 78% correlation to Twitter sentiment for the total time period shown."
+    str = "Correlations for all Adidas stock prices have less than 50% correlation to Twitter sentiment for the total time period shown."
   }
   if(constituent=='BMW'){
-    str = "Open, Close, High and Low prices all have greater than 50% correlations to Twitter sentiment. Twitter sentiment had the greatest correlations to Close prices, which had a 99% correlation, followed by Open and lows, which both were 95% correlated to sentiment, and finally, Highs, which were 92% correlated."
+    str = "Correlations for all BMW stock prices have less than 50% correlation to Twitter sentiment for the total time period shown."
   }
   if(constituent=='Commerzbank'){
-    str = "Open, Close, High and Low prices all have greater than 50% correlations to Twitter sentiment. Twitter sentiment had the greatest correlation to Open Prices, which was 98% correlated, followed by Highs, which was 90% correlated to sentiment. Close prices were 89 percent correlated and Lows were 69% correlated."
+    str = "Correlations for all Commerzbank stock prices have less than 50% correlation to Twitter sentiment for the total time period shown."
   }
   if(constituent=='Deutsche Bank'){
-    str = "Only Close, High and Low prices have greater than 50% correlations to Twitter sentiment. Twitter sentiment had the greatest correlations to Highs, which had a 98% correlation, followed by Low, which was 86% correlated to sentiment, and finally, Close Prices, which were 83% correlated."
+    str = "Correlations for all Deutsche Bank stock prices have less than 50% correlation to Twitter sentiment for the total time period shown."
   }
   if(constituent=='EON'){
-    str = "Only Open and Highs have greater than 50% correlations to Twitter sentiment. Twitter sentiment had the greatest correlation to Open prices, which had a 99% correlation, while Highs were 94% correlated."
+    str = "Correlations for all EON stock prices have less than 50% correlation to Twitter sentiment for the total time period shown."
   }
   str
 }
