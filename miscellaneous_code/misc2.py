@@ -18,8 +18,8 @@ def file_to_mongodb(args):
             data = json.loads(line)
             #change column names
             try:
-                data["NEWS_DATE_NewsDim"] = data.pop("news_date")
-                data["NEWS_TITLE_NewsDim"] = datetime.strptime(data.pop("news_title"), '%Y-%m-%d %H:%M:%S')
+                data["NEWS_TITLE_NewsDim"] = data.pop("news_title")
+                data["NEWS_DATE_NewsDim"] = datetime.strptime(data.pop("news_date"), '%Y-%m-%d %H:%M:%S')
                 data["NEWS_ARTICLE_TXT_NewsDim"] = data.pop("news_article_txt")
                 data["NEWS_SOURCE_NewsDim"] = data.pop("news_source")
                 data["NEWS_PUBLICATION_NewsDim"] = data.pop("news_publication")
