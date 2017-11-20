@@ -196,7 +196,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
     constituents = storage.get_sql_data(sql_connection_string=param_connection_string,
                                         sql_table_name=table,
-                                        sql_column_list=columns)[4:]
+                                        sql_column_list=columns)[5:]
 
     for constituent_id, constituent_name, bvdid in constituents:
         records = 0
