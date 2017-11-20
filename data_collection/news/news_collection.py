@@ -268,13 +268,10 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                     tags = get_spacey_tags(tagger.get_spacy_entities(text))
                     entity_tags.append(tags)
 
-                ###########################################
-                #!!!!!!!!!!!!!!!!!!!!ADD REAMINING FIELDS AND MODIFY DATA MODEL IN BIGQUERY
-                #################################
-
-                fields = ["news_date", "news_title", "news_article_txt", "news_source", "news_publication",
-                          "news_topics",
-                          "score", "sentiment", "constituent_id", "constituent_name", "constituent", "url", "show"]
+                fields = ["news_date", "news_title", "news_article_txt", "news_companies", "news_source",
+                          "news_publication","news_topics", "news_country", "news_region",
+                          "news_language", "news_id","score", "sentiment","constituent_id",
+                          "constituent_name", "constituent", "url", "show"]
 
                 '''
                 # Save to MongoDB
@@ -303,10 +300,6 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 df_bigquery = df[fields]
                 bigquery_data = json.loads(df_bigquery.to_json(orient="records", date_format="iso"))
 
-                fields = ["news_date", "news_title", "news_article_txt", "news_source", "news_publication",
-                          "news_topics",
-                          "score", "sentiment", "constituent_id", "constituent_name", "constituent", "url", "show"]
-
                 # set entity_tag field
                 i = 0
                 for i in range(0, len(bigquery_data)):
@@ -325,6 +318,13 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                     bigquery_data[i]["constituent_id"] = str(bigquery_data[i]["constituent_id"])
                     bigquery_data[i]["constituent_name"] = str(bigquery_data[i]["constituent_name"])
                     bigquery_data[i]["constituent"] = str(bigquery_data[i]["constituent"])
+                    bigquery_data[i]["news_companies"] = str(bigquery_data[i]["news_companies"])
+
+                    bigquery_data[i]["news_country"] = str(bigquery_data[i]["news_country"])
+                    bigquery_data[i]["news_region"] = str(bigquery_data[i]["news_region"])
+                    bigquery_data[i]["news_language"] = str(bigquery_data[i]["news_language"])
+                    bigquery_data[i]["news_id"] = str(bigquery_data[i]["news_id"])
+
 
                     f.write(json.dumps(bigquery_data[i], cls=MongoEncoder) + '\n')
 
