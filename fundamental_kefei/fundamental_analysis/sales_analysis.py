@@ -12,7 +12,7 @@ import json
 import sys
 
 
-#!python Igenie/dax_project/fundamental_kefei/sales_analysis.py '/Users/kefei/Igenie/dax_project/fundamental_kefei' 'mongodb://admin:admin@ds019654.mlab.com:19654/dax' 'dax' 'company_data' 'mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp' 'dax_gcp' 'fundamental analysis' -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Continental','Daimler','Deutsche Börse','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Linde','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media' 'Sales analysis'
+#!python sales_analysis.py '/Users/kefei/Igenie/dax_project/fundamental_kefei' 'mongodb://admin:admin@ds019654.mlab.com:19654/dax' 'dax' 'company_data_bkg' 'mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp' 'dax_gcp' 'fundamental analysis' -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Continental','Daimler','Deutsche Börse','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Linde','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media' 'Sales analysis'
 
 
             
@@ -90,6 +90,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     sys.path.insert(0, args.python_path)
-    from utils.Storage import Storage
+    #from utils.Storage import Storage
     
     sales_main(args)
