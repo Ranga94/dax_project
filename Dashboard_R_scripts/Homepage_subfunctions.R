@@ -40,15 +40,10 @@ string_fun <- function(x) {
 }
 
 
-
-
-
-
 ##This function transforms the all_news database into a presentable DataTable
 news_transform<-function(db){
   db$NEWS_DATE_NewsDim<- as.Date(db$NEWS_DATE_NewsDim,format='%d/%m/%Y')
   db<- db[order(-as.numeric(db$NEWS_DATE_NewsDim)),] ##order by release dates, descending
-
   db <- db[1:7398,c('NEWS_TITLE_NewsDim','constituent','categorised_tag','sentiment')]
 
   #make sure the news link only contains 8 characters from the headline. 
@@ -59,18 +54,22 @@ news_transform<-function(db){
 
 
   ##Assign the conditional sentiment values for conditioned-colors
-  index_posi<-db$sentiment=='positive' 
+  index_posi<-db$sentiment=='positive'
   db$sentiment[index_posi]<-1
-  index_nega<-db$sentiment=='negative' 
+  index_nega<-db$sentiment=='negative'
   db$sentiment[index_nega]<-1
   index_neu<-db$sentiment=='neutral' 
   db$sentiment[index_neu]=0
 
   ##Fix the capital letters
-  db[db$constituent=='bmw',c('constituent')]='BMW'
-  db[db$constituent=='adidas',c('constituent')]='Adidas'
-  db[db$constituent=='commerzbank',c('constituent')]='Commerzbank'
-  db[db$constituent=='eon',c('constituent')]='EON'
+  #db[db$constituent=='bmw',c('constituent')]='BMW'
+  db[!is.na(db$constituent) & db$constituent=='bmw', c('constituent')] ='BMW'
+  #db[db$constituent=='adidas',c('constituent')]='Adidas'
+  db[!is.na(db$constituent) & db$constituent=='adidas', c('constituent')] ='Adidas'
+  #db[db$constituent=='commerzbank',c('constituent')]='Commerzbank'
+  db[!is.na(db$constituent) & db$constituent=='commerzbank', c('constituent')] ='Commerzbank'
+  #db[db$constituent=='eon',c('constituent')]='EON'
+  db[!is.na(db$constituent) & db$constituent=='eon', c('constituent')] ='EON'
 
 #db$Newslink<-paste('<a href="',db$Link,'">',db$Headline ,'</a>',sep="") #embed the hyperlink in headlines
 
