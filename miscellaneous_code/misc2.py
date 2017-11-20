@@ -47,5 +47,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     sys.path.insert(0, args.python_path)
     from utils.Storage import Storage, MongoEncoder
-
-    main(args)
+    #main(args)
+    file_to_mongodb(args)
