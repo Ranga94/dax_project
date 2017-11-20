@@ -79,6 +79,7 @@ server <- function(input, output){
   
   
   
+  
   ## News Table - DataTable
   from_date <- as.integer(as.POSIXct(strptime("2017-11-10","%Y-%m-%d"))) * 1000
   to_date <- as.integer(as.POSIXct(strptime("2017-11-16","%Y-%m-%d"))) * 1000
