@@ -80,11 +80,21 @@ server <- function(input, output){
   
   
   ## News Table - DataTable
+  from_date <- as.integer(as.POSIXct(strptime("2017-11-10","%Y-%m-%d"))) * 1000
+  to_date <- as.integer(as.POSIXct(strptime("2017-11-16","%Y-%m-%d"))) * 1000
+  
+  query <- paste0('{"NEWS_DATE_NewsDim":{"$gte":{"$date":{"$numberLong":"', from_date,'"}},
+                  "$lte":{"$date":{"$numberLong":"', to_date,'"}}},
+                  "constituent_id":{"$exists":true},
+                  "constituent_id":{"$in":["ADSDE8190216927","CBKDEFEB13190","DBKDEFEB13216","BMWDE8170003036","EOANDE5050056484"]}}')
+  
+  proyection <- paste0('{"NEWS_ARTICLE_TXT_NewsDim":false}')
+  
   news_data_all <- eventReactive(input$reload, {
     all_news <- mongo(collection = 'all_news',
                 url = url_mongo,
                 verbose = FALSE, options = ssl_options())
-    db <- all_news$find('{"show":true}')
+    db <- all_news$find(query, proyection)
     news_transform(db)
   }, ignoreNULL = FALSE)
   output$news_all <- DT::renderDataTable(news_data_all())

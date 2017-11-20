@@ -49,7 +49,7 @@ news_transform<-function(db){
   db$NEWS_DATE_NewsDim<- as.Date(db$NEWS_DATE_NewsDim,format='%d/%m/%Y')
   db<- db[order(-as.numeric(db$NEWS_DATE_NewsDim)),] ##order by release dates, descending
 
-  db <- db[1:100,c('NEWS_TITLE_NewsDim','constituent','categorised_tag','sentiment')]
+  db <- db[1:7398,c('NEWS_TITLE_NewsDim','constituent','categorised_tag','sentiment')]
 
   #make sure the news link only contains 8 characters from the headline. 
   db$NEWS_TITLE_NewsDim <- as.character(db$NEWS_TITLE_NewsDim)
