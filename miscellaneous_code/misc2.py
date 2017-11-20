@@ -25,6 +25,8 @@ def file_to_mongodb(args):
                 data["NEWS_SOURCE_NewsDim"] = data.pop("news_source")
                 data["NEWS_PUBLICATION_NewsDim"] = data.pop("news_publication")
                 data["categorised_tag"] = data.pop("news_topics")
+                if data["constituent"] == "BMW":
+                    data["constituent"] = "bmw"
             except Exception as e:
                 print(e)
                 continue
