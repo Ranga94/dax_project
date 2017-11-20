@@ -157,12 +157,12 @@ def extract_meta_data(database, constituent):
                             print("{}:{}".format(key, value))
 
 
-                        '''
+
                         insert_data.append({'table': section, 'constituent': constituent,
                                             data[0].string.strip().replace('.', ''): data[1].string.strip()})
-                        '''
 
-    #bulk_insert(database.company_data, insert_data)
+
+    bulk_insert(database.company_data_bkp, insert_data)
 
 
 def bulk_insert(collection, documents):
@@ -174,7 +174,7 @@ def bulk_insert(collection, documents):
 
 def get_database(connection_string):
     client = MongoClient(connection_string)
-    return client.dax
+    return client.dax_gcp
 
 def insert_document(db, document):
     try:

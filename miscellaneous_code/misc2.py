@@ -34,11 +34,11 @@ def file_to_mongodb(args):
 
             if len(operations) == 1000:
                 print("Saving {} records".format(records))
-                storage.save_to_mongodb(data, "dax_gcp", "all_news")
+                storage.save_to_mongodb(operations, "dax_gcp", "all_news")
                 operations = []
 
         if len(operations) > 0:
-            storage.save_to_mongodb(data, "dax_gcp", "all_news")
+            storage.save_to_mongodb(operations, "dax_gcp", "all_news")
 
 
 if __name__ == "__main__":

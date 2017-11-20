@@ -268,6 +268,10 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                     tags = get_spacey_tags(tagger.get_spacy_entities(text))
                     entity_tags.append(tags)
 
+                ###########################################
+                #!!!!!!!!!!!!!!!!!!!!ADD REAMINING FIELDS AND MODIFY DATA MODEL IN BIGQUERY
+                #################################
+
                 fields = ["news_date", "news_title", "news_article_txt", "news_source", "news_publication",
                           "news_topics",
                           "score", "sentiment", "constituent_id", "constituent_name", "constituent", "url", "show"]
