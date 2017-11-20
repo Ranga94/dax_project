@@ -25,6 +25,8 @@ def file_to_mongodb(args):
                 data["NEWS_SOURCE_NewsDim"] = data.pop("news_source")
                 data["NEWS_PUBLICATION_NewsDim"] = data.pop("news_publication")
                 data["categorised_tag"] = data.pop("news_topics")
+                if data["constituent"] == "BMW":
+                    data["constituent"] = "bmw"
             except Exception as e:
                 print(e)
                 continue
@@ -34,11 +36,11 @@ def file_to_mongodb(args):
 
             if len(operations) == 1000:
                 print("Saving {} records".format(records))
-                storage.save_to_mongodb(data, "dax_gcp", "all_news")
+                storage.save_to_mongodb(operations, "dax_gcp", "all_news")
                 operations = []
 
         if len(operations) > 0:
-            storage.save_to_mongodb(data, "dax_gcp", "all_news")
+            storage.save_to_mongodb(operations, "dax_gcp", "all_news")
 
 
 if __name__ == "__main__":
