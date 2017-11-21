@@ -196,7 +196,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
     constituents = storage.get_sql_data(sql_connection_string=param_connection_string,
                                         sql_table_name=table,
-                                        sql_column_list=columns)[28:]
+                                        sql_column_list=columns)
 
     for constituent_id, constituent_name, bvdid in constituents:
         records = 0
@@ -311,20 +311,40 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
                     bigquery_data[i]["news_title"] = str(bigquery_data[i]["news_title"])
                     bigquery_data[i]["news_article_txt"] = str(bigquery_data[i]["news_article_txt"])
+                    try:
+                        bigquery_data[i]["news_companies"] = bigquery_data[i]["news_companies"].split(";")
+                    except Exception as e:
+                        bigquery_data[i]["news_companies"] = str(bigquery_data[i]["news_companies"])
+
+                    try:
+                        if bigquery_data[i]["news_topics"].isdigit():
+                            bigquery_data[i]["news_topics"] = None
+                        elif bigquery_data[i]["news_topics"] == 'None':
+                            bigquery_data[i]["news_topics"] = None
+                        else:
+                            bigquery_data[i]["news_topics"] = bigquery_data[i]["news_topics"].split(";")
+                    except Exception as e:
+                        bigquery_data[i]["news_topics"] = None
+
+                    try:
+                        bigquery_data[i]["news_country"] = bigquery_data[i]["news_country"].split(";")
+                    except Exception as e:
+                        bigquery_data[i]["news_country"] = str(bigquery_data[i]["news_country"])
+
+                    try:
+                        bigquery_data[i]["news_region"] = bigquery_data[i]["news_region"].split(";")
+                    except Exception as e:
+                        bigquery_data[i]["news_region"] = str(bigquery_data[i]["region"])
+
+                    bigquery_data[i]["news_language"] = str(bigquery_data[i]["news_language"])
                     bigquery_data[i]["news_source"] = str(bigquery_data[i]["news_source"])
                     bigquery_data[i]["news_publication"] = str(bigquery_data[i]["news_publication"])
-                    bigquery_data[i]["news_topics"] = str(bigquery_data[i]["news_topics"]) #list
+                    bigquery_data[i]["news_id"] = str(bigquery_data[i]["news_id"])
+
                     bigquery_data[i]["sentiment"] = str(bigquery_data[i]["sentiment"])
                     bigquery_data[i]["constituent_id"] = str(bigquery_data[i]["constituent_id"])
                     bigquery_data[i]["constituent_name"] = str(bigquery_data[i]["constituent_name"])
                     bigquery_data[i]["constituent"] = str(bigquery_data[i]["constituent"])
-
-                    bigquery_data[i]["news_companies"] = str(bigquery_data[i]["news_companies"]) #list
-                    bigquery_data[i]["news_country"] = str(bigquery_data[i]["news_country"]) #list
-                    bigquery_data[i]["news_region"] = str(bigquery_data[i]["news_region"]) #list
-                    bigquery_data[i]["news_language"] = str(bigquery_data[i]["news_language"])
-                    bigquery_data[i]["news_id"] = str(bigquery_data[i]["news_id"])
-
 
                     f.write(json.dumps(bigquery_data[i], cls=MongoEncoder) + '\n')
 
