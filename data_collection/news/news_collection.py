@@ -310,45 +310,69 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                     ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
                     bigquery_data[i]["news_date"] = ts
 
-                    bigquery_data[i]["news_title"] = str(bigquery_data[i]["news_title"])
-                    bigquery_data[i]["news_article_txt"] = str(bigquery_data[i]["news_article_txt"])
-                    try:
-                        bigquery_data[i]["news_companies"] = bigquery_data[i]["news_companies"].split(";")
-                    except Exception as e:
-                        bigquery_data[i]["news_companies"] = str(bigquery_data[i]["news_companies"])
+                    if bigquery_data[i]["news_title"]:
+                        bigquery_data[i]["news_title"] = str(bigquery_data[i]["news_title"])
 
-                    try:
-                        if bigquery_data[i]["news_topics"].isdigit():
+                    if bigquery_data[i]["news_article_txt"]:
+                        bigquery_data[i]["news_article_txt"] = str(bigquery_data[i]["news_article_txt"])
+
+                    if bigquery_data[i]["news_companies"]:
+                        try:
+                            bigquery_data[i]["news_companies"] = bigquery_data[i]["news_companies"].split(";")
+                        except Exception as e:
+                            bigquery_data[i]["news_companies"] = str(bigquery_data[i]["news_companies"])
+
+                    if bigquery_data[i]["news_topics"]:
+                        try:
+                            if bigquery_data[i]["news_topics"].isdigit():
+                                bigquery_data[i]["news_topics"] = None
+                            elif bigquery_data[i]["news_topics"] == 'None':
+                                bigquery_data[i]["news_topics"] = None
+                            else:
+                                bigquery_data[i]["news_topics"] = bigquery_data[i]["news_topics"].split(";")
+                        except Exception as e:
                             bigquery_data[i]["news_topics"] = None
-                        elif bigquery_data[i]["news_topics"] == 'None':
-                            bigquery_data[i]["news_topics"] = None
-                        else:
-                            bigquery_data[i]["news_topics"] = bigquery_data[i]["news_topics"].split(";")
-                    except Exception as e:
-                        bigquery_data[i]["news_topics"] = None
 
-                    try:
-                        bigquery_data[i]["news_country"] = bigquery_data[i]["news_country"].split(";")
-                    except Exception as e:
-                        bigquery_data[i]["news_country"] = str(bigquery_data[i]["news_country"])
 
-                    try:
-                        bigquery_data[i]["news_region"] = bigquery_data[i]["news_region"].split(";")
-                    except Exception as e:
-                        bigquery_data[i]["news_region"] = str(bigquery_data[i]["region"])
+                    if bigquery_data[i]["news_country"]:
+                        try:
+                            bigquery_data[i]["news_country"] = bigquery_data[i]["news_country"].split(";")
+                        except Exception as e:
+                            bigquery_data[i]["news_country"] = str(bigquery_data[i]["news_country"])
 
-                    bigquery_data[i]["news_language"] = str(bigquery_data[i]["news_language"])
-                    bigquery_data[i]["news_source"] = str(bigquery_data[i]["news_source"])
-                    bigquery_data[i]["news_publication"] = str(bigquery_data[i]["news_publication"])
-                    try:
-                        bigquery_data[i]["news_id"] = int(bigquery_data[i]["news_id"])
-                    except Exception as e:
-                        bigquery_data[i]["news_id"] = str(bigquery_data[i]["news_id"])
+                    if bigquery_data[i]["news_region"]:
+                        try:
+                            bigquery_data[i]["news_region"] = bigquery_data[i]["news_region"].split(";")
+                        except Exception as e:
+                            bigquery_data[i]["news_region"] = str(bigquery_data[i]["region"])
 
-                    bigquery_data[i]["sentiment"] = str(bigquery_data[i]["sentiment"])
-                    bigquery_data[i]["constituent_id"] = str(bigquery_data[i]["constituent_id"])
-                    bigquery_data[i]["constituent_name"] = str(bigquery_data[i]["constituent_name"])
-                    bigquery_data[i]["constituent"] = str(bigquery_data[i]["constituent"])
+                    if bigquery_data[i]["news_language"]:
+                        bigquery_data[i]["news_language"] = str(bigquery_data[i]["news_language"])
+
+                    if bigquery_data[i]["news_source"]:
+                        bigquery_data[i]["news_source"] = str(bigquery_data[i]["news_source"])
+
+                    if bigquery_data[i]["news_publication"]:
+                        bigquery_data[i]["news_publication"] = str(bigquery_data[i]["news_publication"])
+
+
+                    if bigquery_data[i]["news_id"]:
+                        try:
+                            bigquery_data[i]["news_id"] = int(bigquery_data[i]["news_id"])
+                        except Exception as e:
+                            bigquery_data[i]["news_id"] = str(bigquery_data[i]["news_id"])
+
+                    if bigquery_data[i]["sentiment"]:
+                        bigquery_data[i]["sentiment"] = str(bigquery_data[i]["sentiment"])
+
+                    if bigquery_data[i]["constituent_id"]:
+                        bigquery_data[i]["constituent_id"] = str(bigquery_data[i]["constituent_id"])
+
+                    if bigquery_data[i]["constituent_name"]:
+                        bigquery_data[i]["constituent_name"] = str(bigquery_data[i]["constituent_name"])
+
+                    if bigquery_data[i]["constituent"]:
+                        bigquery_data[i]["constituent"] = str(bigquery_data[i]["constituent"])
 
                     f.write(json.dumps(bigquery_data[i], cls=MongoEncoder) + '\n')
 
