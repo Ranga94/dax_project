@@ -1,3 +1,4 @@
+options(scipen=1000)
 library(DT)
 library(shiny)
 library(shinydashboard)
@@ -34,7 +35,10 @@ server <- function(input, output){
                          url = url_mongo,
                          verbose = FALSE, options = ssl_options())
   twitter_df<-twitter_count$find('{}')
-  
+  twitter_df$date<-as.Date(twitter_df$date)
+  twitter_df<- twitter_df[twitter_df$date>as.Date('2017-09-06'),]
+  twitter_df<- twitter_df[twitter_df$date<as.Date('2017-09-22'),]
+  twitter_df<- unique(twitter_df)
   
   ##BMW
   tweet_count_bmw <-eventReactive(input$reload, {
@@ -76,12 +80,23 @@ server <- function(input, output){
   
   
   
+  
   ## News Table - DataTable
+  from_date <- as.integer(as.POSIXct(strptime("2017-11-10","%Y-%m-%d"))) * 1000
+  to_date <- as.integer(as.POSIXct(strptime("2017-11-16","%Y-%m-%d"))) * 1000
+  
+  query <- paste0('{"NEWS_DATE_NewsDim":{"$gte":{"$date":{"$numberLong":"', from_date,'"}},
+                  "$lte":{"$date":{"$numberLong":"', to_date,'"}}},
+                  "constituent_id":{"$exists":true},
+                  "constituent_id":{"$in":["ADSDE8190216927","CBKDEFEB13190","DBKDEFEB13216","BMWDE8170003036","EOANDE5050056484"]}}')
+  
+  proyection <- paste0('{"NEWS_ARTICLE_TXT_NewsDim":false}')
+  
   news_data_all <- eventReactive(input$reload, {
     all_news <- mongo(collection = 'all_news',
                 url = url_mongo,
                 verbose = FALSE, options = ssl_options())
-    db <- all_news$find('{"show":true}')
+    db <- all_news$find(query, proyection)
     news_transform(db)
   }, ignoreNULL = FALSE)
   output$news_all <- DT::renderDataTable(news_data_all())
@@ -93,7 +108,9 @@ server <- function(input, output){
     db <- mongo(collection = 'analyst_opinions',
                 url = url_mongo,
                 verbose = FALSE, options = ssl_options())
-    retrieved_data <- db$find('{"Status":"active"}')
+    retrieved_data <- db$find('{"Status":"inactive"}')
+    retrieved_data$Date<-as.Date(retrieved_data$Date)
+    retrieved_data<-retrieved_data[retrieved_data$Date==as.Date('2017-10-06'),]
     analyst_stacked_bar(retrieved_data)
     }, ignoreNULL = FALSE)
   output$analystplot <- renderPlot(analyst_data())
@@ -104,19 +121,25 @@ server <- function(input, output){
     db <- mongo(collection = 'summary_box',
                 url = url_mongo,
                 verbose = FALSE, options = ssl_options())
-    retrieved_data <- db$find()
+    retrieved_data <- db$find('{}')
     summary_box(retrieved_data)               
   }, ignoreNULL = FALSE)
   output$reactivetable <- renderDataTable(summary_data())
   
   
+  
   ####################################### FUNDAMENTAL ###########################################
   ##Cumulative Returns - DataTable
+  price_analysis_db <- mongo(collection = 'price analysis',
+              url = url_mongo,
+              verbose = FALSE, options = ssl_options())
+  
+  ##Cumulative Returns - DataTable
   cumulative_return <- eventReactive(input$reload, {
-    db <- mongo(collection = 'price analysis',
-                url = url_mongo,
-                verbose = FALSE, options = ssl_options())
-    retrieved_data <- db$find('{"Table":"cumulative return analysis","Status":"inactive"}')
+    retrieved_data <- price_analysis_db$find('{"Table":"cumulative return analysis","Status":"inactive"}')
+    #Select wanted date
+    retrieved_data$Date<-as.Date(retrieved_data$Date)
+    retrieved_data=retrieved_data[retrieved_data$Date==as.Date('2017-10-08'),]
     cumulative_return_table(retrieved_data)
   },ignoreNULL = FALSE)
   output$CRtable <- renderDataTable(cumulative_return())
@@ -124,25 +147,29 @@ server <- function(input, output){
 
   ##Golden Cross - DataTable
   golden_cross <- eventReactive(input$reload, {
-    db <- mongo(collection = 'price analysis',
-                url = url_mongo,
-                verbose = FALSE, options = ssl_options())
-    retrieved_data <- db$find('{"Table":"Market signal","Status":"inactive"}')
+    retrieved_data <- price_analysis_db$find('{"Table":"Market signal","Status":"inactive"}')
+    #select the wanted dates
+    retrieved_data$Date<-as.Date(retrieved_data$Date)
+    retrieved_data=retrieved_data[retrieved_data$Date==as.Date('2017-10-08'),]
     cross_analysis(retrieved_data)
     },ignoreNULL = FALSE)
   output$cross_table <- renderDataTable(golden_cross())
- 
+  
   
   ##Profitability Ranking - DataTable
   ranking <- eventReactive(input$reload, {
-    db <- mongo(collection = 'Profitability ranking',
+    db <- mongo(collection = 'profitability_ranking',
                 url = url_mongo,
                 verbose = FALSE, options = ssl_options())
-    retrieved_data <- db$find('{"Status":"active"}')
+    retrieved_data<-db$find('{}')
+    retrieved_data$Date<-as.Date(retrieved_data$Date)
+    retrieved_data=retrieved_data[retrieved_data$Date==as.Date('2017-10-04'),]
+    retrieved_data <- db$find('{"Status":"inactive"}')
     rank_n_tag(retrieved_data)
       },ignoreNULL = FALSE)
   output$ranking_top  <- renderDataTable(ranking()) 
  
+  
   
   
   ##################################### ANALYST PAGE ####################################

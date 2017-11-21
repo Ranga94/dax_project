@@ -14,6 +14,8 @@ from bs4 import BeautifulSoup
 import urllib
 
 
+#python 
+
 #Write a function that extract analyst data for all stocks
 def analyst_businessinsider(constituents_dict): 
     analyst_opinion_table = pd.DataFrame()
