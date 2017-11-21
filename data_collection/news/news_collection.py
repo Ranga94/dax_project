@@ -197,6 +197,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
     constituents = storage.get_sql_data(sql_connection_string=param_connection_string,
                                         sql_table_name=table,
                                         sql_column_list=columns)
+    constituents = [constituents[0]]
 
     for constituent_id, constituent_name, bvdid in constituents:
         records = 0
@@ -339,7 +340,10 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                     bigquery_data[i]["news_language"] = str(bigquery_data[i]["news_language"])
                     bigquery_data[i]["news_source"] = str(bigquery_data[i]["news_source"])
                     bigquery_data[i]["news_publication"] = str(bigquery_data[i]["news_publication"])
-                    bigquery_data[i]["news_id"] = str(bigquery_data[i]["news_id"])
+                    try:
+                        bigquery_data[i]["news_id"] = int(bigquery_data[i]["news_id"])
+                    except Exception as e:
+                        bigquery_data[i]["news_id"] = str(bigquery_data[i]["news_id"])
 
                     bigquery_data[i]["sentiment"] = str(bigquery_data[i]["sentiment"])
                     bigquery_data[i]["constituent_id"] = str(bigquery_data[i]["constituent_id"])
