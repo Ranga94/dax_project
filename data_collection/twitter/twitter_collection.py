@@ -46,7 +46,9 @@ def get_parameters(connection_string, table, column_list):
 def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABASE_NAME, COLLECTION_NAME,
                LOGGING_FLAG, TWITTER_API_KEY, TWITTER_API_SECRET, PARAM_CONNECTION_STRING, BUCKET_NAME,
                GOOGLE_KEY_PATH=None):
+
     storage = Storage()
+    ps_utils = PubsubUtils(GOOGLE_KEY_PATH)
 
     downloader = TwitterDownloader(TWITTER_API_KEY, TWITTER_API_SECRET)
     downloader.load_api()
@@ -120,9 +122,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
             print("File does not exists in the local filesystem.")
         '''
 
-        #logging
         if LOGGING_FLAG:
-            pass
             logging(constituent_name, constituent_id, tweetCount, LANGUAGE,
                     CONNECTION_STRING, DATABASE_NAME)
 
@@ -288,4 +288,5 @@ if __name__ == "__main__":
     sys.path.insert(0, args.python_path)
     from utils.TwitterDownloader import TwitterDownloader
     from utils.Storage import Storage
+    from utils.PubsubUtils import PubsubUtils
     main(args)

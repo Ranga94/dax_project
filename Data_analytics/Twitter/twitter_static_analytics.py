@@ -355,6 +355,13 @@ def update_from_bigquery_split(args):
 
     print("--- %s seconds ---" % (time.time() - start_time))
 
+class TwitterStaticAnalytics:
+    def __init__(self):
+        self.tagger = TaggingUtils()
+
+    
+
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
