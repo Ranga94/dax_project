@@ -196,7 +196,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
     constituents = storage.get_sql_data(sql_connection_string=param_connection_string,
                                         sql_table_name=table,
-                                        sql_column_list=columns)
+                                        sql_column_list=columns)[2:]
 
     for constituent_id, constituent_name, bvdid in constituents:
         records = 0
@@ -236,7 +236,13 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 csv_result = result[0][0][0].text
 
                 TESTDATA = StringIO(csv_result)
-                df = pd.read_csv(TESTDATA, sep=",", parse_dates=["news_date"])
+                try:
+                    df = pd.read_csv(TESTDATA, sep=",", parse_dates=["news_date"])
+                except Exception as e:
+                    start = end + 1
+                    end = start + 20
+                    records += 20
+                    continue
 
                 if pd.isnull(df.iloc[0, 2]):
                     break

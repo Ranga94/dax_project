@@ -177,6 +177,7 @@ class Storage:
                 print(errors[0])
                 return None
         except Exception as e:
+            print(e)
             return -1
 
 class MongoEncoder(json.JSONEncoder):
