@@ -11,7 +11,7 @@ import json
 import sys
 import operator
 
-#!python Igenie/dax_project/fundamental_kefei/dividend_analysis.py '/Users/kefei/Igenie/dax_project/fundamental_kefei' 'mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp' 'mongodb://admin:admin@ds019654.mlab.com:19654/dax' 'dax_gcp' 'dax' 'historical' 'company_data' 'fundamental analysis' -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Continental','Daimler','Deutsche Börse','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Linde','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media' 'dividend analysis'
+#python dividend_analysis.py 'mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp' 'dax_gcp' 'historical' 'company_data_bkp' 'fundamental analysis' -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Continental','Daimler','Deutsche Börse','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media' 'dividend analysis'
 
 ##This dividend table stores the results of linear regression, and the list of years when dividends are offered
 ##'Commerzbank','Deutsche Bank','Lufthansa','RWE','thyssenkrupp','Vonovia','Volkswagen (VW) vz'may not receive dividend yields
@@ -34,13 +34,6 @@ def dividend_main(args):
     
     status_update(args)
     store_result(args, dividend_table)
-    #print dividend_table
-    #return dividend_table
-    #status_update(args)
-    #store the analysis
-    #storage = Storage()
-    #storage.save_to_mongodb(connection_string=args.connection_string, database=args.database,collection=args.collection_store_analysis, data=quarter_mean_json)
-   
 
 #Computes the linear regression model for dividend, and produce list of years where dividend is offered. 
 def dividend_analysis(div):
@@ -81,8 +74,8 @@ def Gordon_Growth_estimated_return(div_growth,current_price,current_div,future_d
 #this obtains the historical price data as a pandas dataframe from source for one constituent. 
 def get_dividend_data(args,constituent):
     print constituent
-    client = MongoClient(args.connection_string_master)
-    db = client[args.database_master]
+    client = MongoClient(args.connection_string)
+    db = client[args.database]
     collection = db[args.collection_get_master]
     div = collection.find({"constituent":constituent,'table':'Dividend'})
     div = pd.DataFrame(list(div))
@@ -91,8 +84,8 @@ def get_dividend_data(args,constituent):
 
 #this obtains the historical price data as a pandas dataframe from source for one constituent. 
 def get_historical_price(args,constituent):
-    client = MongoClient(args.connection_string_price)
-    db = client[args.database_price]
+    client = MongoClient(args.connection_string)
+    db = client[args.database]
     collection = db[args.collection_get_price]
     his = collection.find({"constituent":constituent})
     his = pd.DataFrame(list(his))
@@ -107,7 +100,7 @@ def status_update(args):
     client = MongoClient(args.connection_string)
     db = client[args.database]
     collection = db[args.collection_store_analysis]
-    collection.update_many({'Table':args.table_store_analysis,'status':'active'}, {'$set': {'status': 'inactive'}},True,True)
+    collection.update_many({'Table':args.table_store_analysis,'Status':'active'}, {'$set': {'Status': 'inactive'}},True,True)
 
 
 def store_result(args,result_df):
@@ -121,11 +114,8 @@ def store_result(args,result_df):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('python_path', help='The directory connection string') 
-    parser.add_argument('connection_string_price', help='The mongodb connection string for price data')
-    parser.add_argument('connection_string_master', help='The mongodb connection string for master data (dividend)')
-    parser.add_argument('database_price',help='Name of the database where historical price is stored')
-    parser.add_argument('database_master',help='Name of the database where master data (dividend) is stored')
+    parser.add_argument('connection_string', help='The mongodb connection string for price data')
+    parser.add_argument('database',help='Name of the database where historical price is stored')
     parser.add_argument('collection_get_price', help='The collection from which company data (dividend) is exracted')
     parser.add_argument('collection_get_master', help='The collection from which historical price is exracted')
     parser.add_argument('collection_store_analysis', help='The collection where the analysis will be stored')
@@ -134,7 +124,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     
-    #sys.path.insert(0, args.python_path)
-    #from utils.Storage import Storage
     
     dividend_table = dividend_main(args)

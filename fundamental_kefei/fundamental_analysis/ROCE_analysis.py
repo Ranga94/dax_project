@@ -10,8 +10,7 @@ import pandas as pd
 import json
 import sys
 
-
-#!python Igenie/dax_project/fundamental_kefei/ROCE_analysis.py '/Users/kefei/Igenie/dax_project/fundamental_kefei' 'mongodb://admin:admin@ds019654.mlab.com:19654/dax' 'dax' 'company_data' 'fundamental analysis' -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Continental','Daimler','Deutsche Börse','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Linde','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media' 'ROCE analysis'
+#python ROCE_analysis.py 'mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp' ‘dax_gcp’ 'company_data_bkp' 'fundamental analysis' -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Continental','Daimler','Deutsche Börse','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Linde','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media' "ROCE analysis"
 
 def ROCE_main(args):
     ROCE_coll_table = pd.DataFrame()
@@ -23,11 +22,6 @@ def ROCE_main(args):
         ROCE_coll_table = ROCE_coll_table.append(pd.DataFrame({'Constituent': constituent, 'Current ROCE': round(ROCE_table['ROCE'].iloc[-1],2), '% change in ROCE from previous year':round(pct_ROCE_last_year,2),'% change in ROCE from 4 years ago': round(pct_ROCE_four_years,2),'ROCE score':score,'Table':'ROCE analysis','Date':str(datetime.date.today()),'Status':"active"}, index=[0]), ignore_index=True)
     status_update(args)
     store_result(args, ROCE_coll_table)
-    #status_update(args)
-    #store the analysis
-    #storage = Storage()
-    #storage.save_to_mongodb(connection_string=args.connection_string, database=args.database,collection=args.collection_store_analysis, data=quarter_mean_json)
-
 
 
 def ROCE_calculate(master):
@@ -58,7 +52,7 @@ def get_master_data(args,constituent):
     print constituent
     client = MongoClient(args.connection_string)
     db = client[args.database]
-    collection = db[args.collection_get_price]
+    collection = db[args.collection_get_master]
     master = collection.find({"constituent":constituent})
     master = pd.DataFrame(list(master))
     return master
@@ -70,7 +64,7 @@ def status_update(args):
     client = MongoClient(args.connection_string)
     db = client[args.database]
     collection = db[args.collection_store_analysis]
-    collection.update_many({'Table':args.table_store_analysis,'status':'active'}, {'$set': {'status': 'inactive'}},True,True)
+    collection.update_many({'Table':args.table_store_analysis,'Status':'active'}, {'$set': {'Status': 'inactive'}},True,True)
 
 
 def store_result(args,result_df):
@@ -84,17 +78,14 @@ def store_result(args,result_df):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('python_path', help='The directory connection string') 
     parser.add_argument('connection_string', help='The mongodb connection string')
     parser.add_argument('database',help='Name of the database')
-    parser.add_argument('collection_get_price', help='The collection from which historical price is exracted')
+    parser.add_argument('collection_get_master', help='The collection from which master is exracted')
     parser.add_argument('collection_store_analysis', help='The collection where the analysis will be stored')
     parser.add_argument('-l', '--constituents_list',help='List of all DAX 30 constituents avaliable',type=str)
     parser.add_argument('table_store_analysis', help='Name of table for stroing the analysis')
 
     args = parser.parse_args()
     
-    #sys.path.insert(0, args.python_path)
-    #from utils.Storage import Storage
     
     ROCE_main(args)

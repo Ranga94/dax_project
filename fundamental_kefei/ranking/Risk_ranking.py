@@ -18,7 +18,7 @@ import urllib
 import json
 import sys
 
-#!python Igenie/dax_project/fundamental_kefei/Risk_ranking.py '/Users/kefei/DIgenie/dax_project/fundamental_kefei' 'mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp' 'dax_gcp' 'price analysis' -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Commerzbank','Continental','Daimler','Deutsche Bank','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Linde','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','ProSiebenSat1 Media','Volkswagen (VW) vz' 'Risk scores'
+#python Risk_ranking.py 'mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp' 'dax_gcp' 'price analysis' -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Commerzbank','Continental','Daimler','Deutsche Bank','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','ProSiebenSat1 Media','Volkswagen (VW) vz' 'Risk scores'
 
 #u'Deutsche B\xf6rse'
 #u'M\xfcnchener R\xfcckversicherungs-Gesellschaft'
@@ -29,19 +29,8 @@ def risk_main(args):
     VaR_stats_table=VaR_stats(VaR_table)
     VaR_score_board = VaR_ranking(args,VaR_stats_table,VaR_table)
     print 'board done'
-    
-    ##Store all the score board in mongodb
-    client = MongoClient(args.connection_string)
-    db = client[args.database]
-    
-    ##Update the collection
-    collection = db[args.collection_store_risk_scores]
-    collection.update_many({'Status':'active'}, {'$set': {'Status': 'inactive'}},True,True)
-    collection.update_many({'Status':'NaN'}, {'$set': {'Status': 'inactive'}},True,True)
-    
-    ##Insert result into database
-    VaR_scores_json = json.loads(VaR_score_board.to_json(orient='records')) #upload the tagging
-    collection.insert_many(VaR_scores_json)
+    status_update(args)
+    store_result(args,VaR_score_board)
     print 'all done'
 
 def VaR_collect(args):
@@ -113,11 +102,26 @@ def VaR_ranking(args,VaR_stats_table,VaR_table):
     return var_score_board
 
 
+def status_update(args):
+    client = MongoClient(args.connection_string)
+    db = client[args.database]
+    collection = db[args.collection_store_risk_scores]
+    collection.update_many({'Status':'active'}, {'$set': {'Status': 'inactive'}},True,True)
+
+
+def store_result(args,result_df):
+    client = MongoClient(args.connection_string)
+    db = client[args.database]
+    collection = db[args.collection_store_risk_scores]
+    json_file = json.loads(result_df.to_json(orient='records'))
+    collection.insert_many(json_file)
+
+
+
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('python_path', help='The directory connection string') 
     parser.add_argument('connection_string', help='The mongodb connection string')
     parser.add_argument('database',help='Name of the database')
     parser.add_argument('collection_get_var_analysis', help='The collection from which VaR analysis is extracted')
@@ -126,7 +130,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     
-    sys.path.insert(0, args.python_path)
+    #sys.path.insert(0, args.python_path)
     #from utils.Storage import Storage
     
     risk_main(args)

@@ -11,7 +11,7 @@ import json
 import sys
 
 
-#!python Igenie/dax_project/fundamental_kefei/EPS_analysis.py '/Users/kefei/Igenie/dax_project/fundamental_kefei' 'mongodb://admin:admin@ds019654.mlab.com:19654/dax' 'dax' 'company_data' 'fundamental analysis' -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Continental','Daimler','Deutsche Börse','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Linde','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media' 'EPS analysis'
+#!python EPS_analysis.py 'mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp' 'dax_gcp' 'company_data_bkp' 'fundamental analysis' -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Continental','Daimler','Deutsche Börse','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media' 'EPS analysis'
 
 #'Volkswagen (VW) vz' not found
 def EPS_main(args):
@@ -62,7 +62,7 @@ def status_update(args):
     client = MongoClient(args.connection_string)
     db = client[args.database]
     collection = db[args.collection_store_analysis]
-    collection.update_many({'Table':args.table_store_analysis,'status':'active'}, {'$set': {'status': 'inactive'}},True,True)
+    collection.update_many({'Table':args.table_store_analysis,'Status':'active'}, {'$set': {'Status': 'inactive'}},True,True)
 
 
 
@@ -78,7 +78,6 @@ def store_result(args,result_df):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('python_path', help='The directory connection string') 
     parser.add_argument('connection_string', help='The mongodb connection string')
     parser.add_argument('database',help='Name of the database')
     parser.add_argument('collection_get_master', help='The collection from which company data is extracted')

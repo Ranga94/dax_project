@@ -11,7 +11,7 @@ import json
 import sys
 
 
-#!python Igenie/dax_project/fundamental_kefei/profit_margin_analysis.py '/Users/kefei/Igenie/dax_project/fundamental_kefei' 'mongodb://admin:admin@ds019654.mlab.com:19654/dax' 'dax' 'company_data' 'fundamental analysis' -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Continental','Daimler','Deutsche Börse','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Linde','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media' 'profit margin analysis'
+#python profit_margin_analysis.py 'mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp' 'dax_gcp' 'company_data_bkp' 'fundamental analysis' -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Continental','Daimler','Deutsche Börse','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media' 'profit margin analysis'
 
 
 def profit_margin_calculator(master):
@@ -34,6 +34,7 @@ def profit_margin_calculator(master):
     else: 
         score = 0
     
+    
     return profit_margin_calculation,current_pm,pm_last_year,pm_four_years_ago,pct_last_year,pct_four_years_ago,score
 
 
@@ -51,7 +52,8 @@ def profit_margin_main(args):
     #storage = Storage()
     #storage.save_to_mongodb(connection_string=args.connection_string, database=args.database,collection=args.collection_store_analysis, data=quarter_mean_json)
    
-
+    status_update(args)
+    store_result(args,profit_margin_table)
 
 #this obtains the master data as a pandas dataframe from source for one constituent. 
 def get_master_data(args,constituent):
@@ -70,14 +72,18 @@ def status_update(args):
     client = MongoClient(args.connection_string)
     db = client[args.database]
     collection = db[args.collection_store_analysis]
-    collection.update_many({'Table':args.table_store_analysis,'status':'active'}, {'$set': {'status': 'inactive'}},True,True)
+    collection.update_many({'Table':args.table_store_analysis,'Status':'active'}, {'$set': {'Status': 'inactive'}},True,True)
 
-
+def store_result(args,result_df):
+    client = MongoClient(args.connection_string)
+    db = client[args.database]
+    collection = db[args.collection_store_analysis]
+    json_file = json.loads(result_df.to_json(orient='records'))
+    collection.insert_many(json_file)
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('python_path', help='The directory connection string') 
     parser.add_argument('connection_string', help='The mongodb connection string')
     parser.add_argument('database',help='Name of the database')
     parser.add_argument('collection_get_master', help='The collection from which company data is extracted')

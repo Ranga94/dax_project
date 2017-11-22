@@ -19,7 +19,7 @@ import urllib
 import json
 import sys
 
-#!python Igenie/dax_project/fundamental_kefei/Fundamental_ranking.py '/Users/kefei/DIgenie/dax_project/fundamental_kefei' 'mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp' 'dax_gcp' 'fundamental analysis'  -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Commerzbank','Continental','Daimler','Deutsche Bank','Deutsche Börse','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Linde','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media','Volkswagen (VW) vz' 'Fundamental ranking'
+#python Fundamental_ranking.py 'mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp' 'dax_gcp' 'fundamental analysis'  -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Commerzbank','Continental','Daimler','Deutsche Bank','Deutsche Börse','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media','Volkswagen (VW) vz' 'Fundamental ranking'
 
 def fundamental_ranking_main(args):
     
@@ -39,22 +39,11 @@ def fundamental_ranking_main(args):
     current_fundamental_score_board=current_fundamental_scoring(current_fundamental_stats_table,current_values_list,table_list)
     print "current fundamental done"
     
-    #Converting the result into json
-    fundamental_growth_json = json.loads(fundamental_growth_score_board.to_json(orient='records'))
-    current_fundamental_json = json.loads(current_fundamental_score_board.to_json(orient='records'))
+   
+    status_update(args)
+    store_result(args,fundamental_growth_score_board)
+    store_result(args,current_fundamental_score_board)
     
-    
-    ##Update the collection
-    client = MongoClient(args.connection_string)
-    db = client[args.database]
-    collection = db[args.collection_store_scores]
-    collection.update_many({'Status':'active'}, {'$set': {'Status': 'inactive'}},True,True)
-    collection.update_many({'Status':'NaN'}, {'$set': {'Status': 'inactive'}},True,True)
-    print "updating fundamental ranking done"
-    
-    ##Insert json into collection
-    collection.insert_many(fundamental_growth_json)
-    collection.insert_many(current_fundamental_json)
     print "insert done"
 
 def fundamental_analysis_collection(args):
@@ -153,6 +142,7 @@ def current_fundamental_scoring(stats_table,current_values_list,table_list):
             constituent = constituents_list[i]
             #print constituent
             if table[current_values_list[j]].loc[table['Constituent']==constituent].empty==False: 
+                print table[current_values_list[j]].loc[table['Constituent']==constituent]
                 value = float(table[current_values_list[j]].loc[table['Constituent']==constituent])
                 #print value
                 #print top_lower
@@ -184,21 +174,31 @@ def current_fundamental_scoring(stats_table,current_values_list,table_list):
     return current_fundamental_board
 
 
+def status_update(args):
+    client = MongoClient(args.connection_string)
+    db = client[args.database]
+    collection = db[args.collection_store_scores]
+    collection.update_many({'Status':'active'}, {'$set': {'Status': 'inactive'}},True,True)
+
+
+def store_result(args,result_df):
+    client = MongoClient(args.connection_string)
+    db = client[args.database]
+    collection = db[args.collection_store_scores]
+    json_file = json.loads(result_df.to_json(orient='records'))
+    collection.insert_many(json_file)
+
+
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('python_path', help='The directory connection string') 
     parser.add_argument('connection_string', help='The mongodb connection string')
     parser.add_argument('database',help='Name of the database')
     parser.add_argument('collection_get_fundamental_analysis', help='The collection from which fundamental analysis is extracted')
     parser.add_argument('-l', '--constituents_list',help='List of all DAX 30 constituents avaliable',type=str)
     parser.add_argument('collection_store_scores', help='The collection where the fundamental scoring result will be stored')
-    #parser.add_argument('table_store_analysis', help='Name of table for stroing the analysis')
-
-    args = parser.parse_args()
     
-    sys.path.insert(0, args.python_path)
-    #from utils.Storage import Storage
+    args = parser.parse_args()
     
     fundamental_ranking_main(args)

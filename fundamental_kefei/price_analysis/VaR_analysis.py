@@ -9,6 +9,13 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import json
 import sys
+from scipy.stats import norm,t
+from scipy.stats.distributions import binom
+from scipy.stats import skew, kurtosis, kurtosistest
+
+
+#python VaR_analysis.py 'mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp' 'dax_gcp' 'historical' 'price analysis' -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Commerzbank','Continental','Daimler','Deutsche Bank','Deutsche Börse','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Linde','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media','Volkswagen (VW) vz' 'VaR analysis'
+
 
 def VaR_main(args):
     #Set parameters for calculating VaR on monthly-return at a confidence level 99%
@@ -20,7 +27,7 @@ def VaR_main(args):
     for constituent in constituents_list:
         his = get_historical_price(args,constituent)
         mean_return,mean_standard_dev, VaR_t= student_VAR_calculate(his,n,alpha)
-        VaR_table = VaR_table.append(pd.DataFrame({'Constituent': constituent,'Investment period': n ,'Average return': mu_norm, 'Standard deviation':sig_norm,'Confidence level': alpha,'Value at Risk': VaR_t,'Table':'VAR analysis','Date':str(datetime.date.today()),'Status':'active'}, index=[0]), ignore_index=True)
+        VaR_table = VaR_table.append(pd.DataFrame({'Constituent': constituent,'Investment period': n ,'Average return': mean_return, 'Standard deviation':mean_standard_dev,'Confidence level': alpha,'Value at Risk': VaR_t,'Table':'VaR analysis','Date':str(datetime.date.today()),'Status':'active'}, index=[0]), ignore_index=True)
     status_update(args)
     store_result(args,VaR_table)
     return VaR_table
@@ -70,7 +77,7 @@ def status_update(args):
     client = MongoClient(args.connection_string)
     db = client[args.database]
     collection = db[args.collection_store_analysis]
-    collection.update_many({'Table':args.table_store_analysis,'status':'active'}, {'$set': {'status': 'inactive'}},True,True)
+    collection.update_many({'Table':args.table_store_analysis,'Status':'active'}, {'$set': {'Status': 'inactive'}},True,True)
 
 
 def store_result(args,result_df):
@@ -84,7 +91,6 @@ def store_result(args,result_df):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('python_path', help='The directory connection string') 
     parser.add_argument('connection_string', help='The mongodb connection string')
     parser.add_argument('database',help='Name of the database')
     parser.add_argument('collection_get_price', help='The collection from which historical price is exracted')
@@ -93,10 +99,6 @@ if __name__ == "__main__":
     parser.add_argument('table_store_analysis', help='Name of table for stroing the analysis')
 
     args = parser.parse_args()
-    
-    #sys.path.insert(0, args.python_path)
-    #from utils.Storage import Storage
-    
     
     
     VaR_main(args)

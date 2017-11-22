@@ -13,13 +13,12 @@ import scipy
 from scipy import stats
 from decimal import Decimal
 import operator
-from bs4 import BeautifulSoup
 import urllib
 import json
 import sys
 
 
-#!python Igenie/dax_project/fundamental_kefei/Profitability_ranking.py '/Users/kefei/DIgenie/dax_project/fundamental_kefei' 'mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp' 'dax_gcp' 'Price ranking' 'Fundamental ranking'  -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Commerzbank','Continental','Daimler','Deutsche Bank','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Linde','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','ProSiebenSat1 Media','Volkswagen (VW) vz' 'Profitability scores' 'Profitability ranking'
+#python Profitability_ranking.py 'mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp' 'dax_gcp' 'Price ranking' 'Fundamental ranking'  -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Commerzbank','Continental','Daimler','Deutsche Bank','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','ProSiebenSat1 Media','Volkswagen (VW) vz' 'Profitability scores' 'Profitability ranking'
 
 #u'Deutsche B\xf6rse'
 #u'M\xfcnchener R\xfcckversicherungs-Gesellschaft'
@@ -40,19 +39,11 @@ def combined_profitability_main(args):
     client = MongoClient(args.connection_string)
     db = client[args.database]
     
-    db[args.collection_store_profitablity_scores].drop()
-    collection = db[args.collection_store_profitablity_scores]
-    collection.update_many({'Status':'active'}, {'$set': {'Status': 'inactive'}},True,True)
-    collection.update_many({'Status':'NaN'}, {'$set': {'Status': 'inactive'}},True,True)
-    
-    db[args.collection_store_profitablity_ranking].drop()
-    collection = db[args.collection_store_profitablity_ranking]
-    collection.update_many({'Status':'active'}, {'$set': {'Status': 'inactive'}},True,True)
-    collection.update_many({'Status':'NaN'}, {'$set': {'Status': 'inactive'}},True,True)
-    
-    db[args.collection_store_profitablity_scores].insert_many(combined_profitability_json)
-    db[args.collection_store_profitablity_ranking].insert_many(combined_tag_json)
-    
+    status_update(args,'scores')
+    status_update(args,'ranking')
+    store_result(args,combined_profitability_board,'scores')
+    store_result(args,combined_profitability_tag_table,'ranking')
+
     print 'all done'
     
 def scoring_collection(args):
@@ -76,6 +67,8 @@ def combined_profitability_scoring(board_list, score_list):
     
     temp['Total profitability score']=temp['Total price growth score']+temp['Current fundamental total score']+temp['Fundamental growth score']
     combined_profitability_board = pd.DataFrame(temp[['Constituent','Total profitability score','Total price growth score','Current fundamental total score','Fundamental growth score','Status']])
+    combined_profitability_board['Date'] = str(datetime.date.today())
+    
     #combined_profitability_board = combined_profitability_board.sort_values('Total profitability score',axis=0, ascending=False).reset_index(drop=True)
     return combined_profitability_board
 
@@ -97,8 +90,8 @@ def combined_profitability_tag(combined_profitability_board):
     for constituent in constituents_list:
         print constituent
         index = int(combined_profitability_board[combined_profitability_board['Constituent']==constituent].index[0])
-        price_growth_score= int(combined_profitability_board['Total price growth score'].loc[combined_profitability_board['Constituent']==constituent])
-        fundamental_growth_score=  int(combined_profitability_board['Fundamental growth score'].loc[combined_profitability_board['Constituent']==constituent])
+        price_growth_score= int(max(combined_profitability_board['Total price growth score'].loc[combined_profitability_board['Constituent']==constituent]))
+        fundamental_growth_score=  int(max(combined_profitability_board['Fundamental growth score'].loc[combined_profitability_board['Constituent']==constituent]))
         if price_growth_score >=24 :
             growth_price_status = 'High'
         elif price_growth_score >=16 :
@@ -118,11 +111,34 @@ def combined_profitability_tag(combined_profitability_board):
     return profitability_ranking_table
 
 
+def status_update(args,parameter):
+    client = MongoClient(args.connection_string)
+    db = client[args.database]
+    if parameter =='scores':
+        collection = db[args.collection_store_profitablity_scores]
+    else:
+        collection = db[args.collection_store_profitablity_ranking]
+    
+    collection.update_many({'Status':'active'}, {'$set': {'Status': 'inactive'}},True,True)
+
+
+def store_result(args,result_df,parameter):
+    client = MongoClient(args.connection_string)
+    db = client[args.database]
+    
+    if parameter =='scores':
+        collection = db[args.collection_store_profitablity_scores]
+    else:
+        collection = db[args.collection_store_profitablity_ranking]
+        
+    json_file = json.loads(result_df.to_json(orient='records'))
+    collection.insert_many(json_file)
+
+
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('python_path', help='The directory connection string') 
     parser.add_argument('connection_string', help='The mongodb connection string')
     parser.add_argument('database',help='Name of the database')
     parser.add_argument('collection_get_price_scores', help='The collection from which price scores is extracted')
@@ -130,11 +146,8 @@ if __name__ == "__main__":
     parser.add_argument('-l', '--constituents_list',help='List of all DAX 30 constituents avaliable',type=str)
     parser.add_argument('collection_store_profitablity_scores', help='The collection where the profitability scores will be stored')
     parser.add_argument('collection_store_profitablity_ranking', help='The collection where the ranking result will be stored')
-    #parser.add_argument('table_store_analysis', help='Name of table for storing the analysis')
 
     args = parser.parse_args()
     
-    sys.path.insert(0, args.python_path)
-    #from utils.Storage import Storage
     
     combined_profitability_main(args)

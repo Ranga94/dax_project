@@ -19,12 +19,12 @@ import urllib
 import json
 import sys
 
-#!python Igenie/dax_project/fundamental_kefei/Price_ranking.py '/Users/kefei/DIgenie/dax_project/fundamental_kefei' 'mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp' 'dax_gcp' 'price analysis'  -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Commerzbank','Continental','Daimler','Deutsche Bank','Deutsche Börse','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Linde','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media','Volkswagen (VW) vz' 'Price ranking'
+#python Price_ranking.py 'mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp' 'dax_gcp' 'price analysis'  -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Commerzbank','Continental','Daimler','Deutsche Bank','Deutsche Börse','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media','Volkswagen (VW) vz' 'Price ranking'
 
 def price_ranking_main(args):
-    cumulative_returns_table,quarter_mean_table,standard_dev_table,ATR_table,market_signal_table,dividend_table,VaR_table=price_analysis_collection(args)
+    cumulative_returns_table,quarter_mean_table,standard_dev_table,ATR_table,market_signal_table,dividend_table,VaR_table,RSI_table=price_analysis_collection(args)
     
-    table_list = [cumulative_returns_table,cumulative_returns_table,quarter_mean_table,quarter_mean_table,market_signal_table]
+    table_list = [cumulative_returns_table,cumulative_returns_table,quarter_mean_table,quarter_mean_table,RSI_table]
     value_list = ['1 year return','3 years return','Rate of change in price in the last 365 days/quarter','Rate of change in price in the last 3 years/quarter','Current RSI']
    
     ##Make a ranking for price growth
@@ -33,18 +33,9 @@ def price_ranking_main(args):
     ##Make a scoreboard. 
     price_growth_board =price_growth_scoring(args,price_stats_table,table_list,value_list)
     
-    price_growth_json = json.loads(price_growth_board.to_json(orient='records'))
-    
     ##Update the collection
-    client = MongoClient(args.connection_string)
-    db = client[args.database]
-    collection = db[args.collection_store_scores]
-    collection.update_many({'Status':'active'}, {'$set': {'Status': 'inactive'}},True,True)
-    collection.update_many({'Status':'NaN'}, {'$set': {'Status': 'inactive'}},True,True)
-    print "updating price ranking done"
-    
-    ##Insert json into collection
-    collection.insert_many(price_growth_json)
+    status_update(args)
+    store_result(args,price_growth_board)
     
     print "insert done"
 
@@ -56,10 +47,11 @@ def price_analysis_collection(args):
     quarter_mean_table = pd.DataFrame(list(collection.find({'Table':'quarterly growth analysis','Status':'active'})))
     standard_dev_table = pd.DataFrame(list(collection.find({'Table':'standard deviation analysis','Status':'active'})))
     ATR_table = pd.DataFrame(list(collection.find({'Table':'ATR analysis','Status':'active'})))
+    RSI_table = pd.DataFrame(list(collection.find({'Table':'RSI analysis','Status':'active'})))
     market_signal_table = pd.DataFrame(list(collection.find({'Table':'Market signal','Status':'active'})))
     dividend_table = pd.DataFrame(list(collection.find({'Table':'dividend analysis','Status':'active'})))
     VaR_table = pd.DataFrame(list(collection.find({'Table':'VAR analysis','Status':'active'})))
-    return cumulative_returns_table,quarter_mean_table,standard_dev_table,ATR_table,market_signal_table,dividend_table,VaR_table
+    return cumulative_returns_table,quarter_mean_table,standard_dev_table,ATR_table,market_signal_table,dividend_table,VaR_table, RSI_table
 
 
 ## Calculate the mean and standard deviation on all the fundamental elements based on overall data of DAX-30 constituents. 
@@ -106,6 +98,8 @@ def price_growth_scoring(args,stats_table,table_list,value_list):
         good_lower = float(stats_table['Good lower-bound'].loc[stats_table['Price growth quantity']==value_list[j]])
         fair_lower = float(stats_table['Fair lower-bound'].loc[stats_table['Price growth quantity']==value_list[j]])
         
+        print str(table)
+    
         for i in range(n): ##loop through constituents
             constituent = constituents_list[i]
             table = table_list[j]
@@ -135,11 +129,10 @@ def price_growth_scoring(args,stats_table,table_list,value_list):
     ## Append the consistency scores into the calculation of total price growth score
     CR_table = table_list[0]
     QM_table = table_list[2]
-    market_signal_table = table_list[-1]
     price_growth_board = price_growth_board.merge(CR_table[['Constituent','Cumulative return consistency score']], on='Constituent',how='inner')
     price_growth_board = price_growth_board.merge(QM_table[['Constituent','Quarterly growth consistency score']], on='Constituent',how='inner')
-    price_growth_board = price_growth_board.merge(market_signal_table[['Constituent','Bull score (crossing)']],on='Constituent',how='inner')
-    price_growth_board['Total price growth score']=price_growth_board['Cumulative return consistency score']+price_growth_board['Quarterly growth consistency score']+price_growth_board['Bull score (crossing)']+price_growth_board['Price growth score']
+    #price_growth_board = price_growth_board.merge(market_signal_table[['Constituent','Bull score (crossing)']],on='Constituent',how='inner')
+    price_growth_board['Total price growth score']=price_growth_board['Cumulative return consistency score']+price_growth_board['Quarterly growth consistency score']+price_growth_board['Price growth score']
     columnsTitles = ['Constituent','Total price growth score','Price growth score','Cumulative return consistency score','Quarterly growth consistency score','1 year return','3 years return','Rate of change in price in the last 365 days/quarter','Rate of change in price in the last 3 years/quarter','Current RSI','Bull score (crossing)']
     price_growth_board=price_growth_board.reindex(columns=columnsTitles)
     price_growth_board['Status']='active'
@@ -149,21 +142,31 @@ def price_growth_scoring(args,stats_table,table_list,value_list):
 
 
 
+def status_update(args):
+    client = MongoClient(args.connection_string)
+    db = client[args.database]
+    collection = db[args.collection_store_scores]
+    collection.update_many({'Status':'active'}, {'$set': {'Status': 'inactive'}},True,True)
+
+
+def store_result(args,result_df):
+    client = MongoClient(args.connection_string)
+    db = client[args.database]
+    collection = db[args.collection_store_scores]
+    json_file = json.loads(result_df.to_json(orient='records'))
+    collection.insert_many(json_file)
+
+
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('python_path', help='The directory connection string') 
     parser.add_argument('connection_string', help='The mongodb connection string')
     parser.add_argument('database',help='Name of the database')
     parser.add_argument('collection_get_price_analysis', help='The collection from which fundamental analysis is extracted')
     parser.add_argument('-l', '--constituents_list',help='List of all DAX 30 constituents avaliable',type=str)
     parser.add_argument('collection_store_scores', help='The collection where the price scoring result will be stored')
-    #parser.add_argument('table_store_analysis', help='Name of table for stroing the analysis')
-
+   
     args = parser.parse_args()
-    
-    sys.path.insert(0, args.python_path)
-    #from utils.Storage import Storage
     
     price_ranking_main(args)

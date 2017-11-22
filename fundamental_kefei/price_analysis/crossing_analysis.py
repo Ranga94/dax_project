@@ -11,14 +11,14 @@ import json
 import sys
 import json
 
-#!python Igenie/dax_project/fundamental_kefei/crossing_analysis.py '/Users/kefei/Igenie/dax_project/fundamental_kefei' 'mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp' 'dax_gcp' 'historical' 'price analysis' -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Commerzbank','Continental','Daimler','Deutsche Bank','Deutsche Börse','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Linde','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media','Volkswagen (VW) vz' 'market signal'
+#!python crossing_analysis.py 'mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp' 'dax_gcp' 'historical' 'price analysis' -l 'Allianz','adidas','BASF','Bayer','Beiersdorf','BMW','Commerzbank','Continental','Daimler','Deutsche Bank','Deutsche Börse','Deutsche Post','Deutsche Telekom','EON','Fresenius','HeidelbergCement','Infineon','Lufthansa','Merck','RWE','SAP','Siemens','thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media','Volkswagen (VW) vz' 'market signal'
 
 
 
 #Note: Henkel_vs(Henkel vs) does not have data
 def crossing_main(args):
     table = pd.DataFrame()
-    all_constituents = ['Allianz', 'adidas', 'BASF', 'Bayer', 'Beiersdorf','BMW', 'Commerzbank', 'Continental', 'Daimler','Deutsche Bank', 'Deutsche Börse', 'Deutsche Post','Deutsche Telekom', 'EON', 'Fresenius', 'HeidelbergCement', 'Infineon','Linde','Lufthansa', 'Merck', 'RWE', 'SAP', 'Siemens', 'thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media','Volkswagen (VW) vz']
+    all_constituents = ['Allianz', 'adidas', 'BASF', 'Bayer', 'Beiersdorf','BMW', 'Commerzbank', 'Continental', 'Daimler','Deutsche Bank', 'Deutsche Börse', 'Deutsche Post','Deutsche Telekom', 'EON', 'Fresenius', 'HeidelbergCement', 'Infineon','Lufthansa', 'Merck', 'RWE', 'SAP', 'Siemens', 'thyssenkrupp','Vonovia','Fresenius Medical Care','Münchener Rückversicherungs-Gesellschaft','ProSiebenSat1 Media','Volkswagen (VW) vz']
     for constituent in all_constituents:
         his = get_historical_price(args,constituent)
         cross_interval,ave_golden_duration,ave_golden_growth,recent_cross,diverge,max_price,min_price,days_after_extreme,extreme_status,pct_diff_from_extreme,crossing_score = crossing_analysis(his)
@@ -173,7 +173,7 @@ def crossing_analysis(his):
         else:
             extreme_status = '%s days'%days_after_extreme +' off the minimum at %s'%min_price
     
-    ########Sort this out
+        ########Sort this out
         #Cross_score scores the bullish trend of SMA-50 and SMA-20. 
         if (recent_cross == 'Golden Cross') & (diverge =="continues diverging (Bull)"):
             cross_score = 2
@@ -192,7 +192,7 @@ def crossing_analysis(his):
         
         #If Golden-cross period generally last longer than death, add one. 
         if ave_golden_duration>freq:
-            cross_score +=1
+            cross_score =cross_score+1
         else: 
             cross_score=cross_score
             
@@ -231,7 +231,6 @@ def store_result(args,result_df):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('python_path', help='The directory connection string') 
     parser.add_argument('connection_string', help='The mongodb connection string')
     parser.add_argument('database',help='Name of the database')
     parser.add_argument('collection_get_price', help='The collection from which historical price is exracted')
@@ -241,7 +240,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     
-    sys.path.insert(0, args.python_path)
+    #sys.path.insert(0, args.python_path)
     #from utils.Storage import Storage
     
     crossing_main(args)
