@@ -3,6 +3,7 @@ import os
 from google.cloud import bigquery
 from datetime import datetime
 import json
+import time
 
 def update_from_cloud_storage(args):
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.google_key_path
@@ -321,7 +322,10 @@ def update_from_bigquery_split(args):
 
                 # Additional fields
                 if isinstance(tweet["created_at"], str):
-                    row['date'] = convert_timestamp(tweet["created_at"])
+                    date = tweet["created_at"]
+                    ts = time.strptime(date, "%a %b %d %H:%M:%S %z %Y")
+                    ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                    row['date'] = ts
 
                 # sentiment score
                 row["sentiment_score"] = get_nltk_sentiment(tweet["text"])
