@@ -171,13 +171,13 @@ news_annotation_selection<-function(constituent){
     str = "Only Highs, Open and Lows have greater than 50% correlations to News sentiment"
   }
   if(constituent=='BMW'){
-    str = "Correlations for all BMW stock prices have less than 50% correlation to News sentiment for the total time period shown."
+    str = "All BMW stock prices have less than 50% correlation to News sentiment for the total time period shown."
   }
   if(constituent=='Commerzbank'){
-    str = "Only Open prices have greater than 50% correlation to News sentiment for the total time period shown."
+    str = "Only Close prices have greater than 50% correlation to News sentiment for the total time period shown."
   }
   if(constituent=='Deutsche Bank'){
-    str = "Correlations for all Deutsche Bank stock prices have less than 50% correlation to News sentiment for the total time period shown."
+    str = "Only Open prices have greater than 50% correlation to News sentiment for the total time period shown."
   }
   if(constituent=='EON'){
     str = "Highs, Close, Open and Lows all have greater than 50% correlations to News sentiment."
@@ -188,19 +188,19 @@ news_annotation_selection<-function(constituent){
 #This selects the annotation for Twitter correlation graph
 twitter_annotation_selection<-function(constituent){
   if(constituent=='Adidas'){
-    str = "Correlations for all Adidas stock prices have less than 50% correlation to Twitter sentiment for the total time period shown."
+    str = "All Adidas stock prices have less than 50% correlation to Twitter sentiment for the total time period shown."
   }
   if(constituent=='BMW'){
-    str = "Correlations for all BMW stock prices have less than 50% correlation to Twitter sentiment for the total time period shown."
+    str = "All BMW stock prices have less than 50% correlation to Twitter sentiment for the total time period shown."
   }
   if(constituent=='Commerzbank'){
-    str = "Correlations for all Commerzbank stock prices have less than 50% correlation to Twitter sentiment for the total time period shown."
+    str = "All Commerzbank stock prices have less than 50% correlation to Twitter sentiment for the total time period shown."
   }
   if(constituent=='Deutsche Bank'){
-    str = "Correlations for all Deutsche Bank stock prices have less than 50% correlation to Twitter sentiment for the total time period shown."
+    str = "Only Open Prices have greater than 50% correlation to Twitter sentiment for the total time period shown."
   }
   if(constituent=='EON'){
-    str = "Correlations for all EON stock prices have less than 50% correlation to Twitter sentiment for the total time period shown."
+    str = "All EON stock prices have less less than 50% correlation to Twitter sentiment for the total time period shown."
   }
   str
 }

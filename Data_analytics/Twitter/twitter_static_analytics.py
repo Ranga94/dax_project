@@ -3,6 +3,7 @@ import os
 from google.cloud import bigquery
 from datetime import datetime
 import json
+import time
 
 def update_from_cloud_storage(args):
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.google_key_path
@@ -273,12 +274,12 @@ def update_from_bigquery_split(args):
     columns = ["CONSTITUENT_ID"]
     table = "MASTER_CONSTITUENTS"
 
-    '''
+
     constituents = storage.get_sql_data(sql_connection_string=args.param_connection_string,
                                         sql_table_name=table,
                                         sql_column_list=columns)
-    '''
-    constituents = [("BMWDE8170003036", ) , ("LHADE5190000974", )]
+
+    #constituents = [("BMWDE8170003036", )]
 
     start_time = time.time()
 
@@ -321,7 +322,10 @@ def update_from_bigquery_split(args):
 
                 # Additional fields
                 if isinstance(tweet["created_at"], str):
-                    row['date'] = convert_timestamp(tweet["created_at"])
+                    date = tweet["created_at"]
+                    ts = time.strptime(date, "%a %b %d %H:%M:%S %z %Y")
+                    ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                    row['date'] = ts
 
                 # sentiment score
                 row["sentiment_score"] = get_nltk_sentiment(tweet["text"])
@@ -335,7 +339,7 @@ def update_from_bigquery_split(args):
 
                 if len(operations) == 1000:
                     result = None
-                    #result = storage.insert_bigquery_data('pecten_dataset', 'tweets', operations)
+                    result = storage.insert_bigquery_data('pecten_dataset', 'tweets', operations)
                     records += 1000
                     print("Performed bulk write of {} records".format(records))
                     if not result:
@@ -345,7 +349,7 @@ def update_from_bigquery_split(args):
 
             if len(operations) > 0:
                 result = None
-                #result = storage.insert_bigquery_data('pecten_dataset', 'tweets', operations)
+                result = storage.insert_bigquery_data('pecten_dataset', 'tweets', operations)
                 records += 1000
                 if not result:
                     print("Records not inserted")
@@ -354,6 +358,13 @@ def update_from_bigquery_split(args):
             print(e)
 
     print("--- %s seconds ---" % (time.time() - start_time))
+
+class TwitterStaticAnalytics:
+    def __init__(self):
+        self.tagger = TaggingUtils()
+
+    
+
 
 if __name__ == "__main__":
     import argparse

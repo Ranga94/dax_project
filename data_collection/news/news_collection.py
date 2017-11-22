@@ -196,7 +196,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
     constituents = storage.get_sql_data(sql_connection_string=param_connection_string,
                                         sql_table_name=table,
-                                        sql_column_list=columns)[28:]
+                                        sql_column_list=columns)[2:]
 
     for constituent_id, constituent_name, bvdid in constituents:
         records = 0
@@ -236,9 +236,15 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 csv_result = result[0][0][0].text
 
                 TESTDATA = StringIO(csv_result)
-                df = pd.read_csv(TESTDATA, sep=",", parse_dates=["news_date"])
+                try:
+                    df = pd.read_csv(TESTDATA, sep=",", parse_dates=["news_date"])
+                except Exception as e:
+                    start = end + 1
+                    end = start + 20
+                    records += 20
+                    continue
 
-                if pd.isnull(df.iloc[0, 2]) or records == 1000:
+                if pd.isnull(df.iloc[0, 2]):
                     break
 
                 # Remove duplicate columns
@@ -309,22 +315,69 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                     ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
                     bigquery_data[i]["news_date"] = ts
 
-                    bigquery_data[i]["news_title"] = str(bigquery_data[i]["news_title"])
-                    bigquery_data[i]["news_article_txt"] = str(bigquery_data[i]["news_article_txt"])
-                    bigquery_data[i]["news_source"] = str(bigquery_data[i]["news_source"])
-                    bigquery_data[i]["news_publication"] = str(bigquery_data[i]["news_publication"])
-                    bigquery_data[i]["news_topics"] = str(bigquery_data[i]["news_topics"]) #list
-                    bigquery_data[i]["sentiment"] = str(bigquery_data[i]["sentiment"])
-                    bigquery_data[i]["constituent_id"] = str(bigquery_data[i]["constituent_id"])
-                    bigquery_data[i]["constituent_name"] = str(bigquery_data[i]["constituent_name"])
-                    bigquery_data[i]["constituent"] = str(bigquery_data[i]["constituent"])
+                    if bigquery_data[i]["news_title"]:
+                        bigquery_data[i]["news_title"] = str(bigquery_data[i]["news_title"])
 
-                    bigquery_data[i]["news_companies"] = str(bigquery_data[i]["news_companies"]) #list
-                    bigquery_data[i]["news_country"] = str(bigquery_data[i]["news_country"]) #list
-                    bigquery_data[i]["news_region"] = str(bigquery_data[i]["news_region"]) #list
-                    bigquery_data[i]["news_language"] = str(bigquery_data[i]["news_language"])
-                    bigquery_data[i]["news_id"] = str(bigquery_data[i]["news_id"])
+                    if bigquery_data[i]["news_article_txt"]:
+                        bigquery_data[i]["news_article_txt"] = str(bigquery_data[i]["news_article_txt"])
 
+                    if bigquery_data[i]["news_companies"]:
+                        try:
+                            bigquery_data[i]["news_companies"] = bigquery_data[i]["news_companies"].split(";")
+                        except Exception as e:
+                            bigquery_data[i]["news_companies"] = str(bigquery_data[i]["news_companies"])
+
+                    if bigquery_data[i]["news_topics"]:
+                        try:
+                            if bigquery_data[i]["news_topics"].isdigit():
+                                bigquery_data[i]["news_topics"] = None
+                            elif bigquery_data[i]["news_topics"] == 'None':
+                                bigquery_data[i]["news_topics"] = None
+                            else:
+                                bigquery_data[i]["news_topics"] = bigquery_data[i]["news_topics"].split(";")
+                        except Exception as e:
+                            bigquery_data[i]["news_topics"] = None
+
+
+                    if bigquery_data[i]["news_country"]:
+                        try:
+                            bigquery_data[i]["news_country"] = bigquery_data[i]["news_country"].split(";")
+                        except Exception as e:
+                            bigquery_data[i]["news_country"] = str(bigquery_data[i]["news_country"])
+
+                    if bigquery_data[i]["news_region"]:
+                        try:
+                            bigquery_data[i]["news_region"] = bigquery_data[i]["news_region"].split(";")
+                        except Exception as e:
+                            bigquery_data[i]["news_region"] = str(bigquery_data[i]["region"])
+
+                    if bigquery_data[i]["news_language"]:
+                        bigquery_data[i]["news_language"] = str(bigquery_data[i]["news_language"])
+
+                    if bigquery_data[i]["news_source"]:
+                        bigquery_data[i]["news_source"] = str(bigquery_data[i]["news_source"])
+
+                    if bigquery_data[i]["news_publication"]:
+                        bigquery_data[i]["news_publication"] = str(bigquery_data[i]["news_publication"])
+
+
+                    if bigquery_data[i]["news_id"]:
+                        try:
+                            bigquery_data[i]["news_id"] = int(bigquery_data[i]["news_id"])
+                        except Exception as e:
+                            bigquery_data[i]["news_id"] = str(bigquery_data[i]["news_id"])
+
+                    if bigquery_data[i]["sentiment"]:
+                        bigquery_data[i]["sentiment"] = str(bigquery_data[i]["sentiment"])
+
+                    if bigquery_data[i]["constituent_id"]:
+                        bigquery_data[i]["constituent_id"] = str(bigquery_data[i]["constituent_id"])
+
+                    if bigquery_data[i]["constituent_name"]:
+                        bigquery_data[i]["constituent_name"] = str(bigquery_data[i]["constituent_name"])
+
+                    if bigquery_data[i]["constituent"]:
+                        bigquery_data[i]["constituent"] = str(bigquery_data[i]["constituent"])
 
                     f.write(json.dumps(bigquery_data[i], cls=MongoEncoder) + '\n')
 

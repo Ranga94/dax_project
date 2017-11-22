@@ -97,7 +97,7 @@ ui <- dashboardPage(
                 )),
               
               fluidRow(
-                box(title= 'Earnings per Share',
+                box(title= 'Earning per Share',
                     height=400,
                     align='center',
                     DT::dataTableOutput('EPS_table')
