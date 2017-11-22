@@ -279,7 +279,7 @@ def update_from_bigquery_split(args):
                                         sql_table_name=table,
                                         sql_column_list=columns)
     '''
-    constituents = [("BMWDE8170003036", ) , ("LHADE5190000974", )]
+    constituents = [("BMWDE8170003036", )]
 
     start_time = time.time()
 
