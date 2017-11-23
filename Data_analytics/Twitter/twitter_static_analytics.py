@@ -363,9 +363,6 @@ class TwitterStaticAnalytics:
     def __init__(self):
         self.tagger = TaggingUtils()
 
-    
-
-
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()

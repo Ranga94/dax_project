@@ -199,6 +199,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                                         sql_column_list=columns)[2:]
 
     for constituent_id, constituent_name, bvdid in constituents:
+        retry_flag = False
         records = 0
         start = 0
         end = 20
@@ -239,10 +240,17 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 try:
                     df = pd.read_csv(TESTDATA, sep=",", parse_dates=["news_date"])
                 except Exception as e:
-                    start = end + 1
-                    end = start + 20
-                    records += 20
-                    continue
+                    if not retry_flag:
+                        print("Retrying once...")
+                        retry_flag = True
+                        continue
+                    else:
+                        print("Giving up...")
+                        retry_flag = False
+                        start = end + 1
+                        end = start + 20
+                        records += 20
+                        continue
 
                 if pd.isnull(df.iloc[0, 2]):
                     break
