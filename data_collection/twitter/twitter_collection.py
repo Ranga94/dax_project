@@ -132,15 +132,15 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
             #ps_utils.publish("igenie-project", "tweets-unmodified", tweets_unmodified)
             #ps_utils.publish("igenie-project", "tweets", tweets_modified)
             try:
-                storage.insert_bigquery_data('pecten_dataset', 'tweets_unmodified_test', tweets_unmodified)
+                storage.insert_bigquery_data('pecten_dataset', 'tweets_unmodified', tweets_unmodified)
             except Exception as e:
                 print(e)
             try:
-                storage.insert_bigquery_data('pecten_dataset', 'tweets_test', tweets_modified)
+                storage.insert_bigquery_data('pecten_dataset', 'tweets', tweets_modified)
             except Exception as e:
                 print(e)
             try:
-                storage.save_to_mongodb(tweets_modified, "dax_gcp", "tweets_test2")
+                storage.save_to_mongodb(tweets_modified, "dax_gcp", "tweets")
             except Exception as e:
                 print(e)
 
