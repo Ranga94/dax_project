@@ -6,7 +6,8 @@ from datetime import datetime
 from langdetect import detect
 import time
 
-def populate_latest_news():
+#for all_news
+def get_all_news():
     client = MongoClient("mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp")
     db = client["dax_gcp"]
     all_news_landing = db["all_news_landing"]
@@ -31,15 +32,14 @@ def populate_latest_news():
             #all_news.insert_many(to_insert)
             all_news.insert_one(to_insert[0])
 
-def get_associated_tags():
+#for news_analytics_assoc_orgs
+def get_news_analytics_assoc_orgs(from_date, to_date):
+    print("news_analytics_assoc_orgs")
     final_result = []
     client = MongoClient("mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp")
     db = client["dax_gcp"]
     all_news_landing = db["all_news_landing"]
     news_analytics_assoc_orgs = db["news_analytics_assoc_orgs"]
-
-    from_date = datetime(2017, 11, 10)
-    to_date = datetime(2017, 11, 16)
 
     constituents = list(all_news_landing.distinct("constituent_id"))
     constituents = list(filter(None.__ne__, constituents))
@@ -51,7 +51,8 @@ def get_associated_tags():
             {
                 "$match": {
                     "constituent_id": const,
-                    "NEWS_DATE_NewsDim": {"$gte": from_date, "$lte": to_date}
+                    "NEWS_DATE_NewsDim": {"$gte": from_date, "$lte": to_date},
+                    "show":True
                 }
             },
             {
@@ -111,15 +112,14 @@ def get_associated_tags():
 
     #return final_result
 
-def populate_topic_sentiment():
+# for news_analytics_topic_sentiment
+def get_news_analytics_topic_sentiment(from_date, to_date):
+    print("news_analytics_topic_sentiment")
     final_result = []
     client = MongoClient("mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp")
     db = client["dax_gcp"]
     all_news_landing = db["all_news_landing"]
     news_analytics_topic_sentiment = db["news_analytics_topic_sentiment"]
-
-    from_date = datetime(2017, 11, 10)
-    to_date = datetime(2017, 11, 16)
 
     constituents = list(all_news_landing.distinct("constituent_id"))
     constituents = list(filter(None.__ne__, constituents))
@@ -232,12 +232,132 @@ def populate_topic_sentiment():
 
         time.sleep(3)
 
+#for news_sentiment_by_tag
+def get_news_sentiment_by_tag(from_date, to_date):
+    print("news_sentiment_by_tag")
+    final_result = []
+    client = MongoClient("mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp")
+    db = client["dax_gcp"]
+    all_news_landing = db["all_news_landing"]
+    news_sentiment_by_tag = db["news_sentiment_by_tag"]
 
+    constituents = list(all_news_landing.distinct("constituent_id"))
+    constituents = list(filter(None.__ne__, constituents))
+
+    for const in constituents:
+        print(const)
+        pipeline = [
+            {
+                "$match": {
+                    "constituent_id": const,
+                    "NEWS_DATE_NewsDim": {"$gte": from_date, "$lte": to_date},
+                    "categorised_tag": {"$nin": ["NA"]}
+                }
+            },
+            {"$unwind": "$categorised_tag"},
+            {
+                "$project": {
+                    "categorised_tag":1,
+                    "constituent_id": 1,
+                    "constituent": 1,
+                    "day": {"$dayOfYear":"$NEWS_DATE_NewsDim"},
+                    "date": "$NEWS_DATE_NewsDim",
+                    "score":"$score"
+                }
+            },
+            {
+                "$group": {
+                    "_id": {"categorised_tag": "$categorised_tag",
+                            "day":"$day",
+                            "constituent_id": "$constituent_id",
+                            "constituent": "$constituent",
+                            "date":"$date"},
+                    "avg_sentiment": {"$avg": "$score"}
+                }
+            },
+            {"$sort": SON([("categorised_tag", -1)])},
+            {
+                "$project": {
+                    "_id":0,
+                    "avg_sentiment":1,
+                    "categorised_tag":"$_id.categorised_tag",
+                    "constituent_id": "$_id.constituent_id",
+                    "constituent": "$_id.constituent",
+                    "date": "$_id.date"
+                }
+            }
+        ]
+
+        result = list(all_news_landing.aggregate(pipeline))
+        news_sentiment_by_tag.insert_many(result)
+        time.sleep(3)
+
+# for news_analytics_daily_sentiment
+def get_news_analytics_daily_sentiment(from_date, to_date):
+    print("news_analytics_daily_sentiment")
+    final_result = []
+    client = MongoClient("mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp")
+    db = client["dax_gcp"]
+    all_news_landing = db["all_news_landing"]
+    news_analytics_daily_sentiment = db["news_analytics_daily_sentiment"]
+
+    constituents = list(all_news_landing.distinct("constituent_id"))
+    constituents = list(filter(None.__ne__, constituents))
+
+    for const in constituents:
+        print(const)
+        pipeline = [
+            {
+                "$match": {
+                    "constituent_id": const,
+                    "NEWS_DATE_NewsDim": {"$gte": from_date, "$lte": to_date}
+                }
+            },
+            {
+                "$project": {
+                    "constituent_id": 1,
+                    "constituent": 1,
+                    "constituent_name": 1,
+                    "day": {"$dayOfYear": "$NEWS_DATE_NewsDim"},
+                    "date": "$NEWS_DATE_NewsDim",
+                    "score": "$score"
+                }
+            },
+            {
+                "$group": {
+                    "_id": {"categorised_tag": "$categorised_tag",
+                            "day": "$day",
+                            "constituent_id": "$constituent_id",
+                            "constituent": "$constituent",
+                            "constituent_name": "$constituent_name",
+                            "date": "$date"},
+                    "avg_sentiment": {"$avg": "$score"}
+                }
+            },
+            {
+                "$project": {
+                    "_id": 0,
+                    "avg_sentiment": 1,
+                    "categorised_tag": "$_id.categorised_tag",
+                    "constituent_id": "$_id.constituent_id",
+                    "constituent": "$_id.constituent",
+                    "constituent_name": "$_id.constituent_name",
+                    "date": "$_id.date"
+                }
+            }
+        ]
+
+        result = list(all_news_landing.aggregate(pipeline))
+        news_analytics_daily_sentiment.insert_many(result)
+        time.sleep(3)
 
 def main(args):
-    #org_tags = get_associated_tags()
-    populate_topic_sentiment()
-    #populate_latest_news()
+    from_date = datetime(2017, 10, 1)
+    to_date = datetime(2017, 11, 16)
+    #get_news_analytics_assoc_orgs(from_date, to_date)
+    #get_news_analytics_topic_sentiment(from_date, to_date)
+    #get_news_sentiment_by_tag(from_date, to_date)
+    get_news_analytics_daily_sentiment(from_date, to_date)
 
 if __name__ == "__main__":
     main(None)
