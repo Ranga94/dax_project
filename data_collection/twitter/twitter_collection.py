@@ -116,6 +116,10 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
                 tweet._json["entities"]["media"] = []
                 if "extended_entities" in tweet._json:
                     tweet._json["extended_entities"]["media"] = []
+                if "place" in tweet._json:
+                    place = tweet._json["place"]
+                    if "contained_within" in place:
+                        del place["contained_within"]
 
                 clean_tweet = tap.scrub(tweet._json)
 
