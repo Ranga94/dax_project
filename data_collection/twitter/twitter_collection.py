@@ -1,9 +1,6 @@
 from sqlalchemy import *
-from pymongo import MongoClient
-from pymongo.results import InsertOneResult, InsertManyResult
 from datetime import datetime
 import time
-import os
 import smtplib
 import sys
 from bson.son import SON
@@ -30,7 +27,8 @@ def main(arguments):
         parameters["LANGUAGE"] = lang
         get_tweets(**parameters)
 
-    send_mail(parameters["CONNECTION_STRING"], arguments.param_connection_string)
+    if parameters["LOGGING_FLAG"]:
+        send_mail(parameters["CONNECTION_STRING"], arguments.param_connection_string)
 
 def get_parameters(connection_string, table, column_list):
     storage = Storage()
@@ -47,7 +45,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
                LOGGING_FLAG, TWITTER_API_KEY, TWITTER_API_SECRET, PARAM_CONNECTION_STRING, BUCKET_NAME,
                GOOGLE_KEY_PATH=None):
 
-    storage = Storage()
+    storage = Storage(google_key_path=GOOGLE_KEY_PATH, mongo_connection_string=CONNECTION_STRING)
     ps_utils = PubsubUtils(GOOGLE_KEY_PATH)
 
     downloader = TwitterDownloader(TWITTER_API_KEY, TWITTER_API_SECRET)
@@ -60,25 +58,30 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
     if LANGUAGE != "en":
         TWEETS_PER_QUERY = 7
 
+    fields_to_keep = ["text", "favorite_count", "source", "retweeted","entities", "id_str",
+                      "retweet_count","favorited","user","lang","created_at","place", "constituent_name",
+                      "constituent_id", "search_term", "id"]
+
     for constituent_id, constituent_name in all_constituents:
-        #For now, pass data_connection string. Later change it to param_connection_string
         search_query = get_search_string(constituent_id, PARAM_CONNECTION_STRING, "PARAM_TWITTER_KEYWORDS",
                                          "PARAM_TWITTER_EXCLUSIONS")
 
         #Get max id of all tweets to extract tweets with id highe than that
-        sinceId = get_max_id(constituent_name, CONNECTION_STRING, DATABASE_NAME, COLLECTION_NAME)
+        q = "SELECT MAX(id) as max_id FROM `pecten_dataset.tweets` WHERE constituent_id = '{}';".format(constituent_id)
+        try:
+            sinceId =  int(storage.get_bigquery_data(q,iterator_flag=False)[0]["max_id"])
+        except Exception as e:
+            print(e)
+            sinceId = None
+        sinceId = None
+
         max_id = -1
         tweetCount = 0
 
-        #Set file name
-        date = str(datetime.now().date())
-        file_name = "{}_{}.json".format(constituent_id, date)
-        cloud_file_name = "2017/{}".format(file_name)
-        saved_tweets = 0
-
-        print("Downloading max {0} tweets for {1} in {2}".format(MAX_TWEETS, constituent_name, LANGUAGE))
+        print("Downloading max {0} tweets for {1} in {2} on {3}".format(MAX_TWEETS, constituent_name, LANGUAGE, str(datetime.now())))
         while tweetCount < MAX_TWEETS:
-            tweets_to_save = []
+            tweets_unmodified = []
+            tweets_modified = []
 
             tweets, tmp_tweet_count, max_id = downloader.download(constituent_name, search_query,
                                                                   LANGUAGE,TWEETS_PER_QUERY,sinceId,max_id)
@@ -89,38 +92,59 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
 
             #Add
             for tweet in tweets:
-                tweet._json['date'] = datetime.strptime(tweet._json['created_at'], '%a %b %d %H:%M:%S %z %Y')
+                #tweet._json['date'] = datetime.strptime(tweet._json['created_at'], '%a %b %d %H:%M:%S %z %Y').isoformat()
                 tweet._json['source'] = "Twitter"
-                tweets_to_save.append(tweet._json)
                 tweet._json['constituent_name'] = constituent_name
                 tweet._json['constituent_id'] = constituent_id
+                tweet._json['search_term'] = search_query
 
-            #Save to MongoDB
-            result = storage.save_to_mongodb(CONNECTION_STRING, DATABASE_NAME, COLLECTION_NAME, tweets_to_save)
-            if isinstance(result, InsertOneResult):
-                saved_tweets += 1
-            elif isinstance(result, InsertManyResult):
-                saved_tweets += len(result.inserted_ids)
+                #Removing bad fields
 
-            ''''
-            #Save to local file
-            if tweetCount == 0:
-                storage.save_to_local_file(tweets_to_save, file_name, "w")
-            else:
-                storage.save_to_local_file(tweets_to_save, file_name, "a")
-            '''
+                user = tweet._json["user"]
+                if "is_translation_enabled" in user:
+                    del user["is_translation_enabled"]
+                if "translator_type" in user:
+                    del user["translator_type"]
+                if "entities" in user:
+                    del user["entities"]
+                if "has_extended_profile" in user:
+                    del user["has_extended_profile"]
+                if "contributors" not in tweet._json:
+                    tweet._json["contributors"] = []
+                elif not tweet._json["contributors"]:
+                    tweet._json["contributors"] = []
+                tweet._json["entities"]["media"] = []
+                if "extended_entities" in tweet._json:
+                    tweet._json["extended_entities"]["media"] = []
+                if "place" in tweet._json:
+                    place = tweet._json["place"]
+                    if "contained_within" in place:
+                        del place["contained_within"]
 
-        '''
-        #Upload file to cloud storage
-        if os.path.isfile(file_name):
-            if storage.upload_to_cloud_storage(GOOGLE_KEY_PATH, BUCKET_NAME, file_name, cloud_file_name):
-                print("File uploaded to Cloud Storage")
-                os.remove(file_name)
-            else:
-                print("File not uploaded to Cloud storage.")
-        else:
-            print("File does not exists in the local filesystem.")
-        '''
+                clean_tweet = tap.scrub(tweet._json)
+
+
+                # Separate the tweets that go to one topic or the other
+                tweets_unmodified.append(clean_tweet)
+                tweets_modified.append(dict((k,clean_tweet[k]) for k in fields_to_keep if k in clean_tweet))
+
+            #send to PubSub topic
+            #ps_utils.publish("igenie-project", "tweets-unmodified", tweets_unmodified)
+            #ps_utils.publish("igenie-project", "tweets", tweets_modified)
+            try:
+                storage.insert_bigquery_data('pecten_dataset', 'tweets_unmodified', tweets_unmodified)
+            except Exception as e:
+                print(e)
+            try:
+                storage.insert_bigquery_data('pecten_dataset', 'tweets', tweets_modified)
+            except Exception as e:
+                print(e)
+            try:
+                storage.save_to_mongodb(tweets_modified, "dax_gcp", "tweets")
+            except Exception as e:
+                print(e)
+
+            time.sleep(1)
 
         if LOGGING_FLAG:
             logging(constituent_name, constituent_id, tweetCount, LANGUAGE,
@@ -176,7 +200,8 @@ def get_search_string(constituent_id, connection_string, table_keywords, table_e
                                                   sql_column_list=["KEYWORD"],
                                                 sql_where=where)
 
-    keywords_list = [key[0] for key in keywords]
+    keywords_list = ['"' + key[0] + '"' for key in keywords]
+    keywords_string = " OR ".join(keywords_list)
 
     exclusions = storage.get_sql_data(sql_connection_string=connection_string,
                                                 sql_table_name=table_exclusions,
@@ -184,10 +209,11 @@ def get_search_string(constituent_id, connection_string, table_keywords, table_e
                                                 sql_where=where)
 
     exclusions_list = ["-" + key[0] for key in exclusions]
+    exclusions_string = " ".join(exclusions_list)
 
-    all_words = keywords_list + exclusions_list
+    all_words = keywords_string + exclusions_string
 
-    return " ".join(all_words)
+    return all_words
     '''
     client = MongoClient(connection_string)
     db = client["dax_gcp"]
@@ -289,4 +315,5 @@ if __name__ == "__main__":
     from utils.TwitterDownloader import TwitterDownloader
     from utils.Storage import Storage
     from utils.PubsubUtils import PubsubUtils
+    from utils import twitter_analytics_helpers as tap
     main(args)

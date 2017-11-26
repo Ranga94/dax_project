@@ -145,7 +145,7 @@ class Storage:
             client = bigquery.Client()
 
         query_job = client.query(query)
-        #print(query_job.state)
+        print(query_job.state)
 
         if query_job.state == 'RUNNING':
             print("Running query...")
@@ -163,7 +163,6 @@ class Storage:
             self.bigquery_client = bigquery.Client()
             client = self.bigquery_client
 
-
         try:
             dataset_ref = client.dataset(dataset_name)
             dataset = bigquery.Dataset(dataset_ref)
@@ -174,11 +173,11 @@ class Storage:
             if not errors:
                 return True
             else:
-                print(errors[0])
+                print(errors)
                 return None
         except Exception as e:
             print(e)
-            return -1
+            return None
 
 class MongoEncoder(json.JSONEncoder):
     def default(self, v):

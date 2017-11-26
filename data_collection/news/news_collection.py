@@ -199,11 +199,13 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                                         sql_column_list=columns)[2:]
 
     for constituent_id, constituent_name, bvdid in constituents:
+        retry_flag = False
         records = 0
         start = 0
         end = 20
         filename = "bq_news_{}.json".format(constituent_id)
         print("Constituent: {},{}".format(constituent_name,bvdid))
+        failed = 0
 
         with open(filename, "a") as f:
             while True:
@@ -228,6 +230,10 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                     # print(get_data_result)
                 except Exception as e:
                     print(str(e))
+                    if failed > 0 and failed == 5:
+                        failed += 1
+                    else:
+                        failed += 1
                 finally:
                     if token:
                         soap.close_connection(token, database)
@@ -239,10 +245,17 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 try:
                     df = pd.read_csv(TESTDATA, sep=",", parse_dates=["news_date"])
                 except Exception as e:
-                    start = end + 1
-                    end = start + 20
-                    records += 20
-                    continue
+                    if not retry_flag:
+                        print("Retrying once...")
+                        retry_flag = True
+                        continue
+                    else:
+                        print("Giving up...")
+                        retry_flag = False
+                        start = end + 1
+                        end = start + 20
+                        records += 20
+                        continue
 
                 if pd.isnull(df.iloc[0, 2]):
                     break
@@ -388,7 +401,6 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 records += 20
                 print("Records saved: {}".format(records))
 
-
 def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_string):
     soap = SOAPUtils()
     storage = Storage()
@@ -502,6 +514,8 @@ if __name__ == "__main__":
     from utils.SOAPUtils import SOAPUtils
     from utils.twitter_analytics_helpers import *
     from utils.TaggingUtils import TaggingUtils as TU
-    main(args)
+    #main(args)
+
+
 
 
