@@ -11,61 +11,61 @@ library(rworldmap)
 library(wordcloud)
 library(RColorBrewer)
 library(plotly)
+library(treemap)
 
-#This function counts the number of positive, negative and neutral tweets for one specific stock. 
-tweet_count<-function(constituent_count){
+popular_tweet_treemap<-function(df){
+  df[df['constituent']=='adidas',c('constituent')]='Adidas'
+  df$label <- paste(df$constituent,',', ' ' ,df$count, ' tweets' ,sep = "")
   
-  pos_line = constituent_count[constituent_count$line=='Positive',c("count")]
-  neg_line = constituent_count[constituent_count$line=='Negative',c("count")]
-  neu_line = constituent_count[constituent_count$line=='Neutral',c("count")]
-  
-  n=max(length(pos_line),length(neu_line),length(neg_line))
-  if (length(pos_line)<n){pos_line<-append(pos_line,rep(0,n-length(pos_line)),after=min(pos_line))}
-  if (length(neu_line)<n){neu_line<-append(neu_line,rep(0,n-length(neu_line)),after=min(neu_line))}
-  if (length(neg_line)<n){neg_line<-append(neg_line,rep(0,n-length(neg_line)),after=min(neg_line))}
-  
-  constituent = constituent_count$constituent[1]
-  
-  title_str = paste('Number of Tweets for ',constituent,sep='')
-  
-  #if (constituent =='EON'){
-    #neg_line <- append(neg_line,0,after=min(neg_line))}
-  
-  date_range <- constituent_count[constituent_count$line=='Neutral',c("date")]
-  date_range <- as.Date(date_range,"%Y-%m-%d")
-  date_range<-gsub("-", "/", date_range)
-  date_range <- as.Date(date_range,"%Y/%m/%d")
-  
-  #constituent_count_posi<-constituent_count[constituent_count$line=='Positive',c("count",'date')]
-  #data=constituent_count_posi
-  ggplot()+
-    geom_line(aes(x=date_range,y=pos_line,group=1,color="Positive")) +geom_point(aes(x=date_range,y=pos_line,group=1,color="Positive"))+
-    geom_line(aes(x=date_range,y=neg_line,group=1,color="Negative")) +geom_point(aes(x=date_range,y=neg_line,group=1,color="Negative"))+
-    geom_line(aes(x=date_range,y=neu_line,group=1,color="Neutral")) +geom_point(aes(x=date_range,y=neu_line,group=1,color="Neutral"))+
-    ggtitle(title_str)+labs(y="Number of Tweets",x="Date")+
-    scale_colour_manual(name="Sentiment",values=c("Positive"="#1E8449","Neutral"="#FFCC00","Negative"="red"))+
-    theme(legend.position="bottom",legend.direction='horizontal')+
+  treemap(df,index="label",vSize="count",
+          vColor = "avg_sentiment_all",
+          type='manual',
+          palette="RdYlGn", 
+          algorithm = 'squarified',
+          mapping=c(-0.15, 0, 0.15),
+          fontsize.labels=c(15,12),
+          title="Most Tweeted Consistuent vs. Sentiment - Last 2 Months",
+          fontsize.title = c(16),
+          fontface.labels=c(1,1),
+          #bg.labels=c("transparent"), 
+          border.col=c("white","white"), 
+          border.lwds=c(7,2),
+          align.labels=list(
+            c("center", "center"), 
+            c("right", "bottom")
+          ),      
+          title.legend="Average sentiment",
+          overlap.labels=0.5,
+          inflate.labels=F
+  )}
+
+
+##This function plots a barchart for the most tweeted constituents
+popular_constituents_bar<-function(top_tweeted_constituents){
+  title_str = 'Most tweeted DAX constituents in the last 2 months'
+  df<-top_tweeted_constituents[,c('constituent','count')]
+  df<-df[df$constituent!='DAX',]
+  df[df$constituent=='adidas',c('constituent')]='Adidas'
+  ggplot(df,aes(x= reorder(constituent, count),y=df$count))+geom_col(fill='#3A87C8')+labs(y="Number of tweets",x="Constituents") +
+    coord_flip()+
+    ggtitle(title_str) +scale_fill_discrete(guide=FALSE)+
     theme(plot.title = element_text(hjust = 0.5))+theme(plot.title = element_text(lineheight=.8, face="bold"))
 }
 
 
 
-
-
-
 ## This is a function that only extract the first n words of a string object. 
 string_fun <- function(x) {
-  ul = unlist(strsplit(x, split = "\\s+"))[1:8] #set n=8
+  ul = unlist(strsplit(x, split = "\\s+"))[1:10] #set n=8
   paste(ul,collapse=" ")
 }
-
 
 
 ##This function transforms the all_news database into a presentable DataTable
 news_transform<-function(db){
   db$NEWS_DATE_NewsDim<- as.Date(db$NEWS_DATE_NewsDim,format='%d/%m/%Y')
   db<- db[order(-as.numeric(db$NEWS_DATE_NewsDim)),] ##order by release dates, descending
-  db <- db[1:7398,c('NEWS_TITLE_NewsDim','constituent','categorised_tag','sentiment')]
+  db <- db[1:30,c('NEWS_TITLE_NewsDim','constituent','categorised_tag','sentiment')]
   
   #make sure the news link only contains 8 characters from the headline. 
   db$NEWS_TITLE_NewsDim <- as.character(db$NEWS_TITLE_NewsDim)
@@ -84,13 +84,7 @@ news_transform<-function(db){
   
   ##Fix the capital letters
   #db[db$constituent=='bmw',c('constituent')]='BMW'
-  db[!is.na(db$constituent) & db$constituent=='bmw', c('constituent')] ='BMW'
-  #db[db$constituent=='adidas',c('constituent')]='Adidas'
-  db[!is.na(db$constituent) & db$constituent=='adidas', c('constituent')] ='Adidas'
-  #db[db$constituent=='commerzbank',c('constituent')]='Commerzbank'
-  db[!is.na(db$constituent) & db$constituent=='commerzbank', c('constituent')] ='Commerzbank'
-  #db[db$constituent=='eon',c('constituent')]='EON'
-  db[!is.na(db$constituent) & db$constituent=='eon', c('constituent')] ='EON'
+  #db[!is.na(db$constituent) & db$constituent=='bmw', c('constituent')] ='BMW'
   
   #db$Newslink<-paste('<a href="',db$Link,'">',db$Headline ,'</a>',sep="") #embed the hyperlink in headlines
   
@@ -101,26 +95,84 @@ news_transform<-function(db){
 }
 
 
-#This function creates a stacked bar for analyst recommendations. 
-analyst_stacked_bar<-function(retrieved_data){
+#This function creates a stacked bar for analyst recommendations, A-D. 
+analyst_stacked_bar_1<-function(retrieved_data){
   df<- retrieved_data[,c('Constituent','% Buy','% Hold','% Sell')]
-  v<-(sort(df$Constituent,decreasing=FALSE))
-  df<-df[match(v,df$Constituent),]
+  df[df$Constituent =='Münchener Rückversicherungs-Gesellschaft',c('Constituent')] ='Münchener RG'
+  df<-df[order(df$Constituent),] #Rank by the most. 
+  df<-df[1:10,]
+  
   dat.m <- melt(df,id.vars = "Constituent") 
   dat.m$Percentage = dat.m$value*100
   names(dat.m)[names(dat.m) == 'variable'] <- 'Key'
-  ggplot(dat.m,aes(x = dat.m$Constituent, y = Percentage,fill=Key,label=paste(Percentage,'%',sep='')))+
+  ggplot(dat.m[order(dat.m$Constituent, decreasing = T),],aes(x = Constituent, y = Percentage,fill=Key,label=paste(Percentage,'%',sep='')))+
     geom_bar(stat='identity')+coord_flip()+scale_fill_manual(values = c("#1E8449",'#FFCC00','red'))+
-    geom_text(size = 3, position = position_stack(vjust = 0.5))+ggtitle('Analyst Recommendations' )+
+    geom_text(size = 3, position = position_stack(vjust = 0.5))+ggtitle('' )+
     theme(plot.title = element_text(hjust = 0.5))+theme(plot.title = element_text(lineheight=.8, face="bold"))+
-    theme(legend.position="bottom",legend.direction='horizontal')+theme(plot.margin = unit(c(2,0,0,0), "cm"))
+    theme(legend.position="bottom",legend.direction='horizontal')+theme(plot.margin = unit(c(1,0,0,0), "cm"))
 }
 
 
+analyst_stacked_bar_2<-function(retrieved_data){
+  df<- retrieved_data[,c('Constituent','% Buy','% Hold','% Sell')]
+  df[df$Constituent =='Münchener Rückversicherungs-Gesellschaft',c('Constituent')] ='Münchener RG'
+  df<-df[order(df$Constituent),] #Rank by the most. 
+  df<-df[11:20,]
+  
+  dat.m <- melt(df,id.vars = "Constituent") 
+  dat.m$Percentage = dat.m$value*100
+  names(dat.m)[names(dat.m) == 'variable'] <- 'Key'
+  ggplot(dat.m[order(dat.m$Constituent, decreasing = T),],aes(x = Constituent, y = Percentage,fill=Key,label=paste(Percentage,'%',sep='')))+
+    geom_bar(stat='identity')+coord_flip()+scale_fill_manual(values = c("#1E8449",'#FFCC00','red'))+
+    geom_text(size = 3, position = position_stack(vjust = 0.5))+ggtitle('' )+
+    theme(plot.title = element_text(hjust = 0.5))+theme(plot.title = element_text(lineheight=.8, face="bold"))+
+    theme(legend.position="bottom",legend.direction='horizontal')+theme(plot.margin = unit(c(1,0,0,0), "cm"))
+}
+
+analyst_stacked_bar_3<-function(retrieved_data){
+  df<- retrieved_data[,c('Constituent','% Buy','% Hold','% Sell')]
+  df[df$Constituent =='Münchener Rückversicherungs-Gesellschaft',c('Constituent')] ='Münchener RG'
+  df<-df[order(df$Constituent),] #Rank by the most. 
+  df<-df[21:nrow(df),]
+  
+  dat.m <- melt(df,id.vars = "Constituent") 
+  dat.m$Percentage = dat.m$value*100
+  names(dat.m)[names(dat.m) == 'variable'] <- 'Key'
+  ggplot(dat.m[order(dat.m$Constituent, decreasing = T),],aes(x = Constituent, y = Percentage,fill=Key,label=paste(Percentage,'%',sep='')))+
+    geom_bar(stat='identity')+coord_flip()+scale_fill_manual(values = c("#1E8449",'#FFCC00','red'))+
+    geom_text(size = 3, position = position_stack(vjust = 0.5))+ggtitle('' )+
+    theme(plot.title = element_text(hjust = 0.5))+theme(plot.title = element_text(lineheight=.8, face="bold"))+
+    theme(legend.position="bottom",legend.direction='horizontal')+theme(plot.margin = unit(c(1,0,0,0), "cm"))
+}
+
+
+
+
 ##This function takes the table from Mongodb and turns it into a color-coded summary datatable
-summary_box<-function(retrieved_data){
-  df<-retrieved_data[,c('constituent','twitter_sentiment','news_rating','profitability','risk')]
-  datatable(df,options=list(dom='t'),rownames = FALSE,colnames = c('Twitter Sentiment', 'News Rating','Profitability', 'Risk')) %>%
-  formatStyle(c('profitability','risk','twitter_sentiment','news_rating'),
+summary_box_1<-function(retrieved_data){
+  df<-retrieved_data[,c('constituent','twitter_sentiment','news_sentiment','profitability','risk')]
+  df<-df[order(df$constituent),]
+  df<-df[1:10,]
+  datatable(df,options=list(dom='t'),rownames = FALSE,colnames = c('Twitter Sentiment', 'News Sentiment','Profitability', 'Risk')) %>%
+  formatStyle(c('profitability','risk','twitter_sentiment','news_sentiment'),
               color = styleInterval(c(-1,0),c('red','#FFCC00','#1E8449')),
               backgroundColor = styleInterval(c(-1,0),c('red','#FFCC00','#1E8449')))}
+
+summary_box_2<-function(retrieved_data){
+  df<-retrieved_data[,c('constituent','twitter_sentiment','news_sentiment','profitability','risk')]
+  df<-df[order(df$constituent),]
+  df<-df[11:20,]
+  datatable(df,options=list(dom='t'),rownames = FALSE,colnames = c('Twitter Sentiment', 'News Sentiment','Profitability', 'Risk')) %>%
+    formatStyle(c('profitability','risk','twitter_sentiment','news_sentiment'),
+                color = styleInterval(c(-1,0),c('red','#FFCC00','#1E8449')),
+                backgroundColor = styleInterval(c(-1,0),c('red','#FFCC00','#1E8449')))}
+
+summary_box_3<-function(retrieved_data){
+  df<-retrieved_data[,c('constituent','twitter_sentiment','news_sentiment','profitability','risk')]
+  df<-df[order(df$constituent),]
+  df<-df[21:nrow(df),]
+  datatable(df,options=list(dom='t'),rownames = FALSE,colnames = c('Twitter Sentiment', 'News Sentiment','Profitability', 'Risk')) %>%
+    formatStyle(c('profitability','risk','twitter_sentiment','news_sentiment'),
+                color = styleInterval(c(-1,0),c('red','#FFCC00','#1E8449')),
+                backgroundColor = styleInterval(c(-1,0),c('red','#FFCC00','#1E8449')))}
+

@@ -37,15 +37,38 @@ EPS_table<-function(retrieved_data){
   df<-df[order(df$Constituent),]
   datatable(df,rownames = FALSE,options = list(pageLength = 5), colnames = c('Constituent','Current EPS value','EPS value last year'))%>% formatStyle(
     'Current EPS',
-    background = styleColorBar(df$`Current PER`, 'orange'),
+    background = styleColorBar(df$`Current EPS`, 'orange'),
     backgroundSize = '100% 90%',
     backgroundRepeat = 'no-repeat',
     backgroundPosition = 'center') %>%formatStyle(
       'EPS last year',
-      background = styleColorBar(df$`PER last year`, '#62B5F6'),
+      background = styleColorBar(df$`EPS last year`, '#62B5F6'),
       backgroundSize = '100% 90%',
       backgroundRepeat = 'no-repeat',
       backgroundPosition = 'center')}
+
+
+#Makes a horizontal bar datatable displaying PER
+PER_table<-function(retrieved_data){
+  df<-retrieved_data[,c('Constituent','Current PER','PER last year')]
+  df[df$Constituent=='adidas',c('Constituent')]<-'Adidas'
+  df<-df[order(df$Constituent),]
+  datatable(df,rownames = FALSE,options = list(pageLength = 5), colnames = c('Constituent','Current PER value','PER value last year'))%>% formatStyle(
+    'Current PER',
+    background = styleColorBar(df$`Current PER`, 'orange'),
+    backgroundSize = '100% 90%',
+    backgroundRepeat = 'no-repeat',
+    backgroundPosition = 'center') %>%formatStyle(
+      'PER last year',
+      background = styleColorBar(df$`PER last year`, '#62B5F6'),
+      backgroundSize = '100% 90%',
+      backgroundRepeat = 'no-repeat',
+      backgroundPosition = 'center')
+  
+  #%>%
+  #formatStyle(c('Recent cross'),
+  #color = styleInterval(c('Golden Cross','Death Cross'),c('red')))
+}
 
 
 #This function creates a datatable for Profitability Ranking and Tags
