@@ -4,10 +4,6 @@ import time
 import smtplib
 import sys
 from bson.son import SON
-from utils.TwitterDownloader import TwitterDownloader
-from utils.Storage import Storage
-from utils.PubsubUtils import PubsubUtils
-from utils import twitter_analytics_helpers as tap
 
 def main(arguments):
     param_table = "PARAM_TWITTER_COLLECTION"
