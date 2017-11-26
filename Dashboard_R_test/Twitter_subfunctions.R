@@ -96,21 +96,6 @@ avg_twitter_sent<-function(data_sent_all,constituent){
     theme(plot.title = element_text(hjust = 0.5))+theme(plot.title = element_text(lineheight=1.0, face="bold"))
 }
 
-##This function creates a color-coded world map according to Twitter Sentiment
-##Find the minimum/maximum of the sentiment, in order to decide the range of colors.
-map_sentiment<-function(country_df,constituent){
-  #title_str = paste('Twitter sentiment for ',constituent,' by countries',sep='')
-  df<-country_df[country_df$constituent_name==constituent_names_array[[constituent]],c('count','avg_sentiment','country')]
-  min_sent<-min(df$avg_sentiment, na.rm=T)
-  max_sent<-max(df$avg_sentiment, na.rm=T)
-  if ((min_sent<=0)&(max_sent>=0)){palette_color = c('red','#EB984E','#FFCC00','#1E8449')}
-  if ((min_sent<=0)&(max_sent<=0)){palette_color = c('red','#EB984E','#FFCC00')}
-  if ((min_sent>=0)&(max_sent>=0)){palette_color = c('#FFCC00','#1E8449')}
-  
-  n <- joinCountryData2Map(df, joinCode="ISO2", nameJoinColumn="country")
-  par(mar=c(0,0,0,0))
-  mapCountryData(n, nameColumnToPlot="avg_sentiment", mapTitle='',colourPalette=rwmGetColours(palette_color,length(palette_color)))
-}
 
 
 #This function counts the number of positive, negative and neutral tweets for one specific stock. 
@@ -159,15 +144,28 @@ tweet_count<-function(twitter_counts,constituent){
 }
 
 
-
 ##This function creates a color-coded world map according to Tweet Frequency
 map_frequency<-function(country_df,constituent){
   #title_str = paste('Tweeting frequency for ',constituent,' by countries',sep='')
-  if (constituent=='Adidas'){
-    df<-country_df[country_df$constituent==tolower(constituent),c('count','avg_sentiment','country')]}else{
-      df<-country_df[country_df$constituent==constituent,c('count','avg_sentiment','country')]}
-  
-  n <- joinCountryData2Map(df, joinCode="ISO2", nameJoinColumn="country")
+  df<-country_df[country_df$constituent_name==constituent_names_array[[constituent]],c("count","avg_sentiment",'country_name')]
+  n <- joinCountryData2Map(df, joinCode="ISO2", nameJoinColumn="country_name")
   par(mar=c(0,0,0,0))
   mapCountryData(n, nameColumnToPlot="count", mapTitle='',colourPalette=rwmGetColours(c('#F5EEF8','#D7BDE2','#9B59B6','#7D3C98'),4))
+}
+
+
+##This function creates a color-coded world map according to Twitter Sentiment
+##Find the minimum/maximum of the sentiment, in order to decide the range of colors.
+map_sentiment<-function(country_df,constituent){
+  #title_str = paste('Twitter sentiment for ',constituent,' by countries',sep='')
+  df<-country_df[country_df$constituent_name==constituent_names_array[[constituent]],c("count","avg_sentiment",'country_name')]
+  min_sent<-min(df$avg_sentiment, na.rm=T)
+  max_sent<-max(df$avg_sentiment, na.rm=T)
+  if ((min_sent<=0)&(max_sent>=0)){palette_color = c('red','#EB984E','#FFCC00','#1E8449')}
+  if ((min_sent<=0)&(max_sent<=0)){palette_color = c('red','#EB984E','#FFCC00')}
+  if ((min_sent>=0)&(max_sent>=0)){palette_color = c('#FFCC00','#1E8449')}
+  
+  n <- joinCountryData2Map(df, joinCode="ISO2", nameJoinColumn="country_name")
+  par(mar=c(0,0,0,0))
+  mapCountryData(n, nameColumnToPlot="avg_sentiment", mapTitle='',colourPalette=rwmGetColours(palette_color,length(palette_color)))
 }
