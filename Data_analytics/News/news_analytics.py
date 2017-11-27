@@ -374,6 +374,8 @@ def get_news_analytics_topic_articles(from_date, to_date):
         print(constituent_name)
         # get the topics for that constituent from news_analytics_topic_sentiment
         topics = list(news_analytics_topic_sentiment.find({"constituent_id":constituent_id},{"categorised_tag":1,"_id":0}))
+        if len(topics) > 5:
+            topics = topics[:5]
         #pprint(topics)
 
         # Get the latest (5) articles per topic
@@ -415,9 +417,11 @@ def get_news_analytics_topic_articles(from_date, to_date):
             ]
 
             result = list(all_news_landing.aggregate(pipeline))
-            # save that in a table
-            if result:
-                news_analytics_topic_articles.insert_many(result)
+            to_return = [a for a in result if detect(a["NEWS_TITLE_NewsDim"]) == 'en']
+
+            # save result in a table
+            if to_return:
+                news_analytics_topic_articles.insert_many(to_return)
 
         time.sleep(3)
 
