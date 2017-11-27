@@ -385,7 +385,8 @@ def get_news_analytics_topic_articles(from_date, to_date):
                     "$match":{
                         "constituent_id":constituent_id,
                         "NEWS_DATE_NewsDim": {"$gte": from_date, "$lte": to_date},
-                        "show":True
+                        "show":True,
+                        "categorised_tag": {"$nin": ["NA"]}
                     }
                 },
                 {"$unwind":"$categorised_tag"},
@@ -417,7 +418,7 @@ def get_news_analytics_topic_articles(from_date, to_date):
             ]
 
             result = list(all_news_landing.aggregate(pipeline))
-            to_return = [a for a in result if detect(a["NEWS_TITLE_NewsDim"]) == 'en']
+            to_return = [a for a in result if detect(a["NEWS_TITLE_NewsDim"]) == 'en' and a["categorised_tag"] and a["categorised_tag"] != 'None']
 
             # save result in a table
             if to_return:
