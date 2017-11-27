@@ -364,8 +364,6 @@ def get_news_analytics_topic_articles(from_date, to_date):
                                             sql_table_name="MASTER_CONSTITUENTS",
                                             sql_column_list=["CONSTITUENT_ID", "CONSTITUENT_NAME"])
 
-    all_constituents = [all_constituents[0]]
-
     client = MongoClient(parameters["CONNECTION_STRING"])
     db = client["dax_gcp"]
     all_news_landing = db["all_news_landing"]
@@ -373,6 +371,7 @@ def get_news_analytics_topic_articles(from_date, to_date):
     news_analytics_topic_articles = db["news_analytics_topic_articles"]
 
     for constituent_id, constituent_name in all_constituents:
+        print(constituent_name)
         # get the topics for that constituent from news_analytics_topic_sentiment
         topics = list(news_analytics_topic_sentiment.find({"constituent_id":constituent_id},{"categorised_tag":1,"_id":0}))
         #pprint(topics)
@@ -395,7 +394,20 @@ def get_news_analytics_topic_articles(from_date, to_date):
                 },
                 {
                     "$project":{
-                        "_id":0
+                        "_id":0,
+                        "from_date":from_date,
+                        "to_date":to_date,
+                        "date":datetime.now(),
+                        "sentiment":1,
+                        "score":1,
+                        "NEWS_ARTICLE_TXT_NewsDim": 1,
+                        "categorised_tag":1,
+                        "NEWS_DATE_NewsDim":1,
+                        "constituent_name":1,
+                        "NEWS_TITLE_NewsDim": 1,
+                        "NEWS_SOURCE_NewsDim":1,
+                        "constituent_id":1,
+                        "constituent":1
                     }
                 },
                 {"$sort": SON([("NEWS_DATE_NewsDim", -1)])},
@@ -407,7 +419,7 @@ def get_news_analytics_topic_articles(from_date, to_date):
             if result:
                 news_analytics_topic_articles.insert_many(result)
 
-            time.sleep(3)
+        time.sleep(3)
 
 def get_parameters(connection_string, table, column_list):
     storage = Storage()
