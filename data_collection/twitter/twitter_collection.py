@@ -47,6 +47,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
 
     storage = Storage(google_key_path=GOOGLE_KEY_PATH, mongo_connection_string=CONNECTION_STRING)
     ps_utils = PubsubUtils(GOOGLE_KEY_PATH)
+    tagger = TU()
 
     downloader = TwitterDownloader(TWITTER_API_KEY, TWITTER_API_SECRET)
     downloader.load_api()
@@ -98,7 +99,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
                 tweet._json['constituent_id'] = constituent_id
                 tweet._json['search_term'] = search_query
 
-                #Removing bad fields
+                #Removing bad fields - Move this to scrub code
 
                 user = tweet._json["user"]
                 if "is_translation_enabled" in user:
@@ -122,11 +123,22 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
                         del place["contained_within"]
 
                 clean_tweet = tap.scrub(tweet._json)
-
+                #!!!!!!!!!!!!!!!!!!!!
 
                 # Separate the tweets that go to one topic or the other
                 tweets_unmodified.append(clean_tweet)
-                tweets_modified.append(dict((k,clean_tweet[k]) for k in fields_to_keep if k in clean_tweet))
+
+                tagged_tweet = dict((k,clean_tweet[k]) for k in fields_to_keep if k in clean_tweet)
+
+                tagged_tweet['date'] = tap.convert_timestamp(clean_tweet["created_at"])
+                # sentiment score
+                tagged_tweet["sentiment_score"] = tap.get_nltk_sentiment(clean_tweet["text"])
+
+                tagged_text = tagger.get_spacy_entities(clean_tweet["text"])
+                tagged_tweet["entity_tags"] = tap.get_spacey_tags(tagged_text)
+                tagged_tweet["relevance"] = -1
+
+                tweets_modified.append(tagged_tweet)
 
             #send to PubSub topic
             #ps_utils.publish("igenie-project", "tweets-unmodified", tweets_unmodified)
@@ -316,4 +328,5 @@ if __name__ == "__main__":
     from utils.Storage import Storage
     from utils.PubsubUtils import PubsubUtils
     from utils import twitter_analytics_helpers as tap
+    from utils.TaggingUtils import TaggingUtils as TU
     main(args)

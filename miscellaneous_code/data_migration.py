@@ -40,19 +40,24 @@ def tweet_table(args):
     db = client["dax_gcp"]
     collection = db["tweets"]
     file_name = "{}.json".format("tweets-raw")
+    fields_to_keep = ["text", "favorite_count", "source", "retweeted", "entities", "id_str",
+                      "retweet_count", "favorited", "user", "lang", "created_at", "place", "constituent_name",
+                      "constituent_id", "search_term", "id", "sentiment_score", "entity_tags", "relevance"]
+
+    #set which types of entities I want
+    #set which types of user I want
+    #set which types of place I want
 
     cursor = collection.find({}, no_cursor_timeout=True)
+
 
     print("Writing local file")
     with open(file_name, "w") as f:
         for tweet in cursor:
-            if 'constituent' in tweet:
-                id, name = tap.get_constituent_id_name(tweet["constituent"])
-                tweet["constituent_name"] = name
-                tweet["constituent_id"] = id
-            if 'date' in tweet:
-                tweet.pop("date")
-            tweet = tap.scrub(tweet)
+            scrubbed_tweet = tap.scrub(tweet)
+            clean_tweet = dict((k, scrubbed_tweet[k]) for k in fields_to_keep if k in scrubbed_tweet)
+            clean_tweet["date"] = tap.convert_timestamp(tweet["created_at"])
+
             f.write(json.dumps(tweet, cls=MongoEncoder) + '\n')
 
     return
