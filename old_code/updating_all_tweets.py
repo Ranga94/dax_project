@@ -19,10 +19,11 @@ def main(args):
 
     start_time = time.time()
 
-    for doc in collection.find({}, no_cursor_timeout=True):
-        sentiment_score = get_nltk_sentiment(doc["text"],sia)
+    for doc in collection.find({"constituent":{"$exists":False}}, no_cursor_timeout=True):
+        #sentiment_score = get_nltk_sentiment(doc["text"],sia)
 
         new_values = {}
+        ''''
         new_values["nltk_sentiment_numeric"] = sentiment_score
         new_values["sentiment_score"] = sentiment_score
 
@@ -34,6 +35,8 @@ def main(args):
         # TO DO
         tagged_text = tagger.get_spacy_entities(doc["text"])
         new_values["entity_tags"] = tap.get_spacey_tags(tagged_text)
+        '''
+        new_values["constituent"] = tap.get_old_constituent_name(doc["constituent_id"])
 
         operations.append(
             UpdateOne({"_id": doc["_id"]}, {"$set": new_values})

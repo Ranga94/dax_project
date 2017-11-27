@@ -444,7 +444,7 @@ def main(args):
     #get_news_analytics_topic_sentiment(from_date, to_date)
     #get_news_sentiment_by_tag(from_date, to_date)
     #get_news_analytics_daily_sentiment(from_date, to_date)
-    get_news_analytics_topic_articles(from_date, to_date)
+    #get_news_analytics_topic_articles(from_date, to_date)
 
 if __name__ == "__main__":
     import argparse
