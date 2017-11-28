@@ -5,6 +5,7 @@ from bson.son import SON
 from pprint import pprint
 import pandas as pd
 import json
+import time
 
 def get_twitter_analytics_top_orgs(args, from_date, to_date):
     param_table = "PARAM_TWITTER_COLLECTION"
@@ -116,18 +117,19 @@ def get_twitter_analytics_latest_price_tweets(args, from_date, to_date):
         symbol = '$' + symbol
         print(symbol)
         to_return = []
+        final = []
 
 
         results = list(collection.find({"date":{"$gte": from_date, "$lte": to_date},
                                         "constituent_id":constituent_id,
                                         "entities.symbols":{"$exists":True, "$ne":[]}},
                                        {"text":1,"constituent_id":1,"constituent_name":1,
-                                       "constituent":1,"entity_tags.MONEY":1,"date":1,"_id":0})
+                                       "constituent":1,"entity_tags.MONEY":1,"sentiment_score":1,"date":1,"_id":0})
                        .sort([("date",-1)]))
 
         if results:
             for item in results:
-                if symbol in item["text"]:
+                if symbol in item["text"].split(" "):
                     if item["entity_tags"]["MONEY"]:
                         text = item["text"].replace("$", "")
                         text = text.replace("€", "")
@@ -150,18 +152,71 @@ def get_twitter_analytics_latest_price_tweets(args, from_date, to_date):
                             item["to_date"] = to_date
                             to_return.append(item)
 
-            df = pd.DataFrame(to_return)
-            df.drop_duplicates("text",inplace=True)
+            if to_return:
+                df = pd.DataFrame(to_return)
+                df.drop_duplicates("text",inplace=True)
 
-            final = df.to_json(orient="records", date_format="iso")
+                final = df.to_json(orient="records", date_format="iso")
+                final = json.loads(final)
 
+                for f in final:
+                    f["from_date"] = datetime.strptime(f["from_date"], "%Y-%m-%dT%H:%M:%S.%fZ")
+                    f["to_date"] = datetime.strptime(f["to_date"], "%Y-%m-%dT%H:%M:%S.%fZ")
 
+        else:
+            results = list(collection.find({"date":{"$gte": from_date, "$lte": to_date},
+                                        "constituent_id":constituent_id,
+                                        "user.followers_count":{"$gte":200}},
+                                       {"text":1,"constituent_id":1,"constituent_name":1,
+                                       "constituent":1,"entity_tags.MONEY":1,"sentiment_score":1,"date":1,"_id":0})
+                           .limit(5)
+                       .sort([("date",-1)]))
 
-        pprint(json.loads(final))
+            if results:
+                df = pd.DataFrame(results)
+                df.drop_duplicates("text", inplace=True)
 
+                final = df.to_json(orient="records", date_format="iso")
+                final = json.loads(final)
 
-        #if results:
-        #    twitter_analytics_latest_price_tweets.insert_many(results)
+                for f in final:
+                    f["from_date"] = from_date
+                    f["to_date"] = to_date
+
+            else:
+                results = list(collection.find({"constituent_id": constituent_id},
+                                               {"text": 1, "constituent_id": 1, "constituent_name": 1,
+                                                "constituent": 1, "entity_tags.MONEY": 1, "sentiment_score": 1,
+                                                "date": 1, "_id": 0})
+                               .limit(5)
+                               .sort([("date", -1)]))
+
+                if results:
+                    df = pd.DataFrame(results)
+                    df.drop_duplicates("text", inplace=True)
+
+                    final = df.to_json(orient="records", date_format="iso")
+                    final = json.loads(final)
+
+                    for f in final:
+                        f["from_date"] = from_date
+                        f["to_date"] = to_date
+
+                else:
+                    final = [{'constituent': constituent_name,
+                              'constituent_id': constituent_id,
+                              'constituent_name': constituent_name,
+                              'date': datetime.now(),
+                              'entity_tags': {'MONEY': ['']},
+                              'from_date': from_date,
+                              'sentiment_score': 0.0,
+                              'text': 'No new tweets.',
+                              'to_date': to_date,
+                              'tweet_date': None}]
+
+        if final:
+           twitter_analytics_latest_price_tweets.insert_many(final)
+        time.sleep(1)
 
 def main(args):
     from_date = datetime(2017, 10, 1)

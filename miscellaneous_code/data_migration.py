@@ -1,32 +1,35 @@
 import sys
-import pandas as pd
 from pymongo import MongoClient
 import os
 import json
+from pprint import pprint
 
 def other_tables(args):
-    mongo_connection_string = "mongodb://igenie_readwrite:igenie@35.197.222.38:27017,35.197.238.147:27017,35.189.111.215:27017/dax_gcp?replicaSet=rs0"
-    storage = Storage()
+    param_table = "PARAM_TWITTER_COLLECTION"
+    parameters_list = ["CONNECTION_STRING"]
+
+    parameters = get_parameters(args.param_connection_string, param_table, parameters_list)
+
+    storage = Storage(google_key_path=args.google_key_path, mongo_connection_string=parameters["CONNECTION_STRING"])
+
+    mongo_connection_string = parameters["CONNECTION_STRING"]
+
+
     client = MongoClient(mongo_connection_string)
     db = client["dax_gcp"]
 
-    #tables = ["ADS_cor", "BMW_cor", "CB_cor", "DB_cor", "EON_cor"]
-    tables = ["historical"]
-    bucket_name = "igenie-financial"
-
-    for collection_name in tables:
+    for collection_name in args.mongo_collections.split(","):
         collection = db[collection_name]
-
-        cursor = collection.find({})
+        cursor = collection.find({},{"_id":0})
         data = list(cursor)
         file_name = "{}.json".format(collection_name)
 
-        storage.save_to_local_file(data, file_name)
+        open(file_name, 'w').write("\n".join(json.dumps(e, cls=MongoEncoder) for e in data))
 
-        cloud_file_name = "price_data/{}".format(file_name)
+        cloud_file_name = "{}/{}".format(args.bucket,file_name)
 
         if os.path.isfile(file_name):
-            if storage.upload_to_cloud_storage(args.google_key_path, bucket_name, file_name, cloud_file_name):
+            if storage.upload_to_cloud_storage(args.google_key_path, args.bucket, file_name, file_name):
                 print("File uploaded to Cloud Storage")
                 os.remove(file_name)
             else:
@@ -74,15 +77,27 @@ def tweet_table(args):
     else:
         print("File does not exists in the local filesystem.")
 
+def get_parameters(connection_string, table, column_list):
+    storage = Storage()
+
+    data = storage.get_sql_data(connection_string, table, column_list)[0]
+    parameters = {}
+
+    for i in range(0, len(column_list)):
+        parameters[column_list[i]] = data[i]
+
+    return parameters
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('python_path', help='The connection string')
     parser.add_argument('google_key_path', help='The path of the Google key')
     parser.add_argument('param_connection_string', help='The connection string')
+    parser.add_argument('mongo_collections', help='Comma separated list of collection names')
+    parser.add_argument('bucket')
     args = parser.parse_args()
     sys.path.insert(0, args.python_path)
     from utils.Storage import Storage, MongoEncoder
     from utils import twitter_analytics_helpers as tap
-    #other_tables(args)
-    tweet_table(args)
+    other_tables(args)
