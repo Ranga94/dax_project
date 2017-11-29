@@ -128,6 +128,7 @@ def get_twitter_analytics_latest_price_tweets(args, from_date, to_date):
                        .sort([("date",-1)]))
 
         if results:
+            print("A")
             for item in results:
                 if symbol in item["text"].split(" "):
                     if item["entity_tags"]["MONEY"]:
@@ -162,8 +163,44 @@ def get_twitter_analytics_latest_price_tweets(args, from_date, to_date):
                 for f in final:
                     f["from_date"] = datetime.strptime(f["from_date"], "%Y-%m-%dT%H:%M:%S.%fZ")
                     f["to_date"] = datetime.strptime(f["to_date"], "%Y-%m-%dT%H:%M:%S.%fZ")
+            else:
+                print("A2")
+                results = list(collection.find({"date": {"$gte": from_date, "$lte": to_date},
+                                                "constituent_id": constituent_id,
+                                                "user.followers_count": {"$gte": 200}},
+                                               {"text": 1, "constituent_id": 1, "constituent_name": 1,
+                                                "constituent": 1, "entity_tags.MONEY": 1, "sentiment_score": 1,
+                                                "date": 1, "_id": 0})
+                               .limit(5)
+                               .sort([("date", -1)]))
+
+                if results:
+                    df = pd.DataFrame(results)
+                    df.drop_duplicates("text", inplace=True)
+
+                    final = df.to_json(orient="records", date_format="iso")
+                    final = json.loads(final)
+
+                    for f in final:
+                        f["from_date"] = from_date
+                        f["to_date"] = to_date
+                else:
+                    print("B2")
+                    final = [{'constituent': constituent_name,
+                              'constituent_id': constituent_id,
+                              'constituent_name': constituent_name,
+                              'date': datetime.now(),
+                              'entity_tags': {'MONEY': ['']},
+                              'from_date': from_date,
+                              'sentiment_score': 0.0,
+                              'text': 'No new tweets.',
+                              'to_date': to_date,
+                              'tweet_date': None}]
+
+
 
         else:
+            print("B")
             results = list(collection.find({"date":{"$gte": from_date, "$lte": to_date},
                                         "constituent_id":constituent_id,
                                         "user.followers_count":{"$gte":200}},
@@ -184,6 +221,7 @@ def get_twitter_analytics_latest_price_tweets(args, from_date, to_date):
                     f["to_date"] = to_date
 
             else:
+                print("C")
                 results = list(collection.find({"constituent_id": constituent_id},
                                                {"text": 1, "constituent_id": 1, "constituent_name": 1,
                                                 "constituent": 1, "entity_tags.MONEY": 1, "sentiment_score": 1,
@@ -203,6 +241,7 @@ def get_twitter_analytics_latest_price_tweets(args, from_date, to_date):
                         f["to_date"] = to_date
 
                 else:
+                    print("D")
                     final = [{'constituent': constituent_name,
                               'constituent_id': constituent_id,
                               'constituent_name': constituent_name,
