@@ -195,13 +195,16 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
     constituents = storage.get_sql_data(sql_connection_string=param_connection_string,
                                         sql_table_name=table,
-                                        sql_column_list=columns)
+                                        sql_column_list=columns)[:1]
 
-    to_skup = ["BASF SE","BAYERISCHE MOTOREN WERKE AG","DEUTSCHE BANK AG",
+    to_skip = ["BASF SE","BAYERISCHE MOTOREN WERKE AG","DEUTSCHE BANK AG",
                "SIEMENS AG"]
 
     for constituent_id, constituent_name, bvdid in constituents:
         limit = get_number_of_news_items(constituent_name)
+        if constituent_name in to_skip:
+            print("Skipping")
+            continue
 
         retry_flag = False
         records = 0
@@ -248,7 +251,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                     print(e)
                     continue
 
-                if df.count() == 0:
+                if df.shape[0] == 0:
                     print("No records in df")
                     continue
 
@@ -748,8 +751,6 @@ def main(args):
     #get_orbis_news(args.user,args.pwd)
     get_historical_orbis_news(args.user,args.pwd, "orbis", args.google_key_path, args.param_connection_string)
     #get_daily_orbis_news(args.user,args.pwd,"orbis",args.google_key_path,args.param_connection_string)
-
-
 
 if __name__ == "__main__":
     import argparse
