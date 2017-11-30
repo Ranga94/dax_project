@@ -17,257 +17,262 @@ library(rworldmap)
 library(wordcloud)
 library(RColorBrewer)
 library(plotly)
-source('Homepage_subfunctions.R')
-source('Fundamental_subfunctions.R')
-source('Analyst_subfunctions.R')
-source('Twitter_subfunctions.R')
-source('News_subfunctions.R')
-source('Correlation_subfunctions.R')
+library(treemap)
 
 server <- function(input, output){
-  url_mongo <- "mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp"
+  url_mongo <- "mongodb://igenie_readwrite:igenie@35.197.245.249:27017/dax_gcp"
   
-######################################  Main content of the dashboard  ##############################################
-  
+  ######################################  Main content of the dashboard  ##############################################
+
   ##############################    HOMEPAGE    ###################################
-  ## The Twitter Sentiment Count - Line plot
-  twitter_count <- mongo(collection = 'twitter_sentiment_count_daily',
-                         url = url_mongo,
-                         verbose = FALSE, options = ssl_options())
-  twitter_df<-twitter_count$find('{}')
-  twitter_df$date<-as.Date(twitter_df$date)
-  twitter_df<- twitter_df[twitter_df$date>as.Date('2017-09-06'),]
-  twitter_df<- twitter_df[twitter_df$date<as.Date('2017-09-22'),]
-  twitter_df<- unique(twitter_df)
   
-  ##BMW
-  tweet_count_bmw <-eventReactive(input$reload, {
-    constituent_count <- twitter_df[twitter_df$constituent=='BMW',]
-    tweet_count(constituent_count)},ignoreNULL = FALSE)
-  output$tweet_num_bmw<-renderPlot(tweet_count_bmw())
+  ##Popular tweets
+  ##Bar chart
+  popular_constituents_db <- mongo(collection = 'popular_constituents',
+                             url = url_mongo,
+                             verbose = FALSE, options = ssl_options())
+  
+  top_tweeted_constituents<-popular_constituents_db$find('{}')
+  output$popular_constituents <- renderPlot(popular_constituents_bar(top_tweeted_constituents))
   
   
-  ## Adidas
-  tweet_count_adidas <-eventReactive(input$reload, {
-    constituent_count <- twitter_df[twitter_df$constituent=='adidas',]
-    tweet_count(constituent_count)
-  },ignoreNULL = FALSE)
-  output$tweet_num_adidas<-renderPlot(tweet_count_adidas())
+  #Treemap
+  popular_count_sent <- mongo(collection = 'twitter_sentiment_popularity',
+                                   url = url_mongo,
+                                   verbose = FALSE, options = ssl_options())
   
+  tweet_popular_df<-popular_count_sent$find('{}')
+  output$popular_treemap<-renderPlot(popular_tweet_treemap(tweet_popular_df))
   
-  ## Commerzbank
-  tweet_count_cb <-eventReactive(input$reload, {
-    constituent_count <- twitter_df[twitter_df$constituent=='Commerzbank',]
-    tweet_count(constituent_count)
-    },ignoreNULL = FALSE)
-  output$tweet_num_cb<-renderPlot(tweet_count_cb())
-  
-  
-  ## Deutsche Bank
-  tweet_count_db <-eventReactive(input$reload, {
-    constituent_count <- twitter_df[twitter_df$constituent=='Deutsche Bank',]
-    tweet_count(constituent_count)
-  },ignoreNULL = FALSE)
-  output$tweet_num_db<-renderPlot(tweet_count_db())
-  
-  
-  ## EON
-  tweet_count_eon <-eventReactive(input$reload, {
-    constituent_count <- twitter_df[twitter_df$constituent=='EON',]
-    tweet_count(constituent_count) 
-  },ignoreNULL = FALSE)
-  output$tweet_num_eon<-renderPlot(tweet_count_eon())
-  
-  
-  
-  
-  ## News Table - DataTable
+
+  ## News Section
+  ## News Table - Interactive DataTable
   from_date <- as.integer(as.POSIXct(strptime("2017-11-10","%Y-%m-%d"))) * 1000
   to_date <- as.integer(as.POSIXct(strptime("2017-11-16","%Y-%m-%d"))) * 1000
   
   query <- paste0('{"NEWS_DATE_NewsDim":{"$gte":{"$date":{"$numberLong":"', from_date,'"}},
                   "$lte":{"$date":{"$numberLong":"', to_date,'"}}},
-                  "constituent_id":{"$exists":true},
-                  "constituent_id":{"$in":["ADSDE8190216927","CBKDEFEB13190","DBKDEFEB13216","BMWDE8170003036","EOANDE5050056484"]}}')
+                  "constituent_id":{"$exists":true} }')
   
-  proyection <- paste0('{"NEWS_ARTICLE_TXT_NewsDim":false}')
+  all_news <- mongo(collection = 'all_news',
+                    url = url_mongo,
+                    verbose = FALSE, options = ssl_options())
+  db <- all_news$find(query)
   
   news_data_all <- eventReactive(input$reload, {
-    all_news <- mongo(collection = 'all_news',
-                url = url_mongo,
-                verbose = FALSE, options = ssl_options())
-    db <- all_news$find(query, proyection)
     news_transform(db)
   }, ignoreNULL = FALSE)
-  output$news_all <- DT::renderDataTable(news_data_all())
   
-    
+  output$news_all <- DT::renderDataTable(news_data_all(),selection = 'single', server=FALSE)
+  
+  observeEvent(input$news_all_rows_selected,
+               {
+                 i = input$news_all_rows_selected
+                 i <- i[length(i)]
+                 cat(i)
+                 showModal(modalDialog(
+                   title = db[i,c('NEWS_TITLE_NewsDim')],
+                   db[i,c('NEWS_ARTICLE_TXT_NewsDim')]
+                 ))
+               })
+  
+  
+  
+  analyst_opinions_db <- mongo(collection = 'analyst_opinions_all',
+              url = url_mongo,
+              verbose = FALSE, options = ssl_options())
+  analyst_opinions <- analyst_opinions_db$find('{"Status":"active"}')
+  analyst_opinions$Date<-as.Date(analyst_opinions$Date)
+  #retrieved_data<-retrieved_data[retrieved_data$Date==as.Date('2017-11-21'),]
   
   ## Analyst Recommendation Percentage - Stacked Bar Chart
-  analyst_data <- eventReactive(input$reload, {
-    db <- mongo(collection = 'analyst_opinions',
-                url = url_mongo,
-                verbose = FALSE, options = ssl_options())
-    retrieved_data <- db$find('{"Status":"inactive"}')
-    retrieved_data$Date<-as.Date(retrieved_data$Date)
-    retrieved_data<-retrieved_data[retrieved_data$Date==as.Date('2017-10-06'),]
-    analyst_stacked_bar(retrieved_data)
-    }, ignoreNULL = FALSE)
-  output$analystplot <- renderPlot(analyst_data())
-
+  output$analystplot1 <- renderPlot({
+    analyst_stacked_bar_1(analyst_opinions)
+  })
+  
+  output$analystplot2 <- renderPlot({
+    analyst_stacked_bar_2(analyst_opinions)
+  })
+  
+  
+  output$analystplot3 <- renderPlot({
+    analyst_stacked_bar_3(analyst_opinions)
+  })
+  
   
   ##Summary Box - DataTable
-  summary_data <- eventReactive(input$reload, {
-    db <- mongo(collection = 'summary_box',
-                url = url_mongo,
-                verbose = FALSE, options = ssl_options())
-    retrieved_data <- db$find('{}')
-    summary_box(retrieved_data)               
-  }, ignoreNULL = FALSE)
-  output$reactivetable <- renderDataTable(summary_data())
+  summary_db <- mongo(collection = 'summary_box',
+              url = url_mongo,
+              verbose = FALSE, options = ssl_options())
+  retrieved_summary_data <- summary_db$find('{}')
+  retrieved_summary_data<-retrieved_summary_data[retrieved_summary_data$constituent!='DAX',]
+  
+  output$summarytable1 <- renderDataTable({
+    summary_box_1(retrieved_summary_data)               
+  })
+  
+  output$summarytable2 <- renderDataTable({
+    summary_box_2(retrieved_summary_data)               
+  })
+  
+  output$summarytable3 <- renderDataTable({
+    summary_box_3(retrieved_summary_data)               
+  })
   
   
   
   ####################################### FUNDAMENTAL ###########################################
-  ##Cumulative Returns - DataTable
-  price_analysis_db <- mongo(collection = 'price analysis',
-              url = url_mongo,
-              verbose = FALSE, options = ssl_options())
+  price_analysis_db <- mongo(collection = 'price_analysis',
+                             url = url_mongo,
+                             verbose = FALSE, options = ssl_options())
+  
+  fundamental_analysis_db<-mongo(collection = 'fundamental_analysis',
+                                 url = url_mongo,
+                                 verbose = FALSE, options = ssl_options())
   
   ##Cumulative Returns - DataTable
-  cumulative_return <- eventReactive(input$reload, {
-    retrieved_data <- price_analysis_db$find('{"Table":"cumulative return analysis","Status":"inactive"}')
+  output$CRtable  <- renderDataTable({
+    retrieved_data <- price_analysis_db$find('{"Table":"cumulative return analysis","Status":"active"}')
     #Select wanted date
-    retrieved_data$Date<-as.Date(retrieved_data$Date)
-    retrieved_data=retrieved_data[retrieved_data$Date==as.Date('2017-10-08'),]
+    #retrieved_data$Date<-as.Date(retrieved_data$Date)
+    #retrieved_data=retrieved_data[retrieved_data$Date==as.Date('2017-10-08'),]
     cumulative_return_table(retrieved_data)
-  },ignoreNULL = FALSE)
-  output$CRtable <- renderDataTable(cumulative_return())
+  })
   
-
-  ##Golden Cross - DataTable
-  golden_cross <- eventReactive(input$reload, {
-    retrieved_data <- price_analysis_db$find('{"Table":"Market signal","Status":"inactive"}')
-    #select the wanted dates
-    retrieved_data$Date<-as.Date(retrieved_data$Date)
-    retrieved_data=retrieved_data[retrieved_data$Date==as.Date('2017-10-08'),]
-    cross_analysis(retrieved_data)
-    },ignoreNULL = FALSE)
-  output$cross_table <- renderDataTable(golden_cross())
   
   
   ##Profitability Ranking - DataTable
-  ranking <- eventReactive(input$reload, {
+  output$ranking_top  <- renderDataTable({
     db <- mongo(collection = 'profitability_ranking',
                 url = url_mongo,
                 verbose = FALSE, options = ssl_options())
     retrieved_data<-db$find('{}')
     retrieved_data$Date<-as.Date(retrieved_data$Date)
-    retrieved_data=retrieved_data[retrieved_data$Date==as.Date('2017-10-04'),]
-    retrieved_data <- db$find('{"Status":"inactive"}')
+    retrieved_data <- db$find('{"Status":"active"}')
+    #retrieved_data=retrieved_data[retrieved_data$Date==as.Date('2017-10-04'),]
     rank_n_tag(retrieved_data)
-      },ignoreNULL = FALSE)
-  output$ranking_top  <- renderDataTable(ranking()) 
- 
+  })
   
   
-  
-  ##################################### ANALYST PAGE ####################################
-  ##Analyst Recommendation - DataTable
-  analyst_recommendation <- eventReactive(input$reload, {
-    db <- mongo(collection = 'analyst_opinions_all',
-                url = url_mongo,
-                verbose = FALSE, options = ssl_options())
-    retrieved_data <- db$find('{"Status":"active"}')
-    analyst_rating_table(retrieved_data)
-  },ignoreNULL = FALSE) 
-  output$recommendation_table <- renderDataTable(analyst_recommendation())
-  
-  
-  ##Analyst Target Prices - DataTable
-  target_prices <- eventReactive(input$reload, {
-    db <- mongo(collection = 'analyst_opinions_all',
-                url = url_mongo,
-                verbose = FALSE, options = ssl_options())
-    retrieved_data <- db$find('{"Status":"active"}')
-    analyst_target_prices(retrieved_data)
-     },ignoreNULL = FALSE)
-  output$target_price_table <- renderDataTable(target_prices())
+  ##EPS Analysis - DataTable
+  output$EPS_table <- renderDataTable({
+    retrieved_data <- fundamental_analysis_db$find('{"Table":"EPS analysis","Status":"active"}')
+    EPS_table(retrieved_data)
+  })
   
   
   ##PER Analysis - DataTable
-  PER_analysis <- eventReactive(input$reload, {
-    db <- mongo(collection = 'fundamental analysis',
-                url = url_mongo,
-                verbose = FALSE, options = ssl_options())
-    retrieved_data <- db$find('{"Table":"PER analysis"}')
+  output$PER_table <- renderDataTable({
+    retrieved_data <- fundamental_analysis_db$find('{"Table":"PER analysis","Status":"active"}')
     PER_table(retrieved_data)
-  },ignoreNULL = FALSE)
-  output$PER_table <- renderDataTable(PER_analysis())
+  })
+  
+  
+  ##################################### ANALYST PAGE ####################################
+  analyst_opinions_all_db <- mongo(collection = 'analyst_opinions_all',
+                                   url = url_mongo,
+                                   verbose = FALSE, options = ssl_options())
+  
+  
+  ##Analyst Recommendation - DataTable
+  output$recommendation_table <- renderDataTable({
+    retrieved_data <- analyst_opinions_all_db$find('{"Status":"active"}')
+    analyst_rating_table(retrieved_data)
+  }) 
+  
+  
+  ##Analyst Target Prices - DataTable
+  output$target_price_table <- renderDataTable({
+    retrieved_data <- analyst_opinions_all_db$find('{"Status":"active"}')
+    analyst_target_prices(retrieved_data)
+  })
   
   
   ##############################  TWITTER PAGE #######################################
-  ##Twitter Target Price Distribution - Vertical Bar Charts 
-  data_twitter <- mongo(collection = 'twitter_analytics',
-              url = url_mongo,
-              verbose = FALSE, options = ssl_options())
-  df<-data_twitter$find('{"category":"price_distribution","state":"active"}')
-  df2<-data_twitter$find('{"category":"influencer_distribution","state":"active"}')
+  
+  
+  general_target_prices_db<- mongo(collection = 'target_prices',
+                        url = url_mongo,
+                        verbose = FALSE, options = ssl_options())
+  general_target_prices_df<- general_target_prices_db$find()
+  output$general_twitter_target_price<-renderPlot({
+    constituent = toString(input$constituent)
+    general_target_price_bar(general_target_prices_df,constituent)
+  })
+  
+  #Deutsche Borse, bmw, henkel, infenion,Volkswagen shows error
+  influencer_target_prices_db<-mongo(collection = 'influencer_prices',
+                                     url = url_mongo,
+                                     verbose = FALSE, options = ssl_options())
+  influencer_target_prices_df<- influencer_target_prices_db$find()
+  output$influencer_twitter_target_price<-renderPlot({
+    constituent = toString(input$constituent)
+    influencer_target_price_bar(influencer_target_prices_df,constituent)
+  })
+  
+  
   
 
-  #General Target Prices
-  output$twitter_target_price <-  renderPlot({
-    constituent = toString(input$constituent_twitter)
-      general_target_price_bar(df,constituent)
-  })
-  
-  ##Influencer Target Prices
-  output$influencer_target_price<-renderPlot({
-    constituent = toString(input$constituent_twitter)
-    influencer_target_price_bar(df2,constituent)
-  })
-  
-  
-  ##Top Mentions - Horizontal Bar Chart
-  db_organization <- mongo(collection = 'twitter_top_organizations',
-              url = url_mongo,
-              verbose = FALSE, options = ssl_options())
-  db_organization<-db_organization$find()
-  output$organization <- renderPlot({
-    constituent = toString(input$constituent_twitter)
-    top_mentions_bar(db_organization,constituent)
-    })
-    
-  
   #Twitter Sentiment Trend - Line Plot
-  data_sent <- mongo(collection = 'twitter_sentiment_trend',
-                     url = url_mongo,
-                     verbose = FALSE, options = ssl_options())
-  data_sent=data_sent$find('{}')
+  data_sent_all <- mongo(collection = 'twitter_sentiment_trend',
+                         url = url_mongo,
+                         verbose = FALSE, options = ssl_options())
+  data_sent_all=data_sent_all$find('{}')
   
   output$sent_trend <-renderPlot({
-    constituent = toString(input$constituent_twitter)    
-    avg_twitter_sent(data_sent,constituent)
+    constituent = toString(input$constituent)    
+    avg_twitter_sent(data_sent_all,constituent)
+  })
+  
+  
+  twitter_counts<- mongo(collection = 'twitter_sentiment_count_daily3',
+                         url = url_mongo,
+                         verbose = FALSE, options = ssl_options())
+  twitter_counts=twitter_counts$find('{}')
+  twitter_counts$date<-as.Date(twitter_counts$date)
+  twitter_counts<- twitter_counts[twitter_counts$date>as.Date('2017-10-01'),]
+  twitter_counts<- twitter_counts[twitter_counts$date<as.Date('2017-11-16'),]
+  twitter_counts<- unique(twitter_counts)
+  
+  output$tweet_num<- tweet_count_adidas <-renderPlot({
+    constituent = toString(input$constituent)
+    tweet_count(twitter_counts, constituent)
   })
   
   
   ##World Twitter Data  - Map Plot
-  data <- mongo(collection = 'country_data',
+  ##Prosiebensat1, Vonovia, Volkswagen shows error
+  data <- mongo(collection = 'country_data3',
                 url = url_mongo,
                 verbose = FALSE, options = ssl_options())
-  country_df = data$find()
+  country_df = data$find('{}')
+  country_df$`date of analysis` <- as.Date(country_df$`date of analysis` )
+  #country_df<- country_df[country_df$`date of analysis` == as.Date('2017-11-26'),]
+  
   
   ##Sentiment Mapping
   output$sentiment_map<-renderPlot({
-    constituent = toString(input$constituent_twitter)
+    constituent = toString(input$constituent)
     map_sentiment(country_df,constituent)
-     })
+  })
   
   ##Frequency Mapping
   output$popularity_map<-renderPlot({
-    constituent = toString(input$constituent_twitter)
+    constituent = toString(input$constituent)
     map_frequency(country_df,constituent)
-    })
+  })
+  
+  
+  ##Most Recent Tweets
+  tweets_db <- mongo(collection = 'twitter_analytics_latest_price_tweets',
+                url = url_mongo,
+                verbose = FALSE, options = ssl_options())
+  retrieved_data <- tweets_db$find('{}')
+  retrieved_data[retrieved_data$constituent=='adidas',c('constituent')] = 'Adidas'
+  output$recent_tweets_table <- renderDataTable({
+    constituent = toString(input$constituent)
+    recent_tweets(retrieved_data,constituent)
+  })
   
   
   ########################################## News #########################################
@@ -275,73 +280,114 @@ server <- function(input, output){
   top_words_data <- mongo(collection = 'top_words',
                           url = url_mongo,
                           verbose = FALSE, options = ssl_options())
-  top_words_df <- top_words_data$find()
+  top_words_df <- top_words_data$find('{}')
   output$word_cloud <-renderPlot({
-    constituent <-toString(input$constituent_news)
+    constituent <-toString(input$constituent)
     word_cloud_plot(top_words_df,constituent)
   })
   
   ##News Tagging Count - Multicolored Vertical Bar Chart
-  data <- mongo(collection = 'news_tag',
-                url = url_mongo,
-                verbose = FALSE, options = ssl_options())
-  news_df = data$find()
+  tag_count_data <- mongo(collection = 'news_tag',
+                          url = url_mongo,
+                          verbose = FALSE, options = ssl_options())
+  tag_count_df = tag_count_data$find('{}')
+  #tag_count_df$date <-as.Date(tag_count_df$date)
+  #tag_count_df <-tag_count_df[tag_count_df$tags!='None',]
+  #tag_count_df <-tag_count_df[tag_count_df$date > as.Date('2017-11-06'),]
+  
   
   output$news_tag_bar<-renderPlot({
-    constituent <-toString(input$constituent_news)
-    count_tags_bar(news_df,constituent)
-    })
+    constituent <-toString(input$constituent)
+    count_tags_bar(tag_count_df ,constituent)
+  })
   
   
   ##News Sentiment Trend - Line Graph
   output$news_sentiment_daily<-renderPlot({
-    constituent <-toString(input$constituent_news)
+    constituent <-toString(input$constituent)
     daily_news_sent(url_mongo,constituent)
   })
   
   
-  ##News Sentiment Trend by Categories - Line Graph
-  news_tag <- mongo(collection = 'news_tagging_score',
+  ##News sentiment by Category - Heatmap
+  topic_sentiment_db <- mongo(collection = 'news_analytics_topic_sentiment',
                     url = url_mongo,
                     verbose = FALSE, options = ssl_options())
-  news_tag_df<-news_tag$find('{}')
+  topic_sentiment_df<- topic_sentiment_db$find()
   
-  ##Average daily sentiment by category
-  output$news_sentiment_tag<-renderPlot({
-    constituent <-toString(input$constituent_news)
-    news_sent_by_tag(news_tag_df,constituent)
-    })
+  output$topic_sentiment_grid<-renderPlot({
+    constituent <-toString(input$constituent)
+    topic_sentiment_grid_plot(topic_sentiment_df,constituent)
+  })
   
   
+  #News articles by topic
+  query <- paste0('{}')
+  
+  news_analytics_topic_articles_conn <- mongo(collection = 'news_analytics_topic_articles',
+                                              url = url_mongo,
+                                              verbose = FALSE, options = ssl_options())
+  news_analytics_topic_articles_df <- news_analytics_topic_articles_conn$find(query)
+  
+  news_analytics_topic_articles_all <- eventReactive(input$constituent, {
+    constituent = toString(input$constituent)
+    news_analytics_topic_articles_func(news_analytics_topic_articles_df,constituent)
+  }, ignoreNULL = FALSE)
+  
+  output$news_analytics_topic_articles <- DT::renderDataTable(news_analytics_topic_articles_all(),
+                                                              selection = 'single', server=FALSE)
+  
+  observeEvent(input$news_analytics_topic_articles_rows_selected,
+               {
+                 i = input$news_analytics_topic_articles_rows_selected
+                 cat(i)
+                 i <- i[length(i)]
+                 constituent = toString(input$constituent)
+                 df<-news_analytics_topic_articles_df[news_analytics_topic_articles_df$constituent == constituent,]
+                 showModal(modalDialog(
+                   title = df[i,c('NEWS_TITLE_NewsDim')],
+                   df[i,c('NEWS_ARTICLE_TXT_NewsDim')]
+                 ))
+               })
+  
+  
+  
+
   ################################# Correlation Page ######################################
-  ### News Sentiment Line 
+  all_correlations<-mongo(collection = 'all_correlations',
+                          url = url_mongo,
+                          verbose = FALSE, options = ssl_options())
+  all_correlations<- all_correlations$find()
   
+  ## News Sentiment line
   output$news_behavior_line <- renderPlotly({
-    constituent = toString(input$constituent_corr)
-    correlation_news(url_mongo,constituent)
+    constituent = toString(input$constituent)
+    correlation_df<-all_correlations[all_correlations$Constituent==constituent,]
+    correlation_news(correlation_df,constituent)
   })
   
   
   ## Twitter Sentiment line
   output$twitter_behavior_line <- renderPlotly({
-    constituent = toString(input$constituent_corr)
-    correlation_twitter(url_mongo,constituent)
+    constituent = toString(input$constituent)
+    correlation_df<-all_correlations[all_correlations$Constituent==constituent,]
+    correlation_twitter(correlation_df,constituent)
   })
   
   
   ### Add explanations
   output$news_annotation<- renderText({
-    constituent = toString(input$constituent_corr)
+    constituent = toString(input$constituent)
     news_annotation_selection(constituent)
   })
   
   
   output$twitter_annotation<- renderText({
-    constituent = toString(input$constituent_corr)
+    constituent = toString(input$constituent)
     twitter_annotation_selection(constituent)
-    })
+  })
   
-}
+  }
 
- 
+
 

@@ -1,10 +1,24 @@
 ##Stores all the functions used for the Fundamental Page of Analytics Dashboard. 
+library(pander)
+library(markdown)
+library(stringr)
+library(mongolite)
+library(reshape)
+library(reshape2)
+library(tidyverse)
+library(ggplot2)
+library(rworldmap)
+library(wordcloud)
+library(RColorBrewer)
+library(plotly)
 
 ##This function creates a color-coded cumulative return datatable
 cumulative_return_table<-function(retrieved_data){
 df<-retrieved_data[,c('Constituent','6 months return','1 year return','3 years return')]
 df<-df[order(df$Constituent),]
 df[df$Constituent=='adidas',c('Constituent')]<-'Adidas'
+df[df$Constituent == 'Volkswagen (VW) vz',c('Constituent')]='Volkswagen'
+df[df$Constituent == 'Münchener Rückversicherungs-Gesellschaft',c('Constituent')]='Münchener RG'
 df[,c('6 months return','1 year return','3 years return')]<-round(df[,c('6 months return','1 year return','3 years return')],2)
 datatable(df,rownames = FALSE,options = list(pageLength = 10),colnames = c('Constituent','6 months cml.return','1 year cml.return','3 years cml.return')) %>%
   formatStyle(c('6 months return','1 year return','3 years return'),
@@ -18,9 +32,56 @@ cross_analysis<-function(retrieved_data){
   datatable(df,rownames = FALSE,options = list(pageLength = 5),colnames = c('Constituent','Recent cross','SMA 50 movement')) 
 }
 
+#This function creates a datatable for EPS
+EPS_table<-function(retrieved_data){
+  df<-retrieved_data[,c('Constituent','Current EPS','EPS last year')]
+  df[df$Constituent=='adidas',c('Constituent')]<-'Adidas'
+  df<-df[order(df$Constituent),]
+  #df[df$Constituent == 'Volkswagen (VW) vz',c('Constituent')]='Volkswagen'
+  df[df$Constituent == 'Münchener Rückversicherungs-Gesellschaft',c('Constituent')]='Münchener RG'
+  datatable(df,rownames = FALSE,options = list(pageLength = 5), colnames = c('Constituent','Current EPS value','EPS value last year'))%>% formatStyle(
+    'Current EPS',
+    background = styleColorBar(df$`Current EPS`, 'orange'),
+    backgroundSize = '100% 90%',
+    backgroundRepeat = 'no-repeat',
+    backgroundPosition = 'center') %>%formatStyle(
+      'EPS last year',
+      background = styleColorBar(df$`EPS last year`, '#62B5F6'),
+      backgroundSize = '100% 90%',
+      backgroundRepeat = 'no-repeat',
+      backgroundPosition = 'center')}
+
+
+#Makes a horizontal bar datatable displaying PER
+PER_table<-function(retrieved_data){
+  df<-retrieved_data[,c('Constituent','Current PER','PER last year')]
+  df[df$Constituent=='adidas',c('Constituent')]<-'Adidas'
+  df<-df[order(df$Constituent),]
+  #df[df$Constituent == 'Volkswagen (VW) vz',c('Constituent')]='Volkswagen'
+  df[df$Constituent == 'Münchener Rückversicherungs-Gesellschaft',c('Constituent')]='Münchener RG'
+  datatable(df,rownames = FALSE,options = list(pageLength = 5), colnames = c('Constituent','Current PER value','PER value last year'))%>% formatStyle(
+    'Current PER',
+    background = styleColorBar(df$`Current PER`, 'orange'),
+    backgroundSize = '100% 90%',
+    backgroundRepeat = 'no-repeat',
+    backgroundPosition = 'center') %>%formatStyle(
+      'PER last year',
+      background = styleColorBar(df$`PER last year`, '#62B5F6'),
+      backgroundSize = '100% 90%',
+      backgroundRepeat = 'no-repeat',
+      backgroundPosition = 'center')
+  
+  #%>%
+  #formatStyle(c('Recent cross'),
+  #color = styleInterval(c('Golden Cross','Death Cross'),c('red')))
+}
+
+
 #This function creates a datatable for Profitability Ranking and Tags
 rank_n_tag<-function(retrieved_data){
   df<-retrieved_data[,c('Profitability rank','Constituent','Price growth','Fundamental growth')]
   df$'Profitability rank'<- df$'Profitability rank'+1
+  df[df$Constituent == 'Volkswagen (VW) vz',c('Constituent')]='Volkswagen'
+  df[df$Constituent == 'Münchener Rückversicherungs-Gesellschaft',c('Constituent')]='Münchener RG'
   datatable(df,rownames = FALSE,options = list(pageLength = 10),colnames = c('Rank','Constituent','Growth in stock price','Growth in fundamental')) %>%formatStyle('Profitability rank', textAlign = 'center')
 }
