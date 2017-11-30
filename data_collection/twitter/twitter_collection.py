@@ -146,24 +146,33 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
 
         if LOGGING_FLAG:
             logging(constituent_name, constituent_id, tweetCount, LANGUAGE,
-                    CONNECTION_STRING, DATABASE_NAME)
+                    'pecten_dataset', 'tweets_unmodified_test', storage)
 
     return "Downloaded tweets"
 
-def logging(constituent_name, constituent_id, tweetCount, language, connection_string, database):
+def logging(constituent_name, constituent_id, tweetCount, language, dataset_name, table_name, storage_object):
+    doc = [{"date": time.strftime('%Y-%m-%d %H:%M:%S', datetime.now().timetuple()),
+           "constituent_name": constituent_name,
+           "constituent_id": constituent_id,
+           "downloaded_tweets": tweetCount,
+           "language": language}]
+
+    try:
+        storage_object.insert_bigquery_data(dataset_name, table_name, doc)
+    except Exception as e:
+        print(e)
+
+    '''
     client = MongoClient(connection_string)
     db = client[database]
     collection = db["tweet_logs"]
 
-    doc = {"date":datetime.now(),
-           "constituent_name":constituent_name,
-           "constituent_id":constituent_id,
-           "downloaded_tweets":tweetCount,
-           "language":language}
+
     try:
         collection.insert_one(doc)
     except Exception as e:
         print("some error : " + str(e))
+    '''
 
 def get_max_id(constituent_id, connection_string, database, table):
     client = MongoClient(connection_string)

@@ -64,6 +64,7 @@ def tweet_table(args):
         for tweet in cursor:
             # Removing bad fields
             clean_tweet = tap.scrub(tweet)
+            clean_tweet["constituent"]
 
             # Separate the tweets that go to one topic or the other
 
