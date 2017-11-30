@@ -39,7 +39,12 @@ def other_tables(args):
             print("File does not exists in the local filesystem.")
 
 def tweet_table(args):
-    mongo_connection_string = "mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp"
+    param_table = "PARAM_TWITTER_COLLECTION"
+    parameters_list = ["CONNECTION_STRING"]
+
+    parameters = get_parameters(args.param_connection_string, param_table, parameters_list)
+
+    mongo_connection_string = parameters["CONNECTION_STRING"]
     client = MongoClient(mongo_connection_string)
     db = client["dax_gcp"]
     collection = db["tweets"]
