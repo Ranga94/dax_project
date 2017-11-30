@@ -404,7 +404,7 @@ def create_tweet_skelleton():
     tweet["place"]["name"] = None
     tweet["constituent_id"] = None
     tweet["constituent_name"] = None
-    tweet["constituent_id"] = None
+    tweet["constituent"] = None
     tweet["search_term"] = None
 
     return tweet
