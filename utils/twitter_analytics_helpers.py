@@ -238,7 +238,7 @@ def convert_timestamp(str):
 
 def scrub(d):
     tweet = create_tweet_skelleton()
-    record_types = ["contributors", "coordinates", "entities", "user", "place"]
+    record_types = ["contributors", "coordinates", "entities", "user", "geo","place"]
     contributor_fields = ["screen_name", "id", "id_str"]
     coordinates_fields = ["type","coordinates"]
     coordinates_coordinates_fields = ["lat", "long"]
@@ -264,7 +264,7 @@ def scrub(d):
                     "id","name"]
 
     for key, value in list(d.items()):
-        if key in tweet:
+        if key in d:
             if key in record_types:
                 if key == "contributors":
                     if d[key]:
