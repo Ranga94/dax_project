@@ -238,10 +238,8 @@ def convert_timestamp(str):
 
 def scrub(d):
     tweet = create_tweet_skelleton()
-    record_types = ["contributors", "coordinates", "entities", "user", "geo","place"]
+    record_types = ["contributors", "entities", "user","place"]
     contributor_fields = ["screen_name", "id", "id_str"]
-    coordinates_fields = ["type","coordinates"]
-    coordinates_coordinates_fields = ["lat", "long"]
     entities_fields = ["symbols", "hashtags", "user_mentions", "trends",
                        "urls"]
     entities_symbols_fields = ["indices", "text"]
@@ -258,8 +256,6 @@ def scrub(d):
                    "name","lang","profile_background_tile","favourites_count","screen_name","notifications",
                    "url","created_at","contributors_enabled","time_zone","protected","default_profile",
                    "is_translator"]
-    geo_fields = ["type", "coordinates"]
-    geo_coordinates_fields = ["lat", "long"]
     place_fields = ["full_name","url","country","place_type","country_code",
                     "id","name"]
 
@@ -273,15 +269,6 @@ def scrub(d):
                             if key2 in contributor_fields:
                                 temp[key2] = value2
                         tweet[key].append(temp)
-                elif key == "coordinates" and d[key]:
-                    for key2, value2 in list(d["coordinates"].items()):
-                        if key2 in coordinates_fields:
-                            if key2 == "coordinates":
-                                for key3, value3 in list(d["coordinates"]["coordinates"]):
-                                    if key3 in coordinates_coordinates_fields:
-                                        tweet[key][key2][key3] = value
-                            else:
-                                tweet[key][key2] = value2
                 elif key == "entities" and d[key]:
                     for key2, value2 in list(d["entities"].items()):
                         if key2 in entities_fields:
@@ -332,15 +319,6 @@ def scrub(d):
                     for key2, value2 in list(d[key].items()):
                         if key2 in user_fields:
                             tweet[key][key2] = value2
-                elif key == "geo" and d[key]:
-                    for key2, value2 in list(d[key].items()):
-                        if key2 in geo_fields:
-                            if key2 == "coordinates":
-                                for key3, value3 in list(d[key][key2].items()):
-                                    if key3 in geo_coordinates_fields:
-                                        tweet[key][key2][key3] = value3
-                            else:
-                                tweet[key][key2] = value2
                 elif key == "place" and d[key]:
                     for key2, value2 in list(d[key].items()):
                         if key2 in place_fields:
@@ -359,11 +337,6 @@ def create_tweet_skelleton():
     tweet["favorite_count"] = None
     tweet["source"] = None
     tweet["retweeted"] = None
-    tweet["coordinates"] = {}
-    tweet["coordinates"]["type"] = None
-    tweet["coordinates"]["coordinates"] = {}
-    tweet["coordinates"]["coordinates"]["lat"] = None
-    tweet["coordinates"]["coordinates"]["long"] = None
     tweet["timestamp_ms"] = None
     tweet["entities"] = {}
     tweet["entities"]["symbols"] = []
@@ -415,11 +388,6 @@ def create_tweet_skelleton():
     tweet["user"]["protected"] = None
     tweet["user"]["default_profile"] = None
     tweet["user"]["is_translator"] = None
-    tweet["geo"] = {}
-    tweet["geo"]["type"] = None
-    tweet["geo"]["coordinates"] = {}
-    tweet["geo"]["coordinates"]["lat"] = None
-    tweet["geo"]["coordinates"]["long"] = None
     tweet["in_reply_to_user_id_str"] = None
     tweet["possibly_sensitive"] = None
     tweet["lang"] = None
