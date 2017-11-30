@@ -61,7 +61,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
 
     fields_to_keep = ["text", "favorite_count", "source", "retweeted","entities", "id_str",
                       "retweet_count","favorited","user","lang","created_at","place", "constituent_name",
-                      "constituent_id", "search_term", "id"]
+                      "constituent_id", "search_term", "id", "sentiment_score", "entity_tags","relevance"]
 
     for constituent_id, constituent_name in all_constituents:
         search_query = get_search_string(constituent_id, PARAM_CONNECTION_STRING, "PARAM_TWITTER_KEYWORDS",
@@ -82,6 +82,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
         while tweetCount < MAX_TWEETS:
             tweets_unmodified = []
             tweets_modified = []
+            tweets_mongo = []
 
             tweets, tmp_tweet_count, max_id = downloader.download(constituent_name, search_query,
                                                                   LANGUAGE,TWEETS_PER_QUERY,sinceId,max_id)
@@ -90,68 +91,53 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
 
             tweetCount += tmp_tweet_count
 
-            #Add
+            #Add fields for both unmodified and modified tweets
             for tweet in tweets:
-                #tweet._json['date'] = datetime.strptime(tweet._json['created_at'], '%a %b %d %H:%M:%S %z %Y').isoformat()
                 tweet._json['source'] = "Twitter"
                 tweet._json['constituent_name'] = constituent_name
                 tweet._json['constituent_id'] = constituent_id
                 tweet._json['search_term'] = search_query
 
-                #Removing bad fields - Move this to scrub code
-
-                user = tweet._json["user"]
-                if "is_translation_enabled" in user:
-                    del user["is_translation_enabled"]
-                if "translator_type" in user:
-                    del user["translator_type"]
-                if "entities" in user:
-                    del user["entities"]
-                if "has_extended_profile" in user:
-                    del user["has_extended_profile"]
-                if "contributors" not in tweet._json:
-                    tweet._json["contributors"] = []
-                elif not tweet._json["contributors"]:
-                    tweet._json["contributors"] = []
-                tweet._json["entities"]["media"] = []
-                if "extended_entities" in tweet._json:
-                    tweet._json["extended_entities"]["media"] = []
-                if "place" in tweet._json:
-                    place = tweet._json["place"]
-                    if "contained_within" in place:
-                        del place["contained_within"]
-
+                #Removing bad fields
                 clean_tweet = tap.scrub(tweet._json)
-                #!!!!!!!!!!!!!!!!!!!!
 
                 # Separate the tweets that go to one topic or the other
-                tweets_unmodified.append(clean_tweet)
+                
+                #unmodified
+                t_unmodified = clean_tweet.deepcopy()
+                t_unmodified["date"] = tap.convert_timestamp(t_unmodified["created_at"])
+                tweets_unmodified.append(t_unmodified)
 
+                #Add additional fields
+                clean_tweet["sentiment_score"] = tap.get_nltk_sentiment(str(clean_tweet["text"]))
+                tagged_text = tagger.get_spacy_entities(str(clean_tweet["text"]))
+                clean_tweet["entity_tags"] = tap.get_spacey_tags(tagged_text)
+                clean_tweet["relevance"] = -1
+
+                #mongo
+                t_mongo = clean_tweet.deepcopy()
+                t_mongo['date'] = datetime.strptime(t_mongo['created_at'], '%a %b %d %H:%M:%S %z %Y')
+                tweets_mongo.append(t_mongo)
+
+                #modified
                 tagged_tweet = dict((k,clean_tweet[k]) for k in fields_to_keep if k in clean_tweet)
-
                 tagged_tweet['date'] = tap.convert_timestamp(clean_tweet["created_at"])
-                # sentiment score
-                tagged_tweet["sentiment_score"] = tap.get_nltk_sentiment(clean_tweet["text"])
-
-                tagged_text = tagger.get_spacy_entities(clean_tweet["text"])
-                tagged_tweet["entity_tags"] = tap.get_spacey_tags(tagged_text)
-                tagged_tweet["relevance"] = -1
-
                 tweets_modified.append(tagged_tweet)
 
             #send to PubSub topic
             #ps_utils.publish("igenie-project", "tweets-unmodified", tweets_unmodified)
             #ps_utils.publish("igenie-project", "tweets", tweets_modified)
             try:
-                storage.insert_bigquery_data('pecten_dataset', 'tweets_unmodified', tweets_unmodified)
+                storage.insert_bigquery_data('pecten_dataset', 'tweets_unmodified_test', tweets_unmodified)
             except Exception as e:
                 print(e)
             try:
-                storage.insert_bigquery_data('pecten_dataset', 'tweets', tweets_modified)
+                storage.insert_bigquery_data('pecten_dataset', 'tweets_test', tweets_modified)
             except Exception as e:
                 print(e)
             try:
-                storage.save_to_mongodb(tweets_modified, "dax_gcp", "tweets")
+                #storage.save_to_mongodb(tweets_mongo, "dax_gcp", "tweets")
+                pass
             except Exception as e:
                 print(e)
 
