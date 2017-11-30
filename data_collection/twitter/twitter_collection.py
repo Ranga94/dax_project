@@ -102,7 +102,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
                 clean_tweet = tap.scrub(tweet._json)
 
                 # Separate the tweets that go to one topic or the other
-                
+
                 #unmodified
                 t_unmodified = clean_tweet.deepcopy()
                 t_unmodified["date"] = tap.convert_timestamp(t_unmodified["created_at"])
