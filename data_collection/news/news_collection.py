@@ -255,6 +255,9 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                     print("No records in df")
                     continue
 
+                #Make news_title column a string
+                df.astype({"news_title":str}, copy=False, errors='ignore')
+
                 # Remove duplicate columns
                 df.drop_duplicates(["news_title"], inplace=True)
 
@@ -279,7 +282,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 # get entity tags
                 entity_tags = []
                 for text in df["news_title"]:
-                    tags = get_spacey_tags(tagger.get_spacy_entities(text))
+                    tags = get_spacey_tags(tagger.get_spacy_entities(str(text)))
                     entity_tags.append(tags)
 
                 fields = ["news_date", "news_title", "news_article_txt", "news_companies", "news_source",
