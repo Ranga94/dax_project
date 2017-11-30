@@ -5,6 +5,7 @@ import smtplib
 import sys
 from bson.son import SON
 from pymongo import MongoClient
+from copy import deepcopy
 
 def main(arguments):
     param_table = "PARAM_TWITTER_COLLECTION"
@@ -104,7 +105,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
                 # Separate the tweets that go to one topic or the other
 
                 #unmodified
-                t_unmodified = clean_tweet.deepcopy()
+                t_unmodified = deepcopy(clean_tweet)
                 t_unmodified["date"] = tap.convert_timestamp(t_unmodified["created_at"])
                 tweets_unmodified.append(t_unmodified)
 
@@ -115,7 +116,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
                 clean_tweet["relevance"] = -1
 
                 #mongo
-                t_mongo = clean_tweet.deepcopy()
+                t_mongo = deepcopy(clean_tweet)
                 t_mongo['date'] = datetime.strptime(t_mongo['created_at'], '%a %b %d %H:%M:%S %z %Y')
                 tweets_mongo.append(t_mongo)
 
