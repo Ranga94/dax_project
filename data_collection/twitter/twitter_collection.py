@@ -160,7 +160,6 @@ def logging(constituent_name, constituent_id, tweetCount, language, connection_s
            "constituent_id":constituent_id,
            "downloaded_tweets":tweetCount,
            "language":language}
-
     try:
         collection.insert_one(doc)
     except Exception as e:

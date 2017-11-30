@@ -3,6 +3,7 @@ from pymongo import MongoClient
 import os
 import json
 from pprint import pprint
+from copy import deepcopy
 
 def other_tables(args):
     param_table = "PARAM_TWITTER_COLLECTION"
@@ -43,25 +44,38 @@ def tweet_table(args):
     db = client["dax_gcp"]
     collection = db["tweets"]
     file_name = "{}.json".format("tweets-raw")
+    file_name_unmodified = "{}.json".format("tweets-unmodified")
     fields_to_keep = ["text", "favorite_count", "source", "retweeted", "entities", "id_str",
                       "retweet_count", "favorited", "user", "lang", "created_at", "place", "constituent_name",
                       "constituent_id", "search_term", "id", "sentiment_score", "entity_tags", "relevance"]
 
-    #set which types of entities I want
-    #set which types of user I want
-    #set which types of place I want
 
     cursor = collection.find({}, no_cursor_timeout=True)
 
 
     print("Writing local file")
-    with open(file_name, "w") as f:
+    with open(file_name, "w") as f, open(file_name_unmodified, "w") as f2:
+        count = 0
         for tweet in cursor:
-            scrubbed_tweet = tap.scrub(tweet)
-            clean_tweet = dict((k, scrubbed_tweet[k]) for k in fields_to_keep if k in scrubbed_tweet)
-            clean_tweet["date"] = tap.convert_timestamp(tweet["created_at"])
+            # Removing bad fields
+            clean_tweet = tap.scrub(tweet)
 
-            f.write(json.dumps(tweet, cls=MongoEncoder) + '\n')
+            # Separate the tweets that go to one topic or the other
+
+            # unmodified
+            t_unmodified = deepcopy(clean_tweet)
+            t_unmodified["date"] = tap.convert_timestamp(t_unmodified["created_at"])
+            f2.write(json.dumps(t_unmodified, cls=MongoEncoder) + '\n')
+
+            # modified
+            tagged_tweet = dict((k, clean_tweet[k]) for k in fields_to_keep if k in clean_tweet)
+            tagged_tweet['date'] = tap.convert_timestamp(clean_tweet["created_at"])
+            f.write(json.dumps(tagged_tweet, cls=MongoEncoder) + '\n')
+            count += 1
+
+            if count == 10000:
+                print("Saved {} tweets".format(count))
+                count = 0
 
     return
     bucket_name = "igenie-tweets"
