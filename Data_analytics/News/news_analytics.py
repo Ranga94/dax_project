@@ -5,6 +5,7 @@ from bson.son import SON
 from datetime import datetime
 from langdetect import detect
 import time
+import sys
 
 #for all_news
 def get_all_news():
@@ -351,13 +352,110 @@ def get_news_analytics_daily_sentiment(from_date, to_date):
         news_analytics_daily_sentiment.insert_many(result)
         time.sleep(3)
 
+def get_news_analytics_topic_articles(from_date, to_date):
+    param_table = "PARAM_TWITTER_COLLECTION"
+    parameters_list = ["CONNECTION_STRING"]
+
+    parameters = get_parameters(args.param_connection_string, param_table, parameters_list)
+
+    storage = Storage(google_key_path=args.google_key_path, mongo_connection_string=parameters["CONNECTION_STRING"])
+
+    all_constituents = storage.get_sql_data(sql_connection_string=args.param_connection_string,
+                                            sql_table_name="MASTER_CONSTITUENTS",
+                                            sql_column_list=["CONSTITUENT_ID", "CONSTITUENT_NAME"])
+
+    client = MongoClient(parameters["CONNECTION_STRING"])
+    db = client["dax_gcp"]
+    all_news_landing = db["all_news_landing"]
+    news_analytics_topic_sentiment = db["news_analytics_topic_sentiment"]
+    news_analytics_topic_articles = db["news_analytics_topic_articles"]
+
+    for constituent_id, constituent_name in all_constituents:
+        print(constituent_name)
+        # get the topics for that constituent from news_analytics_topic_sentiment
+        topics = list(news_analytics_topic_sentiment.find({"constituent_id":constituent_id},{"categorised_tag":1,"_id":0}))
+        if len(topics) > 5:
+            topics = topics[:5]
+        #pprint(topics)
+
+        # Get the latest (5) articles per topic
+        for t in topics:
+            pipeline = [
+                {
+                    "$match":{
+                        "constituent_id":constituent_id,
+                        "NEWS_DATE_NewsDim": {"$gte": from_date, "$lte": to_date},
+                        "show":True,
+                        "categorised_tag": {"$nin": ["NA"]}
+                    }
+                },
+                {"$unwind":"$categorised_tag"},
+                {
+                    "$match":{
+                        "categorised_tag":t['categorised_tag']
+                    }
+                },
+                {
+                    "$project":{
+                        "_id":0,
+                        "from_date":from_date,
+                        "to_date":to_date,
+                        "date":datetime.now(),
+                        "sentiment":1,
+                        "score":1,
+                        "NEWS_ARTICLE_TXT_NewsDim": 1,
+                        "categorised_tag":1,
+                        "NEWS_DATE_NewsDim":1,
+                        "constituent_name":1,
+                        "NEWS_TITLE_NewsDim": 1,
+                        "NEWS_SOURCE_NewsDim":1,
+                        "constituent_id":1,
+                        "constituent":1
+                    }
+                },
+                {"$sort": SON([("NEWS_DATE_NewsDim", -1)])},
+                {"$limit":5}
+            ]
+
+            result = list(all_news_landing.aggregate(pipeline))
+            to_return = [a for a in result if detect(a["NEWS_TITLE_NewsDim"]) == 'en' and a["categorised_tag"] and a["categorised_tag"] != 'None']
+
+            # save result in a table
+            if to_return:
+                news_analytics_topic_articles.insert_many(to_return)
+
+        time.sleep(3)
+
+def get_parameters(connection_string, table, column_list):
+    storage = Storage()
+
+    data = storage.get_sql_data(connection_string, table, column_list)[0]
+    parameters = {}
+
+    for i in range(0, len(column_list)):
+        parameters[column_list[i]] = data[i]
+
+    return parameters
+
 def main(args):
     from_date = datetime(2017, 10, 1)
     to_date = datetime(2017, 11, 16)
     #get_news_analytics_assoc_orgs(from_date, to_date)
     #get_news_analytics_topic_sentiment(from_date, to_date)
     #get_news_sentiment_by_tag(from_date, to_date)
-    get_news_analytics_daily_sentiment(from_date, to_date)
+    #get_news_analytics_daily_sentiment(from_date, to_date)
+    #get_news_analytics_topic_articles(from_date, to_date)
 
 if __name__ == "__main__":
-    main(None)
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('python_path', help='The connection string')
+    parser.add_argument('google_key_path', help='The path of the Google key')
+    parser.add_argument('param_connection_string', help='The connection string')
+    args = parser.parse_args()
+    sys.path.insert(0, args.python_path)
+    from utils.TwitterDownloader import TwitterDownloader
+    from utils.Storage import Storage
+    from utils.PubsubUtils import PubsubUtils
+    from utils import twitter_analytics_helpers as tap
+    main(args)

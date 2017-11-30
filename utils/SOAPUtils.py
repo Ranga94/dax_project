@@ -98,7 +98,7 @@ class SOAPUtils:
         print(SelectionResult_count)
         return SelectionResult_token, SelectionResult_count
 
-    def get_data(self, token, SelectionResult_token, SelectionResult_count, query, database):
+    def get_data(self, token, SelectionResult_token, SelectionResult_count, query, database, timeout):
         url = 'https://webservices.bvdep.com/{}/remoteaccess.asmx'.format(database)
         headers = {'Content-Type': 'text/xml'}
         data = """<?xml version="1.0" encoding="utf-8"?>
@@ -118,7 +118,7 @@ class SOAPUtils:
           </soap12:Body>
         </soap12:Envelope>""".format(token, SelectionResult_token, SelectionResult_count, query)
 
-        response = requests.post(url, headers=headers, data=data, timeout=180)
+        response = requests.post(url, headers=headers, data=data, timeout=timeout)
         return response.text
 
         result = ET.fromstring(response.text)

@@ -186,9 +186,8 @@ def get_sentiment_word(score):
 
 def get_historical_orbis_news(user, pwd, database, google_key_path, param_connection_string):
     #get parameters
-    connection_string = "mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp"
     soap = SOAPUtils()
-    storage = Storage(google_key_path, connection_string)
+    storage = Storage(google_key_path)
     tagger = TU()
 
     columns = ["CONSTITUENT_ID", "CONSTITUENT_NAME", "BVDID"]
@@ -196,19 +195,27 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
     constituents = storage.get_sql_data(sql_connection_string=param_connection_string,
                                         sql_table_name=table,
-                                        sql_column_list=columns)[2:]
+                                        sql_column_list=columns)[1:]
+
+    to_skip = ["BASF SE","BAYERISCHE MOTOREN WERKE AG","DEUTSCHE BANK AG",
+               "SIEMENS AG"]
 
     for constituent_id, constituent_name, bvdid in constituents:
+        limit = get_number_of_news_items(constituent_name)
+        if constituent_name in to_skip:
+            print("Skipping")
+            continue
+
         retry_flag = False
         records = 0
         start = 0
-        end = 20
+        end = 10
         filename = "bq_news_{}.json".format(constituent_id)
         print("Constituent: {},{}".format(constituent_name,bvdid))
         failed = 0
 
         with open(filename, "a") as f:
-            while True:
+            while limit > end:
                 try:
                     token = soap.get_token(user, pwd, database)
                     query = "SELECT LINE BVDNEWS.NEWS_DATE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_date, " \
@@ -226,14 +233,10 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
                     selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, database)
 
-                    get_data_result = soap.get_data(token, selection_token, selection_count, query, database)
-                    # print(get_data_result)
+                    get_data_result = soap.get_data(token, selection_token, selection_count, query, database, timeout=None)
                 except Exception as e:
                     print(str(e))
-                    if failed > 0 and failed == 5:
-                        failed += 1
-                    else:
-                        failed += 1
+                    continue
                 finally:
                     if token:
                         soap.close_connection(token, database)
@@ -245,20 +248,15 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 try:
                     df = pd.read_csv(TESTDATA, sep=",", parse_dates=["news_date"])
                 except Exception as e:
-                    if not retry_flag:
-                        print("Retrying once...")
-                        retry_flag = True
-                        continue
-                    else:
-                        print("Giving up...")
-                        retry_flag = False
-                        start = end + 1
-                        end = start + 20
-                        records += 20
-                        continue
+                    print(e)
+                    continue
 
-                if pd.isnull(df.iloc[0, 2]):
-                    break
+                if df.shape[0] == 0:
+                    print("No records in df")
+                    continue
+
+                #Make news_title column a string
+                df.astype({"news_title":str}, copy=False, errors='ignore')
 
                 # Remove duplicate columns
                 df.drop_duplicates(["news_title"], inplace=True)
@@ -284,7 +282,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 # get entity tags
                 entity_tags = []
                 for text in df["news_title"]:
-                    tags = get_spacey_tags(tagger.get_spacy_entities(text))
+                    tags = get_spacey_tags(tagger.get_spacy_entities(str(text)))
                     entity_tags.append(tags)
 
                 fields = ["news_date", "news_title", "news_article_txt", "news_companies", "news_source",
@@ -315,7 +313,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 #storage.save_to_mongodb(mongo_data, "dax_gcp", "all_news")
                 '''
 
-                # Save to BigQuery
+                #Get needed fields
                 df_bigquery = df[fields]
                 bigquery_data = json.loads(df_bigquery.to_json(orient="records", date_format="iso"))
 
@@ -397,9 +395,266 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 # storage.insert_bigquery_data("pecten_dataset", "news", bigquery_data)
 
                 start = end + 1
-                end = start + 20
-                records += 20
+                end = start + 10
+                records += 10
                 print("Records saved: {}".format(records))
+
+def get_number_of_news_items(constituent_name):
+    mapping = {}
+    mapping["ADIDAS AG"] = 1153
+    mapping["ALLIANZ SE"] = 3063
+    mapping["BASF SE"] = 14244
+    mapping["BAYER AG"] = 3260
+    mapping["BEIERSDORF AG"] = 505
+    mapping["BAYERISCHE MOTOREN WERKE AG"] = 17676
+    mapping["COMMERZBANK AKTIENGESELLSCHAFT"] = 4845
+    mapping["CONTINENTAL AG"] = 2455
+    mapping["DAIMLER AG"] = 3570
+    mapping["DEUTSCHE BOERSE AG"] = 706
+    mapping["DEUTSCHE BANK AG"] = 18647
+    mapping["DEUTSCHE POST AG"] = 725
+    mapping["DEUTSCHE TELEKOM AG"] = 3475
+    mapping["E.ON SE"] = 1159
+    mapping["FRESENIUS MEDICAL CARE AG & CO. KGAA"] = 925
+    mapping["FRESENIUS SE & CO. KGAA"] = 458
+    mapping["HEIDELBERGCEMENT AG"] = 610
+    mapping["HENKEL AG & CO. KGAA"] = 3443
+    mapping["INFINEON TECHNOLOGIES AG"] = 3761
+    mapping["DEUTSCHE LUFTHANSA AG"] = 3353
+    mapping["LINDE AG"] = 1454
+    mapping["MERCK KGAA"] = 2171
+    mapping["MUNCHENER RUCKVERSICHERUNGS-GESELLSCHAFT AKTIENGESELLSCHAFT IN MUNCHEN"] = 1220
+    mapping["PROSIEBENSAT.1 MEDIA SE"] = 413
+    mapping["RWE AG"] = 821
+    mapping["SAP SE"] = 4558
+    mapping["SIEMENS AG"] = 14558
+    mapping["THYSSENKRUPP AG"] = 2732
+    mapping["VONOVIA SE"] = 220
+    mapping["VOLKSWAGEN AG"] = 5944
+
+    return mapping[constituent_name]
+
+
+
+
+
+
+
+
+
+    ALLIANZ
+    SE
+    2
+    YMVEE24AVXXZJE
+    Closing
+    connection
+    (3063, 4)
+    BASF
+    SE
+    2
+    DXTEE24B2YOV80
+    Closing
+    connection
+    (14244, 4)
+    BAYER
+    AG
+    F5SREE24AT7RQQF
+    Closing
+    connection
+    (3260, 4)
+    BEIERSDORF
+    AG
+    TNU1EE24AYPTYOY
+    Closing
+    connection
+    (505, 4)
+    BAYERISCHE
+    MOTOREN
+    WERKE
+    AG
+    1
+    Z5ZEE24AT7RQUV
+    Closing
+    connection
+    (17676, 4)
+    COMMERZBANK
+    AKTIENGESELLSCHAFT
+    JYTKEE24AUVPBAV
+    Closing
+    connection
+    (4845, 4)
+    CONTINENTAL
+    AG
+    JYCGEE24AVFOI2N
+    Closing
+    connection
+    (2455, 4)
+    DAIMLER
+    AG
+    2
+    PVNEE24AS5BKS5
+    Closing
+    connection
+    (3570, 4)
+    DEUTSCHE
+    BOERSE
+    AG
+    3392
+    EE24AXLVLDN
+    Closing
+    connection
+    (706, 4)
+    DEUTSCHE
+    BANK
+    AG
+    21
+    A7EE24AVXY13F
+    Closing
+    connection
+    (18647, 4)
+    DEUTSCHE
+    POST
+    AG
+    3
+    ECJEE24B5QKUI9
+    Closing
+    connection
+    (725, 4)
+    DEUTSCHE
+    TELEKOM
+    AG
+    2
+    Q8SEE24AT99YFO
+    Closing
+    connection
+    (3475, 4)
+    E.ON
+    SE
+    1
+    MD3EE24B0FH74M
+    Closing
+    connection
+    (1159, 4)
+    FRESENIUS
+    MEDICAL
+    CARE
+    AG & CO.KGAA
+    1
+    DHIEE24B4TL1GA
+    Closing
+    connection
+    (925, 4)
+    FRESENIUS
+    SE & CO.KGAA
+    1
+    AFAEE24AZD10WC
+    Closing
+    connection
+    (458, 4)
+    HEIDELBERGCEMENT
+    AG
+    3
+    VSXEE24ARLCE7H
+    Closing
+    connection
+    (610, 4)
+    HENKEL
+    AG & CO.KGAA
+    1
+    I0CEE24ARJU6XJ
+    Closing
+    connection
+    (3443, 4)
+    INFINEON
+    TECHNOLOGIES
+    AG
+    2
+    UZXEE24AS3TDPZ
+    Closing
+    connection
+    (3761, 4)
+    DEUTSCHE
+    LUFTHANSA
+    AG
+    1
+    SY6EE24B1KXS4C
+    Closing
+    connection
+    (3353, 4)
+    LINDE
+    AG
+    2
+    VQYEE24AR1D7OK
+    Closing
+    connection
+    (1454, 4)
+    MERCK
+    KGAA
+    25J
+    9
+    EE24ASPAS1G
+    Closing
+    connection
+    (2171, 4)
+    MUNCHENER
+    RUCKVERSICHERUNGS - GESELLSCHAFT
+    AKTIENGESELLSCHAFT
+    IN
+    MUNCHEN
+    3
+    QUIEE24B2OW5VW
+    Closing
+    connection
+    (1220, 4)
+    PROSIEBENSAT
+    .1
+    MEDIA
+    SE
+    ROIOEE24AWUXURT
+    Closing
+    connection
+    (413, 4)
+    RWE
+    AG
+    1
+    PJIEE24AUVPBZQ
+    Closing
+    connection
+    (821, 4)
+    SAP
+    SE
+    3
+    DNVEE24B6HIMBM
+    Closing
+    connection
+    (4558, 4)
+    SIEMENS
+    AG
+    MGH0EE24ARJU7NZ
+    Closing
+    connection
+    (14558, 4)
+    THYSSENKRUPP
+    AG
+    3081
+    EE24B38VDS4
+    Closing
+    connection
+    (2732, 4)
+    VONOVIA
+    SE
+    3
+    AFGEE24B2NDZUM
+    Closing
+    connection
+    (220, 4)
+    VOLKSWAGEN
+    AG
+    1
+    FI7EE24ATJ2REH
+    Closing
+    connection
+    (5944, 4)
 
 def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_string):
     soap = SOAPUtils()
@@ -514,7 +769,7 @@ if __name__ == "__main__":
     from utils.SOAPUtils import SOAPUtils
     from utils.twitter_analytics_helpers import *
     from utils.TaggingUtils import TaggingUtils as TU
-    #main(args)
+    main(args)
 
 
 

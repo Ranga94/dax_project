@@ -2,11 +2,12 @@ from pymongo import MongoClient, errors
 from google.cloud import storage
 from google.cloud.exceptions import GoogleCloudError, NotFound
 import os
-import jsonpickle
 from sqlalchemy import *
 import json
 from google.cloud import datastore
 from google.cloud import bigquery
+from datetime import datetime
+import time
 
 class Storage:
     def __init__(self, google_key_path=None, mongo_connection_string=None):
@@ -173,7 +174,7 @@ class Storage:
             if not errors:
                 return True
             else:
-                print(errors)
+                print(errors[0])
                 return None
         except Exception as e:
             print(e)
@@ -183,7 +184,7 @@ class MongoEncoder(json.JSONEncoder):
     def default(self, v):
         types = {
             'ObjectId': lambda v: str(v),
-            'datetime': lambda v: v.isoformat()
+            'datetime': lambda v: MongoEncoder.convert_timestamp(v)
         }
         vtype = type(v).__name__
         if vtype in types:
@@ -191,21 +192,13 @@ class MongoEncoder(json.JSONEncoder):
         else:
             return json.JSONEncoder.default(self, v)
 
+    @classmethod
+    def convert_timestamp(cls, date_object):
+        ts = time.strftime('%Y-%m-%d %H:%M:%S', date_object.timetuple())
+        return ts
+
 if __name__ == "__main__":
-    s = Storage()
-    q = "SELECT id_str from `pecten_dataset.tweets_raw`"
-    it = s.get_bigquery_data("C:\\Users\\Uly\\Desktop\\Desktop\\DAX\\dax_project\\keys\\igenie-project-key.json",
-                             q)
-
-    i = 0
-    j = 0
-
-    for item in it:
-        i += 1
-        j += 1
-        if i == 2000:
-            print(j)
-            i = 0
+    pass
 
 
 
