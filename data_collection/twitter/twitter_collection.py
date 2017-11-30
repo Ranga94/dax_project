@@ -4,6 +4,7 @@ import time
 import smtplib
 import sys
 from bson.son import SON
+from pymongo import MongoClient
 
 def main(arguments):
     param_table = "PARAM_TWITTER_COLLECTION"
@@ -46,7 +47,6 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
                GOOGLE_KEY_PATH=None):
 
     storage = Storage(google_key_path=GOOGLE_KEY_PATH, mongo_connection_string=CONNECTION_STRING)
-    ps_utils = PubsubUtils(GOOGLE_KEY_PATH)
     tagger = TU()
 
     downloader = TwitterDownloader(TWITTER_API_KEY, TWITTER_API_SECRET)
@@ -74,7 +74,6 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
         except Exception as e:
             print(e)
             sinceId = None
-        sinceId = None
 
         max_id = -1
         tweetCount = 0

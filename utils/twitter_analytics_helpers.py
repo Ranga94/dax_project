@@ -89,67 +89,6 @@ def get_old_constituent_name(constituent_id):
     else:
         return constituent_id
 
-def analytics():
-    sia = SIA()
-
-    tokenizer = TweetTokenizer(preserve_case=True, reduce_len=True, strip_handles=False)
-
-    list_of_tweets = []
-    for tweet in tweets_to_check:
-        doc = tweet._json
-
-        if collection.find({"id_str": doc["id_str"]}, {"id_str": 1}).limit(1):
-            continue
-
-        list_of_tweets.append(doc)
-
-    if language != "en":
-        if not do_translation(list_of_tweets):
-            if not do_translation(list_of_tweets):
-                return None
-
-
-    for document in list_of_tweets:
-        if language == 'en':
-            document.update(preprocess_tweet(document['text']))
-        else:
-            document.update(preprocess_tweet(document['text_en']))
-
-        document['search_term'] = searchQuery
-        document['constituent'] = constituent
-        document['language'] = language
-
-        date = datetime.strptime(document['created_at'], '%a %b %d %H:%M:%S %z %Y')
-        document['date'] = date
-
-        #Update sentiment
-        sentiment_score,sentiment = get_nltk_sentiment(document["semi_processed_text"], sia)
-        document["nltk_sentiment_score"] = sentiment
-        document["nltk_sentiment_number"] = sentiment_score
-
-        #Update tags
-        document["tag_LOCATION"] = list()
-        document["tag_PERSON"] = list()
-        document["tag_ORGANIZATION"] = list()
-        document["tag_MONEY"] = list()
-        document["tag_PERCENT"] = list()
-        document["tag_DATE"] = list()
-        document["tag_TIME"] = list()
-
-        if language == 'en':
-            text = document['text']
-        else:
-            text = document['text_en']
-
-        for word, tag in get_tags(text, st, tokenizer):
-            if tag != "O":
-                document["tag_" + tag].append(word)
-
-        if 'retweeted_status' in document:
-            document.pop('retweeted_status', None)
-
-    return list_of_tweets
-
 def get_nltk_sentiment(text):
     sia = SIA()
     sent = None
@@ -297,86 +236,212 @@ def convert_timestamp(str):
 
     return ts
 
-def flatten(lst):
-    """Helper function used to massage the raw tweet data."""
-    for el in lst:
-        if (isinstance(el, collections.Iterable) and
-                not isinstance(el, str)):
-            for sub in flatten(el):
-                yield sub
-        else:
-            yield el
-
-def cleanup(data):
-    """Do some data massaging."""
-    if isinstance(data, dict):
-        newdict = {}
-        for k, v in data.items():
-            if (k == 'coordinates') and isinstance(v, list):
-                # flatten list
-                newdict[k] = list(flatten(v))
-            # temporarily, ignore some fields not supported by the
-            # current BQ schema.
-            # TODO: update BigQuery schema
-            elif (k == 'video_info' or k == 'scopes' or k == 'withheld_in_countries'
-                  or k == 'is_quote_status' or 'source_user_id' in k
-                  or 'quoted_status' in k or 'display_text_range' in k or 'extended_tweet' in k
-                  or 'retweeted_status' == k):
-                pass
-            elif v is False:
-                newdict[k] = v
-            else:
-                if k and v:
-                    newdict[k] = cleanup(v)
-        return newdict
-    elif isinstance(data, list):
-        newlist = []
-        for item in data:
-            newdata = cleanup(item)
-            if newdata:
-                newlist.append(newdata)
-        return newlist
-    else:
-        return data
-
 def scrub(d):
-    # d.iteritems isn't used as you can't del or the iterator breaks.
+    tweet = create_tweet_skelleton()
+    record_types = ["contributors", "coordinates", "entities", "user", "place"]
+    contributor_fields = ["screen_name", "id", "id_str"]
+    coordinates_fields = ["type","coordinates"]
+    coordinates_coordinates_fields = ["lat", "long"]
+    entities_fields = ["symbols", "hashtags", "user_mentions", "trends",
+                       "urls"]
+    entities_symbols_fields = ["indices", "text"]
+    entities_hashtags_fields = ["indices", "text"]
+    entities_user_mentions_fields = ["id", "indices", "id_str", "screen_name", "name"]
+    entities_trends_fields = ["woeid", "name", "countryCode", "url", "country"]
+    entities_urls_fields = ["url","indices","expanded_url", "display_url"]
+    user_fields = ["follow_request_sent", "profile_use_background_image","default_profile_image",
+                   "id","verified","profile_image_url_https","profile_sidebar_fill_color",
+                   "profile_text_color","followers_count","profile_sidebar_border_color",
+                   "id_str","profile_background_color","listed_count","profile_background_image_url_https",
+                   "utc_offset","statuses_count","description","friends_count","location","profile_link_color",
+                   "profile_image_url","following","geo_enabled","profile_banner_url","profile_background_image_url",
+                   "name","lang","profile_background_tile","favourites_count","screen_name","notifications",
+                   "url","created_at","contributors_enabled","time_zone","protected","default_profile",
+                   "is_translator"]
+    geo_fields = ["type", "coordinates"]
+    geo_coordinates_fields = ["lat", "long"]
+    place_fields = ["full_name","url","country","place_type","country_code",
+                    "id","name"]
+
     for key, value in list(d.items()):
+        if key in tweet:
+            if key in record_types:
+                if key == "contributors":
+                    if d[key]:
+                        for item in d[key]:
+                            temp = {"screen_name":None, "id":None, "id_str":None}
+                            for key2, value2 in list(item.items()):
+                                if key2 in contributor_fields:
+                                    temp[key2] = value2
+                            tweet[key].append(temp)
+                elif key == "coordinates":
+                    for key2, value2 in list(d["coordinates"].items()):
+                        if key2 in coordinates_fields:
+                            if key2 == "coordinates":
+                                for key3, value3 in list(d["coordinates"]["coordinates"]):
+                                    if key3 in coordinates_coordinates_fields:
+                                        tweet[key][key2][key3] = value
+                            else:
+                                tweet[key][key2] = value2
+                elif key == "entities":
+                    for key2, value2 in list(d["entities"].items()):
+                        if key2 in entities_fields:
+                            if key2 == "symbols":
+                                if tweet[key][key2]:
+                                    for item in d[key][key2]:
+                                        temp = {"indices": None, "text": None}
+                                        for key3, value3 in list(item.items()):
+                                            if key3 in entities_symbols_fields:
+                                                temp[key3] = value3
+                                        tweet[key][key2].append(temp)
+                            elif key2 == "hashtags":
+                                if d[key][key2]:
+                                    for item in d[key][key2]:
+                                        temp = {"indices":None, "text":None}
+                                        for key3, value3 in list(item.items()):
+                                            if key3 in entities_hashtags_fields:
+                                                temp[key3] = value3
+                                        tweet[key][key2].append(temp)
+                            elif key2 == "user_mentions":
+                                if d[key][key2]:
+                                    for item in d[key][key2]:
+                                        temp = {"id":None, "indices":None, "id_str":None,
+                                                "screen_name":None, "name":None}
+                                        for key3, value3 in list(item.items()):
+                                            if key3 in entities_user_mentions_fields:
+                                                temp[key3] = value3
+                                        tweet[key][key2].append(temp)
+                            elif key2 == "trends":
+                                if d[key][key2]:
+                                    for item in d[key][key2]:
+                                        temp = {"woeid":None, "name":None, "countryCode":None,
+                                                "url":None, "country":None}
+                                        for key3, value3 in list(item.items()):
+                                            if key3 in entities_trends_fields:
+                                                temp[key3] = value3
+                                        tweet[key][key2].append(temp)
+                            elif key2 == "urls":
+                                if d[key][key2]:
+                                    for item in d[key][key2]:
+                                        temp = {"url":None,"indices":None,"expanded_url":None,
+                                                "display_url":None}
+                                        for key3, value3 in list(item.items()):
+                                            if key3 in entities_urls_fields:
+                                                temp[key3] = value3
+                                        tweet[key][key2].append(temp)
+                elif key == "user":
+                    for key2, value2 in list(d[key].items()):
+                        if key2 in user_fields:
+                            tweet[key][key2] = value2
+                elif key == "geo":
+                    for key2, value2 in list(d[key].items()):
+                        if key2 in geo_fields:
+                            if key2 == "coordinates":
+                                for key3, value3 in list(d[key][key2].items()):
+                                    if key3 in geo_coordinates_fields:
+                                        tweet[key][key2][key3] = value3
+                            else:
+                                tweet[key][key2] = value2
+                elif key == "place":
+                    for key2, value2 in list(d[key].items()):
+                        if key2 in place_fields:
+                            tweet[key][key2] = value2
+            else:
+                tweet[key] = value
+    return tweet  # For convenience
 
-        if value is None:
-            del d[key]
-        # maintain geo with lat/long
-        elif key == 'geo':
-            geo = d.get('geo', None)
-            if geo:
+def create_tweet_skelleton():
+    tweet = {}
+    tweet["contributors"] = []
+    tweet["truncated"] = None
+    tweet["text"] = None
+    tweet["in_reply_to_status_id"] = None
+    tweet["id"] = None
+    tweet["favorite_count"] = None
+    tweet["source"] = None
+    tweet["retweeted"] = None
+    tweet["coordinates"] = {}
+    tweet["coordinates"]["type"] = None
+    tweet["coordinates"]["coordinates"] = {}
+    tweet["coordinates"]["coordinates"]["lat"] = None
+    tweet["coordinates"]["coordinates"]["long"] = None
+    tweet["timestamp_ms"] = None
+    tweet["entities"] = {}
+    tweet["entities"]["symbols"] = []
+    tweet["entities"]["hashtags"] = []
+    tweet["entities"]["user_mentions"] = []
+    tweet["entities"]["trends"] = []
+    tweet["entities"]["urls"] = []
+    tweet["in_reply_to_screen_name"] = None
+    tweet["id_str"] = None
+    tweet["retweet_count"] = None
+    tweet["in_reply_to_user_id"] = None
+    tweet["favorited"] = None
+    tweet["user"] = {}
+    tweet["user"]["follow_request_sent"] = None
+    tweet["user"]["profile_use_background_image"] = None
+    tweet["user"]["default_profile_image"] = None
+    tweet["user"]["id"] = None
+    tweet["user"]["verified"] = None
+    tweet["user"]["profile_image_url_https"] = None
+    tweet["user"]["profile_sidebar_fill_color"] = None
+    tweet["user"]["profile_text_color"] = None
+    tweet["user"]["followers_count"] = None
+    tweet["user"]["profile_sidebar_border_color"] = None
+    tweet["user"]["id_str"] = None
+    tweet["user"]["profile_background_color"] = None
+    tweet["user"]["listed_count"] = None
+    tweet["user"]["profile_background_image_url_https"] = None
+    tweet["user"]["utc_offset"] = None
+    tweet["user"]["statuses_count"] = None
+    tweet["user"]["description"] = None
+    tweet["user"]["friends_count"] = None
+    tweet["user"]["location"] = None
+    tweet["user"]["profile_link_color"] = None
+    tweet["user"]["profile_image_url"] = None
+    tweet["user"]["following"] = None
+    tweet["user"]["geo_enabled"] = None
+    tweet["user"]["profile_banner_url"] = None
+    tweet["user"]["profile_background_image_url"] = None
+    tweet["user"]["name"] = None
+    tweet["user"]["lang"] = None
+    tweet["user"]["profile_background_tile"] = None
+    tweet["user"]["favourites_count"] = None
+    tweet["user"]["screen_name"] = None
+    tweet["user"]["notifications"] = None
+    tweet["user"]["url"] = None
+    tweet["user"]["created_at"] = None
+    tweet["user"]["contributors_enabled"] = None
+    tweet["user"]["time_zone"] = None
+    tweet["user"]["protected"] = None
+    tweet["user"]["default_profile"] = None
+    tweet["user"]["is_translator"] = None
+    tweet["geo"] = {}
+    tweet["geo"]["type"] = None
+    tweet["geo"]["coordinates"] = {}
+    tweet["geo"]["coordinates"]["lat"] = None
+    tweet["geo"]["coordinates"]["long"] = None
+    tweet["in_reply_to_user_id_str"] = None
+    tweet["possibly_sensitive"] = None
+    tweet["lang"] = None
+    tweet["created_at"] = None
+    tweet["filter_level"] = None
+    tweet["in_reply_to_status_id_str"] = None
+    tweet["place"] = {}
+    tweet["place"]["full_name"] = None
+    tweet["place"]["url"] = None
+    tweet["place"]["country"] = None
+    tweet["place"]["place_type"] = None
+    tweet["place"]["country_code"] = None
+    tweet["place"]["id"] = None
+    tweet["place"]["name"] = None
+    tweet["constituent_id"] = None
+    tweet["constituent_name"] = None
+    tweet["constituent_id"] = None
+    tweet["search_term"] = None
 
-                type = geo.get('type', None)
-                coordinates = geo.get('coordinates', None)
-                del geo['coordinates']
+    return tweet
 
-                if type == 'Point':
-                    geo['lat'] = coordinates[0]
-                    geo['long'] = coordinates[1]
-                elif type == 'Polygon':
-                    geo['lat'] = sum(pair[1] for pair in coordinates[0]) / 4
-                    geo['long'] = sum(pair[0] for pair in coordinates[0]) / 4
-
-                    #                     print "\t\t\t FOUND", geo
-
-            d['geo'] = geo
-        # remove other coordinates that are 4-point bounding boxes
-        elif key == 'coordinates':
-            del d[key]
-        elif key == 'bounding_box':  # in 'place' object
-            del d[key]
-        elif key == 'attributes':  # in 'place' object
-            del d[key]
-        elif key == 'retweeted_status':
-            del d[key]
-        elif isinstance(value, dict):
-            scrub(value)
-
-    return d  # For convenience
 
 
 if __name__ == "__main__":
