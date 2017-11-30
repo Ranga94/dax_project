@@ -264,17 +264,16 @@ def scrub(d):
                     "id","name"]
 
     for key, value in list(d.items()):
-        if key in d:
+        if key in tweet:
             if key in record_types:
-                if key == "contributors":
-                    if d[key]:
-                        for item in d[key]:
-                            temp = {"screen_name":None, "id":None, "id_str":None}
-                            for key2, value2 in list(item.items()):
-                                if key2 in contributor_fields:
-                                    temp[key2] = value2
-                            tweet[key].append(temp)
-                elif key == "coordinates":
+                if key == "contributors" and d[key]:
+                    for item in d[key]:
+                        temp = {"screen_name": None, "id": None, "id_str": None}
+                        for key2, value2 in list(item.items()):
+                            if key2 in contributor_fields:
+                                temp[key2] = value2
+                        tweet[key].append(temp)
+                elif key == "coordinates" and d[key]:
                     for key2, value2 in list(d["coordinates"].items()):
                         if key2 in coordinates_fields:
                             if key2 == "coordinates":
@@ -283,7 +282,7 @@ def scrub(d):
                                         tweet[key][key2][key3] = value
                             else:
                                 tweet[key][key2] = value2
-                elif key == "entities":
+                elif key == "entities" and d[key]:
                     for key2, value2 in list(d["entities"].items()):
                         if key2 in entities_fields:
                             if key2 == "symbols":
@@ -294,7 +293,7 @@ def scrub(d):
                                             if key3 in entities_symbols_fields:
                                                 temp[key3] = value3
                                         tweet[key][key2].append(temp)
-                            elif key2 == "hashtags":
+                            elif key2 == "hashtags" and d[key]:
                                 if d[key][key2]:
                                     for item in d[key][key2]:
                                         temp = {"indices":None, "text":None}
@@ -302,7 +301,7 @@ def scrub(d):
                                             if key3 in entities_hashtags_fields:
                                                 temp[key3] = value3
                                         tweet[key][key2].append(temp)
-                            elif key2 == "user_mentions":
+                            elif key2 == "user_mentions" and d[key]:
                                 if d[key][key2]:
                                     for item in d[key][key2]:
                                         temp = {"id":None, "indices":None, "id_str":None,
@@ -311,7 +310,7 @@ def scrub(d):
                                             if key3 in entities_user_mentions_fields:
                                                 temp[key3] = value3
                                         tweet[key][key2].append(temp)
-                            elif key2 == "trends":
+                            elif key2 == "trends" and d[key]:
                                 if d[key][key2]:
                                     for item in d[key][key2]:
                                         temp = {"woeid":None, "name":None, "countryCode":None,
@@ -320,7 +319,7 @@ def scrub(d):
                                             if key3 in entities_trends_fields:
                                                 temp[key3] = value3
                                         tweet[key][key2].append(temp)
-                            elif key2 == "urls":
+                            elif key2 == "urls" and d[key]:
                                 if d[key][key2]:
                                     for item in d[key][key2]:
                                         temp = {"url":None,"indices":None,"expanded_url":None,
@@ -329,11 +328,11 @@ def scrub(d):
                                             if key3 in entities_urls_fields:
                                                 temp[key3] = value3
                                         tweet[key][key2].append(temp)
-                elif key == "user":
+                elif key == "user" and d[key]:
                     for key2, value2 in list(d[key].items()):
                         if key2 in user_fields:
                             tweet[key][key2] = value2
-                elif key == "geo":
+                elif key == "geo" and d[key]:
                     for key2, value2 in list(d[key].items()):
                         if key2 in geo_fields:
                             if key2 == "coordinates":
@@ -342,7 +341,7 @@ def scrub(d):
                                         tweet[key][key2][key3] = value3
                             else:
                                 tweet[key][key2] = value2
-                elif key == "place":
+                elif key == "place" and d[key]:
                     for key2, value2 in list(d[key].items()):
                         if key2 in place_fields:
                             tweet[key][key2] = value2
