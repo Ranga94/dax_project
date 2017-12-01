@@ -263,8 +263,6 @@ def main(args):
     #get_twitter_analytics_top_orgs(args, from_date, to_date)
     get_twitter_analytics_latest_price_tweets(args, from_date, to_date)
 
-
-
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
