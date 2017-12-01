@@ -6,6 +6,7 @@ import sys
 from bson.son import SON
 from pymongo import MongoClient
 from copy import deepcopy
+from pprint import pprint, pformat
 
 def main(arguments):
     param_table = "PARAM_TWITTER_COLLECTION"
@@ -30,8 +31,7 @@ def main(arguments):
         get_tweets(**parameters)
 
     if parameters["LOGGING_FLAG"]:
-        #send_mail(parameters["CONNECTION_STRING"], arguments.param_connection_string)\
-        pass
+        send_mail(arguments.param_connection_string, arguments.google_key_path)
 
 def get_parameters(connection_string, table, column_list):
     storage = Storage()
@@ -56,7 +56,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
 
     all_constituents = storage.get_sql_data(sql_connection_string=PARAM_CONNECTION_STRING,
                                               sql_table_name="MASTER_CONSTITUENTS",
-                                              sql_column_list=["CONSTITUENT_ID","CONSTITUENT_NAME"])[:2]
+                                              sql_column_list=["CONSTITUENT_ID","CONSTITUENT_NAME"])
 
     if LANGUAGE != "en":
         TWEETS_PER_QUERY = 7
@@ -132,15 +132,15 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
             #ps_utils.publish("igenie-project", "tweets-unmodified", tweets_unmodified)
             #ps_utils.publish("igenie-project", "tweets", tweets_modified)
             try:
-                storage.insert_bigquery_data('pecten_dataset', 'tweets_unmodified_test', tweets_unmodified)
+                storage.insert_bigquery_data('pecten_dataset', 'tweets_unmodified', tweets_unmodified)
             except Exception as e:
                 print(e)
             try:
-                storage.insert_bigquery_data('pecten_dataset', 'tweets_test', tweets_modified)
+                storage.insert_bigquery_data('pecten_dataset', 'tweets', tweets_modified)
             except Exception as e:
                 print(e)
             try:
-                #storage.save_to_mongodb(tweets_mongo, "dax_gcp", "tweets")
+                storage.save_to_mongodb(tweets_mongo, "dax_gcp", "tweets")
                 pass
             except Exception as e:
                 print(e)
@@ -152,7 +152,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
 
         if LOGGING_FLAG:
             logging(constituent_name, constituent_id, tweetCount, LANGUAGE,
-                    'pecten_dataset', 'tweet_logs_test', storage)
+                    'pecten_dataset', 'tweet_logs', storage)
 
     return "Downloaded tweets"
 
@@ -242,78 +242,52 @@ def get_search_string(constituent_id, connection_string, table_keywords, table_e
     return searchQuery
     '''
 
-def send_mail(data_connection_string, param_connection_string):
-    engine = create_engine(param_connection_string)
-    metadata = MetaData(engine)
+def send_mail(param_connection_string, google_key_path):
+    storage = Storage(google_key_path=google_key_path)
 
-    param_twitter_collection = Table('PARAM_TWITTER_COLLECTION', metadata, autoload=True)
-    statement = select([param_twitter_collection.c.EMAIL_USERNAME,
-                        param_twitter_collection.c.EMAIL_PASSWORD])
-    result = statement.execute()
-    row = result.fetchone()
-    result.close()
+    parameters = get_parameters(param_connection_string,"PARAM_TWITTER_COLLECTION",["EMAIL_USERNAME",
+                                                                            "EMAIL_PASSWORD"])
+    q1 = """
+    SELECT a.constituent_name, a.downloaded_tweets, a.language
+    FROM `pecten_dataset.tweet_logs` a,
+    (SELECT constituent_name,max(date) as date
+    FROM `pecten_dataset.tweet_logs`
+    GROUP BY constituent_name) b
+    WHERE a.constituent_name = b.constituent_name AND a.date = b.date AND a.language = "en";
+    """
+    print(q1)
 
-    fromaddr = row[0]
+    latest_logs = storage.get_bigquery_data(query=q1,iterator_flag=False)
+    latest_logs_list = [l.values() for l in latest_logs]
 
-    client = MongoClient(data_connection_string)
-    db = client["dax_gcp"]
-    logging_collection = db['tweet_logs']
+    q2 = """
+    SELECT constituent_name,count(*)
+    FROM `pecten_dataset.tweets`
+    GROUP BY constituent_name;
+    """
 
-    daily = list(logging_collection.aggregate([
-        {
-            "$match": {
-                "constituent_name": {"$exists": True}
-            }
-        },
-        {
-            "$project": {
-                "constituent_name": 1,
-                "day": {"$dayOfYear": "$date"},
-                "date":1,
-                "downloaded_tweets": 1
-            }
-        },
-        {
-            "$group": {
-                "_id": {"constituent_name": "$constituent_name", "day": "$day", "date":"$date"},
-                "tweets": {"$sum": "$downloaded_tweets"}
-            }
-        },
-        {
-            "$project": {
-                "constituent": "$_id.constituent_name",
-                "day": "$_id.day",
-                "date":"$_id.date",
-                "tweets": 1,
-                "_id": 0
-            }
-        },
-        {"$sort": SON([("day", -1)])}
-    ]))
+    total_tweets = storage.get_bigquery_data(query=q2, iterator_flag=False)
+    total_tweets_list = [l.values() for l in total_tweets]
 
-    day = daily[0]["day"]
-    i = 0
-    for item in daily:
-        if item["day"] != day:
-            break
-        i += 1
 
-    body = "Tweets collected today\n" + str(daily[:i])
+    body = "Latest tweets collected\n" + pformat(latest_logs_list) + "\n\n\n" + \
+    "Total tweets\n" + pformat(total_tweets_list)
     subject = "Twitter collection logs: {}".format(time.strftime("%d/%m/%Y"))
 
     message = 'Subject: {}\n\n{}'.format(subject, body)
 
     # Credentials (if needed)
-    username = row[0]
-    password = row[1]
+    username = parameters["EMAIL_USERNAME"]
+    password = parameters["EMAIL_PASSWORD"]
 
-    toaddrs = ["ulysses@igenieconsulting.com", "twitter@igenieconsulting.com"]
+    #toaddrs = ["ulysses@igenieconsulting.com", "twitter@igenieconsulting.com"]
+    toaddrs = ["ulysses@igenieconsulting.com"]
 
     # The actual mail send
     server = smtplib.SMTP('smtp.gmail.com:587')
     server.starttls()
     server.login(username, password)
-    server.sendmail(fromaddr, toaddrs, message)
+    server.sendmail(username, toaddrs, message)
     server.quit()
 
 if __name__ == "__main__":
@@ -330,3 +304,4 @@ if __name__ == "__main__":
     from utils import twitter_analytics_helpers as tap
     from utils.TaggingUtils import TaggingUtils as TU
     main(args)
+
