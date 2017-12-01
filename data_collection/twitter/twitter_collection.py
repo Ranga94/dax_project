@@ -30,7 +30,8 @@ def main(arguments):
         get_tweets(**parameters)
 
     if parameters["LOGGING_FLAG"]:
-        send_mail(parameters["CONNECTION_STRING"], arguments.param_connection_string)
+        #send_mail(parameters["CONNECTION_STRING"], arguments.param_connection_string)\
+        pass
 
 def get_parameters(connection_string, table, column_list):
     storage = Storage()
@@ -55,7 +56,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
 
     all_constituents = storage.get_sql_data(sql_connection_string=PARAM_CONNECTION_STRING,
                                               sql_table_name="MASTER_CONSTITUENTS",
-                                              sql_column_list=["CONSTITUENT_ID","CONSTITUENT_NAME"])
+                                              sql_column_list=["CONSTITUENT_ID","CONSTITUENT_NAME"])[:2]
 
     if LANGUAGE != "en":
         TWEETS_PER_QUERY = 7
@@ -87,6 +88,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
 
             tweets, tmp_tweet_count, max_id = downloader.download(constituent_name, search_query,
                                                                   LANGUAGE,TWEETS_PER_QUERY,sinceId,max_id)
+            print("Downloaded {} tweets".format(tmp_tweet_count))
             if not tweets:
                 break
 
@@ -143,11 +145,14 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
             except Exception as e:
                 print(e)
 
+
             time.sleep(1)
+
+        print("Saved {} tweets".format(tweetCount))
 
         if LOGGING_FLAG:
             logging(constituent_name, constituent_id, tweetCount, LANGUAGE,
-                    'pecten_dataset', 'tweets_unmodified_test', storage)
+                    'pecten_dataset', 'tweet_logs_test', storage)
 
     return "Downloaded tweets"
 

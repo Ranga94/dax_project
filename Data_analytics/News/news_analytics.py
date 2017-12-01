@@ -33,6 +33,32 @@ def get_all_news():
             #all_news.insert_many(to_insert)
             all_news.insert_one(to_insert[0])
 
+def get_all_news_bq():
+    client = MongoClient("mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp")
+    db = client["dax_gcp"]
+    all_news_landing = db["all_news_landing"]
+    all_news = db["all_news"]
+
+    constituents = list(all_news_landing.distinct("constituent_id"))
+
+    from_date = datetime(2017, 11, 10)
+    to_date = datetime(2017, 11, 16)
+
+    for const in constituents:
+        if const:
+            data = list(all_news_landing.find({"constituent_id": const,
+                                               "NEWS_DATE_NewsDim": {"$gte": from_date, "$lte": to_date}})
+                        .sort("NEWS_DATE_NewsDim", DESCENDING)
+                        .limit(10)
+                        )
+            to_insert = []
+            for news in data:
+                if detect(news["NEWS_TITLE_NewsDim"]) == 'en' and len(to_insert) < 3:
+                    to_insert.append(news)
+            # all_news.insert_many(to_insert)
+            all_news.insert_one(to_insert[0])
+
+
 #for news_analytics_assoc_orgs
 def get_news_analytics_assoc_orgs(from_date, to_date):
     print("news_analytics_assoc_orgs")
