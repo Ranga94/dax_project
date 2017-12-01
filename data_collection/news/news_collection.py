@@ -360,7 +360,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                         try:
                             bigquery_data[i]["news_region"] = bigquery_data[i]["news_region"].split(";")
                         except Exception as e:
-                            bigquery_data[i]["news_region"] = str(bigquery_data[i]["region"])
+                            bigquery_data[i]["news_region"] = str(bigquery_data[i]["news_region"])
 
                     if bigquery_data[i]["news_language"]:
                         bigquery_data[i]["news_language"] = str(bigquery_data[i]["news_language"])

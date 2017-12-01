@@ -98,6 +98,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
                 tweet._json['constituent_name'] = constituent_name
                 tweet._json['constituent_id'] = constituent_id
                 tweet._json['search_term'] = search_query
+                tweet._json["constituent"] = tap.get_old_constituent_name(constituent_id)
 
                 #Removing bad fields
                 clean_tweet = tap.scrub(tweet._json)

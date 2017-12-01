@@ -31,7 +31,7 @@ def get_constituent_id_name(old_constituent_name):
     mapping["Deutsche Telekom"] = ("DTEDE5030147137" , "DEUTSCHE TELEKOM AG")
     mapping["Fresenius"] = ("FREDE6290014544" , "FRESENIUS SE & CO.KGAA")
     mapping["HeidelbergCement"] = ("HEIDE7050000100" , "HEIDELBERGCEMENT AG")
-    mapping["Henkel vz"] = ("HEN3DE5050001329" , "HENKEL AG & CO.KGAA")
+    mapping["Henkel vz"] = ("HEN3DE5050001329" , "HENKEL AG & CO. KGAA")
     mapping["Infineon"] = ("IFXDE8330359160" , "INFINEON TECHNOLOGIES AG")
     mapping["Linde"] = ("LINDE8170014684" , "LINDE AG")
     mapping["Merck"] = ("MRKDE6050108507" , "MERCK KGAA")
