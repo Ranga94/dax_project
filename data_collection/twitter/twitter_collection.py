@@ -280,8 +280,7 @@ def send_mail(param_connection_string, google_key_path):
     username = parameters["EMAIL_USERNAME"]
     password = parameters["EMAIL_PASSWORD"]
 
-    #toaddrs = ["ulysses@igenieconsulting.com", "twitter@igenieconsulting.com"]
-    toaddrs = ["ulysses@igenieconsulting.com"]
+    toaddrs = ["ulysses@igenieconsulting.com", "twitter@igenieconsulting.com"]
 
     # The actual mail send
     server = smtplib.SMTP('smtp.gmail.com:587')
