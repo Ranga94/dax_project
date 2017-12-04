@@ -321,10 +321,14 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 i = 0
                 for i in range(0, len(bigquery_data)):
                     bigquery_data[i]["entity_tags"] = entity_tags[i]
-                    date = bigquery_data[i]["news_date"]
-                    ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
-                    ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
-                    bigquery_data[i]["news_date"] = ts
+
+                    #set news_date
+                    if "news_date" in bigquery_data[i] and bigquery_data[i]["news_date"]:
+                        date = bigquery_data[i]["news_date"]
+                        ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                        bigquery_data[i]["news_date"] = ts
+                    else:
+                        bigquery_data[i]["news_date"] = None
 
                     if bigquery_data[i]["news_title"]:
                         bigquery_data[i]["news_title"] = str(bigquery_data[i]["news_title"])

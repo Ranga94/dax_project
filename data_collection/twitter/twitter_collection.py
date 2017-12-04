@@ -86,8 +86,13 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
             tweets_modified = []
             tweets_mongo = []
 
-            tweets, tmp_tweet_count, max_id = downloader.download(constituent_name, search_query,
-                                                                  LANGUAGE,TWEETS_PER_QUERY,sinceId,max_id)
+            try:
+                tweets, tmp_tweet_count, max_id = downloader.download(constituent_name, search_query,
+                                                                      LANGUAGE, TWEETS_PER_QUERY, sinceId, max_id)
+            except Exception as e:
+                continue
+
+
             print("Downloaded {} tweets".format(tmp_tweet_count))
             if not tweets:
                 break
@@ -157,7 +162,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
     return "Downloaded tweets"
 
 def logging(constituent_name, constituent_id, tweetCount, language, dataset_name, table_name, storage_object):
-    doc = [{"date": time.strftime('%Y-%m-%d %H:%M:%S', datetime.now().timetuple()),
+    doc = [{"date": time.strftime('%Y-%m-%d %H:%M:%S', datetime.now().date().timetuple()),
            "constituent_name": constituent_name,
            "constituent_id": constituent_id,
            "downloaded_tweets": tweetCount,

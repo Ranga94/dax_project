@@ -48,11 +48,14 @@ class TwitterDownloader:
             tweet_count += len(new_tweets)
             #print("Downloaded {0} tweets".format(tweet_count))
             max_id = new_tweets[-1].id
+
+            return new_tweets, tweet_count, max_id
         except tweepy.TweepError as e:
             # Just exit if any error
             print("some error : " + str(e))
+            raise
 
-        return new_tweets, tweet_count, max_id
+
 
 if __name__ == "__main__":
     pass
