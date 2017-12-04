@@ -58,6 +58,9 @@ def main(args):
 
     to_date = ".".join(to_date_parts)
 
+    if from_date == to_date:
+        return
+
     dax_url = 'http://en.boerse-frankfurt.de/index/pricehistory/DAX/{}_{}#History'.format(from_date,to_date)
     constituent_base_url = 'http://en.boerse-frankfurt.de/stock/pricehistory/'
     constituent_date_url = '-share/FSE/{}_{}#Price_History'.format(from_date,to_date)
