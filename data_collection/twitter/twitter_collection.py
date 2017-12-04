@@ -266,7 +266,6 @@ def send_mail(param_connection_string, google_key_path):
     WHERE a.constituent_name = b.constituent_name AND a.date = b.date AND a.language = "en"
     GROUP BY a.constituent_name, a.downloaded_tweets, a.date, a.language;
     """
-    print(q1)
 
     latest_logs = storage.get_bigquery_data(query=q1,iterator_flag=False)
     latest_logs_list = [l.values() for l in latest_logs]

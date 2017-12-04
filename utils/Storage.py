@@ -22,7 +22,6 @@ class Storage:
         else:
             self.mongo_client = None
 
-
     def save_to_mongodb(self, data, database=None, collection=None, connection_string=None):
         if database and collection:
             if self.mongo_client:
@@ -111,6 +110,15 @@ class Storage:
         rows = result.fetchall()
         result.close()
         return rows
+
+    def get_sql_data_text_query(self, sql_connection_string, query):
+        s = text(query)
+        engine = create_engine(sql_connection_string)
+        conn = engine.connect()
+        rows = conn.execute(s).fetchall()
+
+        return rows
+
 
     def insert_to_sql(self, sql_connection_string=None, sql_table_name=None, data=None):
         engine = create_engine(sql_connection_string)
