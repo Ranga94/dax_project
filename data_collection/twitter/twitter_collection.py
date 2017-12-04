@@ -56,7 +56,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
 
     all_constituents = storage.get_sql_data(sql_connection_string=PARAM_CONNECTION_STRING,
                                               sql_table_name="MASTER_CONSTITUENTS",
-                                              sql_column_list=["CONSTITUENT_ID","CONSTITUENT_NAME"])
+                                              sql_column_list=["CONSTITUENT_ID","CONSTITUENT_NAME"])[21:]
 
     if LANGUAGE != "en":
         TWEETS_PER_QUERY = 7
