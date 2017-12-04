@@ -120,24 +120,6 @@ def extract_historical_data(url, driver, database, constituent=None):
 
     bulk_insert(database.historical_bkp, rows)
 
-def bulk_insert(collection, documents):
-    try:
-        result = collection.insert_many(documents)
-        print(result)
-    except errors.BulkWriteError as e:
-        print(e.details)
-
-def get_database(connection_string):
-    client = MongoClient(connection_string)
-    return client.dax_gcp
-
-def insert_document(db, document):
-    try:
-        result = db.historical.insert_one(document)
-        print(result)
-    except errors.DuplicateKeyError as e:
-        print(e.details)
-
 
 if __name__ == "__main__":
     import argparse
