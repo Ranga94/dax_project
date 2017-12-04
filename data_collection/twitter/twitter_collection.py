@@ -86,8 +86,13 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
             tweets_modified = []
             tweets_mongo = []
 
-            tweets, tmp_tweet_count, max_id = downloader.download(constituent_name, search_query,
-                                                                  LANGUAGE,TWEETS_PER_QUERY,sinceId,max_id)
+            try:
+                tweets, tmp_tweet_count, max_id = downloader.download(constituent_name, search_query,
+                                                                      LANGUAGE, TWEETS_PER_QUERY, sinceId, max_id)
+            except Exception as e:
+                continue
+
+
             print("Downloaded {} tweets".format(tmp_tweet_count))
             if not tweets:
                 break
@@ -157,7 +162,7 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
     return "Downloaded tweets"
 
 def logging(constituent_name, constituent_id, tweetCount, language, dataset_name, table_name, storage_object):
-    doc = [{"date": time.strftime('%Y-%m-%d %H:%M:%S', datetime.now().timetuple()),
+    doc = [{"date": time.strftime('%Y-%m-%d %H:%M:%S', datetime.now().date().timetuple()),
            "constituent_name": constituent_name,
            "constituent_id": constituent_id,
            "downloaded_tweets": tweetCount,
@@ -248,12 +253,18 @@ def send_mail(param_connection_string, google_key_path):
     parameters = get_parameters(param_connection_string,"PARAM_TWITTER_COLLECTION",["EMAIL_USERNAME",
                                                                             "EMAIL_PASSWORD"])
     q1 = """
-    SELECT a.constituent_name, a.downloaded_tweets, a.language
-    FROM `pecten_dataset.tweet_logs` a,
-    (SELECT constituent_name,max(date) as date
+    SELECT a.constituent_name, a.downloaded_tweets, a.date, a.language
+    FROM
+    (SELECT constituent_name, SUM(downloaded_tweets) as downloaded_tweets, DATE(date) as date, language
     FROM `pecten_dataset.tweet_logs`
-    GROUP BY constituent_name) b
-    WHERE a.constituent_name = b.constituent_name AND a.date = b.date AND a.language = "en";
+    GROUP BY constituent_name, date, language
+    ) a,
+    (SELECT constituent_name, MAX(DATE(date)) as date
+    FROM `igenie-project.pecten_dataset.tweet_logs`
+    GROUP BY constituent_name
+    ) b
+    WHERE a.constituent_name = b.constituent_name AND a.date = b.date AND a.language = "en"
+    GROUP BY a.constituent_name, a.downloaded_tweets, a.date, a.language;
     """
     print(q1)
 
