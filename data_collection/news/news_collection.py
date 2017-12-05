@@ -245,8 +245,9 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                     print(str(e))
                     continue
                 finally:
-                    if token:
-                        soap.close_connection(token, database)
+                    pass
+                    #if token:
+                    #    soap.close_connection(token, database)
 
                 result = ET.fromstring(get_data_result)
                 csv_result = result[0][0][0].text
@@ -346,33 +347,41 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
                     if bigquery_data[i]["news_companies"]:
                         try:
-                            bigquery_data[i]["news_companies"] = bigquery_data[i]["news_companies"].split(";")
+                            bigquery_data[i]["news_companies"] = [i.strip() for i in bigquery_data[i]["news_companies"].split(";")]
                         except Exception as e:
-                            bigquery_data[i]["news_companies"] = str(bigquery_data[i]["news_companies"])
+                            bigquery_data[i]["news_companies"] = []
+                    else:
+                        bigquery_data[i]["news_companies"] = []
 
                     if bigquery_data[i]["news_topics"]:
                         try:
                             if bigquery_data[i]["news_topics"].isdigit():
-                                bigquery_data[i]["news_topics"] = None
+                                bigquery_data[i]["news_topics"] = []
                             elif bigquery_data[i]["news_topics"] == 'None':
-                                bigquery_data[i]["news_topics"] = None
+                                bigquery_data[i]["news_topics"] = []
                             else:
-                                bigquery_data[i]["news_topics"] = bigquery_data[i]["news_topics"].split(";")
+                                bigquery_data[i]["news_topics"] = [i.strip() for i in bigquery_data[i]["news_topics"].split(";")]
                         except Exception as e:
-                            bigquery_data[i]["news_topics"] = None
+                            bigquery_data[i]["news_topics"] = []
+                    else:
+                        bigquery_data[i]["news_topics"] = []
 
 
                     if bigquery_data[i]["news_country"]:
                         try:
-                            bigquery_data[i]["news_country"] = bigquery_data[i]["news_country"].split(";")
+                            bigquery_data[i]["news_country"] = [i.strip() for i in bigquery_data[i]["news_country"].split(";")]
                         except Exception as e:
-                            bigquery_data[i]["news_country"] = str(bigquery_data[i]["news_country"])
+                            bigquery_data[i]["news_country"] = []
+                    else:
+                        bigquery_data[i]["news_country"] = []
 
                     if bigquery_data[i]["news_region"]:
                         try:
-                            bigquery_data[i]["news_region"] = bigquery_data[i]["news_region"].split(";")
+                            bigquery_data[i]["news_region"] = [i.strip() for i in bigquery_data[i]["news_region"].split(";")]
                         except Exception as e:
-                            bigquery_data[i]["news_region"] = str(bigquery_data[i]["news_region"])
+                            bigquery_data[i]["news_region"] = []
+                    else:
+                        bigquery_data[i]["news_region"] = []
 
                     if bigquery_data[i]["news_language"]:
                         bigquery_data[i]["news_language"] = str(bigquery_data[i]["news_language"])
@@ -410,6 +419,9 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 end = start + 10
                 records += 10
                 print("Records saved: {}".format(records))
+
+        if token:
+            soap.close_connection(token, database)
 
 def get_number_of_news_items(constituent_name):
     mapping = {}
