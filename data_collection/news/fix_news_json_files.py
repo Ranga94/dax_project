@@ -6,9 +6,10 @@ def main(argv):
     path = Path(".")
 
     for json_file in path.iterdir():
+        if json_file.is_dir() or ".py" in str(json_file):
+            continue
         print(json_file)
         new_name = "fixed/" + str(json_file)
-        print(new_name)
 
         with open(str(json_file), 'r') as f1, open(new_name, "w") as f2:
             for line in f1:
