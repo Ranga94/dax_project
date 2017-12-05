@@ -218,6 +218,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
         try:
             token = soap.get_token(user, pwd, database)
+            selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, database)
         except Exception as e:
             print(e)
             return
@@ -238,7 +239,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                             "LINE BVDNEWS.NEWS_ID USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_id FROM RemoteAccess.A".format(
                         start, end)
 
-                    selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, database)
+                    #selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, database)
 
                     get_data_result = soap.get_data(token, selection_token, selection_count, query, database, timeout=None)
                 except Exception as e:
