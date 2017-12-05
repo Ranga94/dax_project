@@ -897,10 +897,9 @@ def main_rest(api_key):
         return True
 
 def main(args):
-    pass
     #get_zephyr_data(args.user,args.pwd)
     #get_orbis_news(args.user,args.pwd)
-    #get_historical_orbis_news(args.user,args.pwd, "orbis", args.google_key_path, args.param_connection_string)
+    get_historical_orbis_news(args.user,args.pwd, "orbis", args.google_key_path, args.param_connection_string)
     #get_daily_orbis_news(args.user,args.pwd,"orbis",args.google_key_path,args.param_connection_string)
 
 if __name__ == "__main__":
