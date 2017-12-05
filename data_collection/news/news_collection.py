@@ -195,7 +195,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
     constituents = storage.get_sql_data(sql_connection_string=param_connection_string,
                                         sql_table_name=table,
-                                        sql_column_list=columns)[20:]
+                                        sql_column_list=columns)[26:]
 
     to_skip = ["BASF SE","BAYERISCHE MOTOREN WERKE AG","DEUTSCHE BANK AG",
                "SIEMENS AG"]
@@ -865,9 +865,6 @@ def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_
             end = start + 10
             records += 10
             print("Records saved: {}".format(records))
-
-
-
 
 #Development halted for now
 def main_rest(api_key):
