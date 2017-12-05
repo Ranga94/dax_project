@@ -6,6 +6,8 @@ from io import StringIO
 import pandas as pd
 import sys
 import json
+from pprint import pprint, pformat
+import smtplib
 
 #Deprecated
 def get_orbis_news(user, pwd):
@@ -865,6 +867,68 @@ def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_
             end = start + 10
             records += 10
             print("Records saved: {}".format(records))
+
+def logging(constituent_name, constituent_id, tweetCount, language, dataset_name, table_name, storage_object):
+    doc = [{"date": time.strftime('%Y-%m-%d %H:%M:%S', datetime.now().date().timetuple()),
+            "constituent_name": constituent_name,
+            "constituent_id": constituent_id,
+            "downloaded_tweets": tweetCount,
+            "language": language}]
+
+    try:
+        storage_object.insert_bigquery_data(dataset_name, table_name, doc)
+    except Exception as e:
+        print(e)
+
+def send_mail(param_connection_string, google_key_path):
+    storage = Storage(google_key_path=google_key_path)
+
+    parameters = get_parameters(param_connection_string, "PARAM_TWITTER_COLLECTION", ["EMAIL_USERNAME",
+                                                                                          "EMAIL_PASSWORD"])
+    q1 = """
+
+        """
+
+    latest_logs = storage.get_bigquery_data(query=q1, iterator_flag=False)
+    latest_logs_list = [l.values() for l in latest_logs]
+
+    q2 = """
+
+        """
+
+    total_tweets = storage.get_bigquery_data(query=q2, iterator_flag=False)
+    total_tweets_list = [l.values() for l in total_tweets]
+
+    body = "Latest tweets collected\n" + pformat(latest_logs_list) + "\n\n\n" + \
+            "Total tweets\n" + pformat(total_tweets_list)
+    subject = "Twitter collection logs: {}".format(time.strftime("%d/%m/%Y"))
+
+    message = 'Subject: {}\n\n{}'.format(subject, body)
+
+    # Credentials (if needed)
+    username = parameters["EMAIL_USERNAME"]
+    password = parameters["EMAIL_PASSWORD"]
+
+    toaddrs = ["ulysses@igenieconsulting.com", "twitter@igenieconsulting.com"]
+
+    # The actual mail send
+    server = smtplib.SMTP('smtp.gmail.com:587')
+    server.starttls()
+    server.login(username, password)
+    server.sendmail(username, toaddrs, message)
+    server.quit()
+
+def get_parameters(connection_string, table, column_list):
+    storage = Storage()
+
+    data = storage.get_sql_data(connection_string, table, column_list)[0]
+    parameters = {}
+
+    for i in range(0, len(column_list)):
+        parameters[column_list[i]] = data[i]
+
+    return parameters
+
 
 #Development halted for now
 def main_rest(api_key):

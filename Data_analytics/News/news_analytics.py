@@ -58,7 +58,6 @@ def get_all_news_bq():
             # all_news.insert_many(to_insert)
             all_news.insert_one(to_insert[0])
 
-
 #for news_analytics_assoc_orgs
 def get_news_analytics_assoc_orgs(from_date, to_date):
     print("news_analytics_assoc_orgs")
@@ -378,6 +377,32 @@ def get_news_analytics_daily_sentiment(from_date, to_date):
         news_analytics_daily_sentiment.insert_many(result)
         time.sleep(3)
 
+def get_news_analytics_daily_sentiment_bq(from_date, to_date, google_key_path):
+    print("news_analytics_daily_sentiment")
+
+    columns = ["constituent_id", "avg_sentiment", "constituent_name", "date", "constituent"]
+
+    query = """
+    SELECT constituent_id, AVG(score) as avg_sentiment, constituent_name, news_date as date, constituent
+    FROM `pecten_dataset.all_news`
+    WHERE news_date between TIMESTAMP ('{}') and TIMESTAMP ('{}')
+    GROUP BY constituent_id, constituent_name, date, constituent
+    """.format(from_date, to_date)
+
+    storage_client = Storage(google_key_path=google_key_path)
+
+    result = storage_client.get_bigquery_data(query, iterator_flag=True)
+    to_insert = []
+
+    for item in result:
+        to_insert.append(dict((k,item[k].strftime('%Y-%m-%d %H:%M:%S')) if isinstance(item[k],datetime) else
+                   (k,item[k]) for k in columns))
+
+    try:
+        storage_client.insert_bigquery_data('pecten_dataset', 'news_analytics_daily_sentiment', to_insert)
+    except Exception as e:
+        print(e)
+
 def get_news_analytics_topic_articles(from_date, to_date):
     param_table = "PARAM_TWITTER_COLLECTION"
     parameters_list = ["CONNECTION_STRING"]
@@ -463,14 +488,67 @@ def get_parameters(connection_string, table, column_list):
 
     return parameters
 
+def get_country_data(from_date, to_date,google_key_path):
+    print("country_data")
+    columns = ["constituent", "avg_sentiment", "count","country", "constituent_name", "constituent_id"]
+
+    query = """
+    SELECT constituent, AVG(sentiment_score) as avg_sentiment, count(place.country_code) as count, place.country_code as country, constituent_name, constituent_id
+    FROM `pecten_dataset.tweets`
+    WHERE date between TIMESTAMP ({}) and TIMESTAMP ({})
+    GROUP BY constituent_id, constituent, country, constituent_name
+    """.format(from_date, to_date)
+
+    storage_client = Storage(google_key_path=google_key_path)
+
+    try:
+        result = storage_client.get_bigquery_data(query, iterator_flag=True)
+    except Exception as e:
+        print(e)
+        return None
+
+    to_insert = []
+
+    for item in result:
+        to_insert.append(dict((k, item[k].strftime('%Y-%m-%d %H:%M:%S')) if isinstance(item[k], datetime) else
+                              (k, item[k]) for k in columns))
+
+    return
+    try:
+        storage_client.insert_bigquery_data('pecten_dataset', 'country_data_copy', to_insert)
+    except Exception as e:
+        print(e)
+
+    query2 = """
+    UPDATE country_data_copy SET status = 'inactive' where status = 'active';
+    """
+
+    storage_client.get_bigquery_data(query2, iterator_flag=True)
+
+    query3 = """
+    UPDATE country_data_copy SET status = 'active' where date between TIMESTAMP() and TIMESTAMP();
+    """.format(from_date,to_date)
+
+    storage_client.get_bigquery_data(query3, iterator_flag=True)
+
+    query4 = """
+    UPDATE country_data_copy SET date_of_analysis = TIMESTAMP() where date between TIMESTAMP() and TIMESTAMP()
+    """.format(from_date,to_date)
+
+    storage_client.get_bigquery_data(query4, iterator_flag=True)
+
 def main(args):
     from_date = datetime(2017, 10, 1)
     to_date = datetime(2017, 11, 16)
+    from_date_str = '2017-11-16 00:00:00 UTC'
+    to_date_str = '2017-12-23 00:00:00 UTC'
     #get_news_analytics_assoc_orgs(from_date, to_date)
     #get_news_analytics_topic_sentiment(from_date, to_date)
     #get_news_sentiment_by_tag(from_date, to_date)
     #get_news_analytics_daily_sentiment(from_date, to_date)
     #get_news_analytics_topic_articles(from_date, to_date)
+    #get_news_analytics_daily_sentiment_bq(from_date_str, to_date_str, args.google_key_path)
+    get_country_data(from_date_str, to_date_str, args.google_key_path)
 
 if __name__ == "__main__":
     import argparse

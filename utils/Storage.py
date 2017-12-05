@@ -153,7 +153,18 @@ class Storage:
         else:
             client = bigquery.Client()
 
+        print("Running query...")
         query_job = client.query(query)
+        iterator = query_job.result(timeout=timeout)
+
+        if iterator_flag:
+            return iterator
+        else:
+            return list(iterator)
+
+        '''
+        return iterator
+
         print(query_job.state)
 
         if query_job.state == 'RUNNING':
@@ -164,6 +175,7 @@ class Storage:
                 return iterator
             else:
                 return list(iterator)
+        '''
 
     def insert_bigquery_data(self, dataset_name, table_name, data):
         if self.bigquery_client:
