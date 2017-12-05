@@ -523,7 +523,7 @@ def get_country_data_bq(from_date, to_date,google_key_path):
     storage_client = Storage(google_key_path=google_key_path)
 
     query2 = """
-    UPDATE `pecten_dataset.country_data_copy` SET status = 'inactive' where status = 'active';
+    UPDATE `pecten_dataset.country_data` SET status = 'inactive' where status = 'active';
     """
 
     try:
@@ -558,7 +558,7 @@ def get_country_data_bq(from_date, to_date,google_key_path):
                               (k, item[k]) for k in columns))
 
     try:
-        storage_client.insert_bigquery_data('pecten_dataset', 'country_data_copy', to_insert)
+        storage_client.insert_bigquery_data('pecten_dataset', 'country_data', to_insert)
     except Exception as e:
         print(e)
 
