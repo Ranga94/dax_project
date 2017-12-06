@@ -8,6 +8,7 @@ import sys
 import json
 from pprint import pprint, pformat
 import smtplib
+from timeit import default_timer as timer
 
 #Deprecated
 def get_orbis_news(user, pwd):
@@ -217,7 +218,8 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
         failed = 0
 
         if constituent_name == "BASF SE":
-            start = 5070
+            start = 5380
+            records = 5370
 
         try:
             token = soap.get_token(user, pwd, database)
@@ -244,7 +246,10 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
                     #selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, database)
 
+                    timer_start = timer()
                     get_data_result = soap.get_data(token, selection_token, selection_count, query, database, timeout=None)
+                    timer_end = timer()
+                    print("API call: {}".format(str(timer_end - timer_start)))
                 except Exception as e:
                     print(str(e))
                     continue
@@ -253,6 +258,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                     #if token:
                     #    soap.close_connection(token, database)
 
+                timer_start = timer()
                 result = ET.fromstring(get_data_result)
                 csv_result = result[0][0][0].text
 
@@ -415,10 +421,14 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                     if bigquery_data[i]["constituent"]:
                         bigquery_data[i]["constituent"] = str(bigquery_data[i]["constituent"])
 
+
                     f.write(json.dumps(bigquery_data[i], cls=MongoEncoder) + '\n')
 
                 # storage.insert_bigquery_data("pecten_dataset", "news", bigquery_data)
 
+                timer_end = timer()
+                print("Data processing: {}".format(str(timer_end - timer_start)))
+                
                 start = end + 1
                 end = start + 10
                 records += 10
