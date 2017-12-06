@@ -216,6 +216,9 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
         print("Constituent: {},{}".format(constituent_name,bvdid))
         failed = 0
 
+        if constituent_name == "BASF SE":
+            start = 5070
+
         try:
             token = soap.get_token(user, pwd, database)
             selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, database)
@@ -664,40 +667,88 @@ def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_
             records += 10
             print("Records saved: {}".format(records))
 
-def logging(constituent_name, constituent_id, tweetCount, language, dataset_name, table_name, storage_object):
+def logging(constituent_name, constituent_id, news_count, source, dataset_name, table_name, storage_object):
     doc = [{"date": time.strftime('%Y-%m-%d %H:%M:%S', datetime.now().date().timetuple()),
             "constituent_name": constituent_name,
             "constituent_id": constituent_id,
-            "downloaded_tweets": tweetCount,
-            "language": language}]
+            "downloaded_news": news_count,
+            "source": source}]
 
     try:
         storage_object.insert_bigquery_data(dataset_name, table_name, doc)
     except Exception as e:
         print(e)
 
-def send_mail(param_connection_string, google_key_path):
+def send_mail(param_connection_string, google_key_path, source):
     storage = Storage(google_key_path=google_key_path)
 
-    parameters = get_parameters(param_connection_string, "PARAM_TWITTER_COLLECTION", ["EMAIL_USERNAME",
-                                                                                          "EMAIL_PASSWORD"])
-    q1 = """
+    if source == 'orbis':
+        parameters = get_parameters(param_connection_string, "PARAM_NEWS_COLLECTION",
+                                    ["EMAIL_USERNAME", "EMAIL_PASSWORD"],
+                                    lambda x: x["SOURCE"] == 'orbis')
 
+        q1 = """
+                SELECT a.constituent_name, a.downloaded_news, a.date, a.source
+                FROM
+                (SELECT constituent_name, SUM(downloaded_news) as downloaded_news, DATE(date) as date, source
+                FROM `pecten_dataset.news_logs`
+                WHERE source = 'orbis'
+                GROUP BY constituent_name, date, source
+                ) a,
+                (SELECT constituent_name, MAX(DATE(date)) as date
+                FROM `igenie-project.pecten_dataset.news_logs`
+                WHERE source = 'orbis'
+                GROUP BY constituent_name
+                ) b
+                WHERE a.constituent_name = b.constituent_name AND a.date = b.date
+                GROUP BY a.constituent_name, a.downloaded_news, a.date, a.source;
         """
 
-    latest_logs = storage.get_bigquery_data(query=q1, iterator_flag=False)
-    latest_logs_list = [l.values() for l in latest_logs]
+        latest_logs = storage.get_bigquery_data(query=q1, iterator_flag=False)
+        latest_logs_list = [l.values() for l in latest_logs]
 
-    q2 = """
+        q2 = """
+                SELECT constituent_name,count(*)
+                FROM `pecten_dataset.all_news`
+                GROUP BY constituent_name;
+                """
+    elif source == "zephyr":
+        parameters = get_parameters(param_connection_string, "PARAM_NEWS_COLLECTION",
+                                    ["EMAIL_USERNAME", "EMAIL_PASSWORD"],
+                                    lambda x: x["SOURCE"] == 'zephyr')
 
+        q1 = """
+            SELECT a.constituent_name, a.downloaded_news, a.date, a.source
+            FROM
+            (SELECT constituent_name, SUM(downloaded_news) as downloaded_news, DATE(date) as date, source
+            FROM `pecten_dataset.news_logs`
+            WHERE source = 'zephyr'
+            GROUP BY constituent_name, date, source
+            ) a,
+            (SELECT constituent_name, MAX(DATE(date)) as date
+            FROM `igenie-project.pecten_dataset.news_logs`
+            WHERE source = 'zephyr'
+            GROUP BY constituent_name
+            ) b
+            WHERE a.constituent_name = b.constituent_name AND a.date = b.date
+            GROUP BY a.constituent_name, a.downloaded_news, a.date, a.source;
         """
+
+        latest_logs = storage.get_bigquery_data(query=q1, iterator_flag=False)
+        latest_logs_list = [l.values() for l in latest_logs]
+
+        q2 = """
+                SELECT
+                FROM `pecten_dataset.ma_deals`
+                GROUP BY ;
+                """
 
     total_tweets = storage.get_bigquery_data(query=q2, iterator_flag=False)
     total_tweets_list = [l.values() for l in total_tweets]
 
-    body = "Latest tweets collected\n" + pformat(latest_logs_list) + "\n\n\n" + \
-            "Total tweets\n" + pformat(total_tweets_list)
-    subject = "Twitter collection logs: {}".format(time.strftime("%d/%m/%Y"))
+    body = "Latest news collected\n" + pformat(latest_logs_list) + "\n\n\n" + \
+            "Total news\n" + pformat(total_tweets_list)
+    subject = "News collection logs: {}".format(time.strftime("%d/%m/%Y"))
 
     message = 'Subject: {}\n\n{}'.format(subject, body)
 
@@ -714,17 +765,16 @@ def send_mail(param_connection_string, google_key_path):
     server.sendmail(username, toaddrs, message)
     server.quit()
 
-def get_parameters(connection_string, table, column_list):
+def get_parameters(connection_string, table, column_list, where):
     storage = Storage()
 
-    data = storage.get_sql_data(connection_string, table, column_list)[0]
+    data = storage.get_sql_data(connection_string, table, column_list, where)[0]
     parameters = {}
 
     for i in range(0, len(column_list)):
         parameters[column_list[i]] = data[i]
 
     return parameters
-
 
 #Development halted for now
 def main_rest(api_key):
