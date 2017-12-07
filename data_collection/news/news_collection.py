@@ -220,8 +220,8 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
         failed = 0
 
         if constituent_name == "BASF SE":
-            start = 9610
-            records = 9610
+            start = 10650
+            records = 10650
 
         try:
             token = soap.get_token(user, pwd, database)
@@ -254,7 +254,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                     timer_start = timer()
                     get_data_result = soap.get_data(token, selection_token, selection_count, query, database, timeout=None)
                     timer_end = timer()
-                    print("API call: {}".format(str(timer_end - timer_start)))
+                    print("API call: {}, token {}".format(str(timer_end - timer_start)), token)
                 except Exception as e:
                     print(str(e))
                     continue
@@ -263,7 +263,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                     #if token:
                     #    soap.close_connection(token, database)
 
-                timer_start = timer()
+                #timer_start = timer()
                 result = ET.fromstring(get_data_result)
                 csv_result = result[0][0][0].text
 
@@ -274,8 +274,8 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                     print(e)
                     continue
 
-                timer_end = timer()
-                print("Loading df: {}".format(str(timer_end - timer_start)))
+                #timer_end = timer()
+                #print("Loading df: {}".format(str(timer_end - timer_start)))
 
                 if df.shape[0] == 0:
                     print("No records in df")
@@ -284,21 +284,21 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 #Make news_title column a string
                 df.astype({"news_title":str}, copy=False, errors='ignore')
 
-                timer_start = timer()
+                #timer_start = timer()
                 # Remove duplicate columns
                 df.drop_duplicates(["news_title"], inplace=True)
-                timer_end = timer()
-                print("Removing duplicates: {}".format(str(timer_end - timer_start)))
+                #timer_end = timer()
+                #print("Removing duplicates: {}".format(str(timer_end - timer_start)))
 
-                timer_start = timer()
+                #timer_start = timer()
                 # Get sentiment score
                 df["score"] = df.apply(lambda row: get_nltk_sentiment(str(row["news_article_txt"])), axis=1)
                 #df["score"] = df.apply(lambda row: sia.polarity_scores(str(row["news_article_txt"]))['compound'] , axis=1)
 
                 # get sentiment word
                 df["sentiment"] = df.apply(lambda row: get_sentiment_word(row["score"]), axis=1)
-                timer_end = timer()
-                print("Getting sentiment: {}".format(str(timer_end - timer_start)))
+                #timer_end = timer()
+                #print("Getting sentiment: {}".format(str(timer_end - timer_start)))
 
                 # add constituent name, id and old name
                 df["constituent_id"] = constituent_id
@@ -312,15 +312,15 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 # add show
                 df["show"] = True
 
-                timer_start = timer()
+                #timer_start = timer()
                 # get entity tags
                 entity_tags = []
                 for text in df["news_title"]:
                     tags = get_spacey_tags(tagger.get_spacy_entities(str(text)))
                     entity_tags.append(tags)
 
-                timer_end = timer()
-                print("getting entity tags: {}".format(str(timer_end - timer_start)))
+                #timer_end = timer()
+                #print("getting entity tags: {}".format(str(timer_end - timer_start)))
 
                 fields = ["news_date", "news_title", "news_article_txt", "news_companies", "news_source",
                           "news_publication","news_topics", "news_country", "news_region",
@@ -354,7 +354,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 df_bigquery = df[fields]
                 bigquery_data = json.loads(df_bigquery.to_json(orient="records", date_format="iso"))
 
-                timer_start = timer()
+                #timer_start = timer()
                 # set entity_tag field
                 i = 0
                 for i in range(0, len(bigquery_data)):
@@ -444,8 +444,8 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
                     f.write(json.dumps(bigquery_data[i], cls=MongoEncoder) + '\n')
 
-                timer_end = timer()
-                print("writing results: {}".format(str(timer_end - timer_start)))
+                #timer_end = timer()
+                #print("writing results: {}".format(str(timer_end - timer_start)))
 
                 # storage.insert_bigquery_data("pecten_dataset", "news", bigquery_data)
 
@@ -454,7 +454,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 start = end + 1
                 end = start + 10
                 records += 10
-                print("Records saved: {}, token {}".format(records, token))
+                print("Records saved: {}".format(records))
 
         if token:
             soap.close_connection(token, database)
