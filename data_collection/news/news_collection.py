@@ -202,8 +202,10 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                                         sql_table_name=table,
                                         sql_column_list=columns)
 
-    to_skip = ["BASF SE","BAYERISCHE MOTOREN WERKE AG","DEUTSCHE BANK AG",
+    to_skip = ["BAYERISCHE MOTOREN WERKE AG","DEUTSCHE BANK AG",
                "SIEMENS AG", "SAP SE", "VOLKSWAGEN AG"]
+
+    #"BASF SE"
 
     for constituent_id, constituent_name, bvdid in constituents:
         limit = get_number_of_news_items(constituent_name)
@@ -252,6 +254,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
                     #selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, database)
                     timer_start = timer()
+                    print("Offset: {}, MaxCount: {}".format(start,end))
                     get_data_result = soap.get_data(token, selection_token, selection_count, query, database, timeout=None)
                     timer_end = timer()
                     print("API call: {}, token {}".format(str(timer_end - timer_start), token))
@@ -449,10 +452,8 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
                 # storage.insert_bigquery_data("pecten_dataset", "news", bigquery_data)
 
-
-
-                start = end + 1
-                end = start + 10
+                start = start + 11
+                #end = start + 10
                 records += 10
                 print("Records saved: {}".format(records))
 
