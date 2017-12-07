@@ -64,6 +64,7 @@ def tweet_table(args):
         for tweet in cursor:
             # Removing bad fields
             clean_tweet = tap.scrub(tweet)
+            clean_tweet["constituent"]
 
             # Separate the tweets that go to one topic or the other
 
@@ -194,16 +195,5 @@ if __name__ == "__main__":
         other_tables(args)
     elif args.function == "tweet_table":
         tweet_table(args)
-    else:
-        from pymongo import MongoClient
-
-        connection_string = "mongodb://igenie_readwrite:igenie@35.197.245.249:27017/dax_gcp"
-        client = MongoClient(connection_string)
-        db = client["dax_gcp"]
-        collection = db["tweets"]
-        tweet = collection.find_one()
-
-        clean_tweet = twitter_table(tweet)
-        pprint(clean_tweet)
 
 

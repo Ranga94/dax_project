@@ -33,6 +33,31 @@ def get_all_news():
             #all_news.insert_many(to_insert)
             all_news.insert_one(to_insert[0])
 
+def get_all_news_bq():
+    client = MongoClient("mongodb://igenie_readwrite:igenie@35.189.89.82:27017/dax_gcp")
+    db = client["dax_gcp"]
+    all_news_landing = db["all_news_landing"]
+    all_news = db["all_news"]
+
+    constituents = list(all_news_landing.distinct("constituent_id"))
+
+    from_date = datetime(2017, 11, 10)
+    to_date = datetime(2017, 11, 16)
+
+    for const in constituents:
+        if const:
+            data = list(all_news_landing.find({"constituent_id": const,
+                                               "NEWS_DATE_NewsDim": {"$gte": from_date, "$lte": to_date}})
+                        .sort("NEWS_DATE_NewsDim", DESCENDING)
+                        .limit(10)
+                        )
+            to_insert = []
+            for news in data:
+                if detect(news["NEWS_TITLE_NewsDim"]) == 'en' and len(to_insert) < 3:
+                    to_insert.append(news)
+            # all_news.insert_many(to_insert)
+            all_news.insert_one(to_insert[0])
+
 #for news_analytics_assoc_orgs
 def get_news_analytics_assoc_orgs(from_date, to_date):
     print("news_analytics_assoc_orgs")
@@ -352,6 +377,32 @@ def get_news_analytics_daily_sentiment(from_date, to_date):
         news_analytics_daily_sentiment.insert_many(result)
         time.sleep(3)
 
+def get_news_analytics_daily_sentiment_bq(from_date, to_date, google_key_path):
+    print("news_analytics_daily_sentiment")
+
+    columns = ["constituent_id", "avg_sentiment", "constituent_name", "date", "constituent"]
+
+    query = """
+    SELECT constituent_id, AVG(score) as avg_sentiment, constituent_name, news_date as date, constituent
+    FROM `pecten_dataset.all_news`
+    WHERE news_date between TIMESTAMP ('{}') and TIMESTAMP ('{}')
+    GROUP BY constituent_id, constituent_name, date, constituent
+    """.format(from_date, to_date)
+
+    storage_client = Storage(google_key_path=google_key_path)
+
+    result = storage_client.get_bigquery_data(query, iterator_flag=True)
+    to_insert = []
+
+    for item in result:
+        to_insert.append(dict((k,item[k].strftime('%Y-%m-%d %H:%M:%S')) if isinstance(item[k],datetime) else
+                   (k,item[k]) for k in columns))
+
+    try:
+        storage_client.insert_bigquery_data('pecten_dataset', 'news_analytics_daily_sentiment', to_insert)
+    except Exception as e:
+        print(e)
+
 def get_news_analytics_topic_articles(from_date, to_date):
     param_table = "PARAM_TWITTER_COLLECTION"
     parameters_list = ["CONNECTION_STRING"]
@@ -426,6 +477,36 @@ def get_news_analytics_topic_articles(from_date, to_date):
 
         time.sleep(3)
 
+def get_news_analytics_topic_articles_bq(from_date, to_date, google_key_path):
+    print("news_analytics_topic_articles")
+
+    columns = []
+
+    query = """
+    SELECT constituent_name, constituent_id, sentiment, News_Date_NewsDim, Constituent,
+    News_source_News_Dim, Score, news_topic as Categorised_tag, news_Title_NewsDim, Date, NEWS_ARTICLE_TXT_NewsDim
+    FROM [igenie-project:pecten_dataset.news]
+    where date between TIMESTAMP ('{}') and TIMESTAMP ('{}')
+    """.format(from_date, to_date)
+
+    #`
+    #UPDATE twitter_analytics_latest_price_tweets SET From_date = TIMESTAMP() where date between TIMESTAMP() and TIMESTAMP()
+    #UPDATE twitter_analytics_latest_price_tweets SET To_date = TIMESTAMP() where date between TIMESTAMP() and TIMESTAMP()
+
+    storage_client = Storage(google_key_path=google_key_path)
+
+    result = storage_client.get_bigquery_data(query, iterator_flag=True)
+    to_insert = []
+
+    for item in result:
+        to_insert.append(dict((k,item[k].strftime('%Y-%m-%d %H:%M:%S')) if isinstance(item[k],datetime) else
+                   (k,item[k]) for k in columns))
+
+    try:
+        storage_client.insert_bigquery_data('pecten_dataset', '', to_insert)
+    except Exception as e:
+        print(e)
+
 def get_parameters(connection_string, table, column_list):
     storage = Storage()
 
@@ -437,14 +518,63 @@ def get_parameters(connection_string, table, column_list):
 
     return parameters
 
+def get_country_data_bq(from_date, to_date,google_key_path):
+    print("country_data")
+    storage_client = Storage(google_key_path=google_key_path)
+
+    query2 = """
+    UPDATE `pecten_dataset.country_data` SET status = 'inactive' where status = 'active';
+    """
+
+    try:
+        storage_client.get_bigquery_data(query2, iterator_flag=True)
+    except Exception as e:
+        print(e)
+        return
+
+    columns = ["constituent", "avg_sentiment", "count","country_name", "constituent_name", "constituent_id", "date_of_analysis",
+               'status']
+
+    query = """
+    SELECT constituent, AVG(sentiment_score) as avg_sentiment, count(place.country_code) as count,
+    place.country_code as country_name, constituent_name, constituent_id, CURRENT_TIMESTAMP() as date_of_analysis,
+    'active' as status
+    FROM `pecten_dataset.tweets`
+    WHERE date between TIMESTAMP('{}') and TIMESTAMP('{}')
+    GROUP BY constituent_id, constituent, country_name, constituent_name
+    HAVING country_name IS NOT NULL;
+    """.format(from_date, to_date)
+
+    try:
+        result = storage_client.get_bigquery_data(query, iterator_flag=True)
+    except Exception as e:
+        print(e)
+        return None
+
+    to_insert = []
+
+    for item in result:
+        to_insert.append(dict((k, item[k].strftime('%Y-%m-%d %H:%M:%S')) if isinstance(item[k], datetime) else
+                              (k, item[k]) for k in columns))
+
+    try:
+        storage_client.insert_bigquery_data('pecten_dataset', 'country_data', to_insert)
+    except Exception as e:
+        print(e)
+
 def main(args):
     from_date = datetime(2017, 10, 1)
     to_date = datetime(2017, 11, 16)
+    from_date_str = '2017-11-16 00:00:00 UTC'
+    to_date_str = '2017-12-23 00:00:00 UTC'
     #get_news_analytics_assoc_orgs(from_date, to_date)
     #get_news_analytics_topic_sentiment(from_date, to_date)
     #get_news_sentiment_by_tag(from_date, to_date)
     #get_news_analytics_daily_sentiment(from_date, to_date)
     #get_news_analytics_topic_articles(from_date, to_date)
+    #get_news_analytics_daily_sentiment_bq(from_date_str, to_date_str, args.google_key_path)
+    #get_country_data_bq(from_date_str, to_date_str, args.google_key_path)
+
 
 if __name__ == "__main__":
     import argparse

@@ -22,7 +22,6 @@ class Storage:
         else:
             self.mongo_client = None
 
-
     def save_to_mongodb(self, data, database=None, collection=None, connection_string=None):
         if database and collection:
             if self.mongo_client:
@@ -112,6 +111,15 @@ class Storage:
         result.close()
         return rows
 
+    def get_sql_data_text_query(self, sql_connection_string, query):
+        s = text(query)
+        engine = create_engine(sql_connection_string)
+        conn = engine.connect()
+        rows = conn.execute(s).fetchall()
+
+        return rows
+
+
     def insert_to_sql(self, sql_connection_string=None, sql_table_name=None, data=None):
         engine = create_engine(sql_connection_string)
         metadata = MetaData(engine)
@@ -145,7 +153,18 @@ class Storage:
         else:
             client = bigquery.Client()
 
+        print("Running query...")
         query_job = client.query(query)
+        iterator = query_job.result(timeout=timeout)
+
+        if iterator_flag:
+            return iterator
+        else:
+            return list(iterator)
+
+        '''
+        return iterator
+
         print(query_job.state)
 
         if query_job.state == 'RUNNING':
@@ -156,6 +175,7 @@ class Storage:
                 return iterator
             else:
                 return list(iterator)
+        '''
 
     def insert_bigquery_data(self, dataset_name, table_name, data):
         if self.bigquery_client:

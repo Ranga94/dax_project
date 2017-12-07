@@ -8,6 +8,7 @@ import time
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from . import TaggingUtils
+from . import Storage
 import spacy
 from collections import defaultdict
 
@@ -31,7 +32,7 @@ def get_constituent_id_name(old_constituent_name):
     mapping["Deutsche Telekom"] = ("DTEDE5030147137" , "DEUTSCHE TELEKOM AG")
     mapping["Fresenius"] = ("FREDE6290014544" , "FRESENIUS SE & CO.KGAA")
     mapping["HeidelbergCement"] = ("HEIDE7050000100" , "HEIDELBERGCEMENT AG")
-    mapping["Henkel vz"] = ("HEN3DE5050001329" , "HENKEL AG & CO.KGAA")
+    mapping["Henkel vz"] = ("HEN3DE5050001329" , "HENKEL AG & CO. KGAA")
     mapping["Infineon"] = ("IFXDE8330359160" , "INFINEON TECHNOLOGIES AG")
     mapping["Linde"] = ("LINDE8170014684" , "LINDE AG")
     mapping["Merck"] = ("MRKDE6050108507" , "MERCK KGAA")
@@ -404,12 +405,29 @@ def create_tweet_skelleton():
     tweet["place"]["name"] = None
     tweet["constituent_id"] = None
     tweet["constituent_name"] = None
-    tweet["constituent_id"] = None
+    tweet["constituent"] = None
     tweet["search_term"] = None
 
     return tweet
 
+def get_sentiment_word(score):
+    if score > 0.25:
+        return "positive"
+    elif score < -0.25:
+        return "negative"
+    else:
+        return "neutral"
 
+def get_parameters(connection_string, table, column_list, where):
+    storage = Storage()
+
+    data = storage.get_sql_data(connection_string, table, column_list, where)[0]
+    parameters = {}
+
+    for i in range(0, len(column_list)):
+        parameters[column_list[i]] = data[i]
+
+    return parameters
 
 if __name__ == "__main__":
     import argparse
