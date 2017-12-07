@@ -749,7 +749,8 @@ if __name__ == "__main__":
     parser.add_argument('pwd', help='SOAP pwd')
     args = parser.parse_args()
     sys.path.insert(0, args.python_path)
-    from utils.Storage import Storage, MongoEncoder
+    from utils.Storage import Storage as Storage
+    from utils.Storage import MongoEncoder
     from utils.SOAPUtils import SOAPUtils
     from utils.twitter_analytics_helpers import *
     from utils.TaggingUtils import TaggingUtils as TU
