@@ -8,6 +8,7 @@ import time
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from . import TaggingUtils
+from . import Storage
 import spacy
 from collections import defaultdict
 
@@ -409,7 +410,24 @@ def create_tweet_skelleton():
 
     return tweet
 
+def get_sentiment_word(score):
+    if score > 0.25:
+        return "positive"
+    elif score < -0.25:
+        return "negative"
+    else:
+        return "neutral"
 
+def get_parameters(connection_string, table, column_list, where):
+    storage = Storage()
+
+    data = storage.get_sql_data(connection_string, table, column_list, where)[0]
+    parameters = {}
+
+    for i in range(0, len(column_list)):
+        parameters[column_list[i]] = data[i]
+
+    return parameters
 
 if __name__ == "__main__":
     import argparse

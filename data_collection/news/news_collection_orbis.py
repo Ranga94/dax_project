@@ -130,14 +130,6 @@ def get_historical_orbis_news_old(user, pwd, database, google_key_path, param_co
         else:
             print("File does not exists in the local filesystem.")
 
-def get_sentiment_word(score):
-    if score > 0.25:
-        return "positive"
-    elif score < -0.25:
-        return "negative"
-    else:
-        return "neutral"
-
 def get_historical_orbis_news(user, pwd, database, google_key_path, param_connection_string):
     #get parameters
     soap = SOAPUtils()
@@ -747,17 +739,6 @@ def send_mail(param_connection_string, google_key_path, source):
     server.login(username, password)
     server.sendmail(username, toaddrs, message)
     server.quit()
-
-def get_parameters(connection_string, table, column_list, where):
-    storage = Storage()
-
-    data = storage.get_sql_data(connection_string, table, column_list, where)[0]
-    parameters = {}
-
-    for i in range(0, len(column_list)):
-        parameters[column_list[i]] = data[i]
-
-    return parameters
 
 #Development halted for now
 def main_rest(api_key):
