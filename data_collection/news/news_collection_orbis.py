@@ -133,7 +133,7 @@ def get_historical_orbis_news_old(user, pwd, database, google_key_path, param_co
 def get_historical_orbis_news(user, pwd, database, google_key_path, param_connection_string):
     #get parameters
     soap = SOAPUtils()
-    storage = Storage(google_key_path)
+    storage = Storage.Storage(google_key_path)
     tagger = TU()
 
     columns = ["CONSTITUENT_ID", "CONSTITUENT_NAME", "BVDID"]
@@ -749,7 +749,7 @@ if __name__ == "__main__":
     parser.add_argument('pwd', help='SOAP pwd')
     args = parser.parse_args()
     sys.path.insert(0, args.python_path)
-    from utils.Storage import Storage as Storage
+    from utils.Storage import Storage
     from utils.Storage import MongoEncoder
     from utils.SOAPUtils import SOAPUtils
     from utils.twitter_analytics_helpers import *
