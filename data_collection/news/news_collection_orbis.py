@@ -130,20 +130,11 @@ def get_historical_orbis_news_old(user, pwd, database, google_key_path, param_co
         else:
             print("File does not exists in the local filesystem.")
 
-def get_sentiment_word(score):
-    if score > 0.25:
-        return "positive"
-    elif score < -0.25:
-        return "negative"
-    else:
-        return "neutral"
-
 def get_historical_orbis_news(user, pwd, database, google_key_path, param_connection_string):
     #get parameters
     soap = SOAPUtils()
     storage = Storage(google_key_path)
     tagger = TU()
-    #sia = SIA()
 
     columns = ["CONSTITUENT_ID", "CONSTITUENT_NAME", "BVDID"]
     table = "MASTER_CONSTITUENTS"
@@ -152,28 +143,21 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                                         sql_table_name=table,
                                         sql_column_list=columns)
 
-    to_skip = ["BASF SE","BAYERISCHE MOTOREN WERKE AG","DEUTSCHE BANK AG",
+    to_skip = ["BAYERISCHE MOTOREN WERKE AG","DEUTSCHE BANK AG",
                "SIEMENS AG", "SAP SE", "VOLKSWAGEN AG"]
-
-    #
 
     for constituent_id, constituent_name, bvdid in constituents:
         limit = get_number_of_news_items(constituent_name)
-        if constituent_name not in to_skip:
+        if constituent_name in to_skip:
             print("Skipping")
             continue
 
-        retry_flag = False
         records = 0
         start = 0
-        max_count = 9
+        max_count = 20
         filename = "bq_news_{}.json".format(constituent_id)
         print("Constituent: {},{}".format(constituent_name,bvdid))
         failed = 0
-
-        if constituent_name == "BASF SE":
-            start = 10650
-            records = 10650
 
         try:
             token = soap.get_token(user, pwd, database)
@@ -184,10 +168,6 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
         with open(filename, "a") as f:
             while limit > records:
-                if records % 500 == 0:
-                    tagger = TU()
-                    #sia = SIA()
-
                 try:
                     query = "SELECT LINE BVDNEWS.NEWS_DATE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_date, " \
                             "LINE BVDNEWS.NEWS_TITLE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_title," \
@@ -202,12 +182,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                             "LINE BVDNEWS.NEWS_ID USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_id FROM RemoteAccess.A".format(
                         start, max_count)
 
-                    #selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, database)
-                    #timer_start = timer()
-                    print("Offset: {}, MaxCount: {}".format(start,max_count))
                     get_data_result = soap.get_data(token, selection_token, selection_count, query, database, timeout=None)
-                    #timer_end = timer()
-                    #print("API call: {}, token {}".format(str(timer_end - timer_start), token))
                 except Exception as e:
                     print(str(e))
                     continue
@@ -216,7 +191,6 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                     #if token:
                     #    soap.close_connection(token, database)
 
-                #timer_start = timer()
                 result = ET.fromstring(get_data_result)
                 csv_result = result[0][0][0].text
 
@@ -227,9 +201,6 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                     print(e)
                     continue
 
-                #timer_end = timer()
-                #print("Loading df: {}".format(str(timer_end - timer_start)))
-
                 if df.shape[0] == 0:
                     print("No records in df")
                     continue
@@ -237,21 +208,15 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 #Make news_title column a string
                 df.astype({"news_title":str}, copy=False, errors='ignore')
 
-                #timer_start = timer()
                 # Remove duplicate columns
                 df.drop_duplicates(["news_title"], inplace=True)
-                #timer_end = timer()
-                #print("Removing duplicates: {}".format(str(timer_end - timer_start)))
 
-                #timer_start = timer()
                 # Get sentiment score
                 df["score"] = df.apply(lambda row: get_nltk_sentiment(str(row["news_article_txt"])), axis=1)
                 #df["score"] = df.apply(lambda row: sia.polarity_scores(str(row["news_article_txt"]))['compound'] , axis=1)
 
                 # get sentiment word
                 df["sentiment"] = df.apply(lambda row: get_sentiment_word(row["score"]), axis=1)
-                #timer_end = timer()
-                #print("Getting sentiment: {}".format(str(timer_end - timer_start)))
 
                 # add constituent name, id and old name
                 df["constituent_id"] = constituent_id
@@ -265,15 +230,11 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 # add show
                 df["show"] = True
 
-                #timer_start = timer()
                 # get entity tags
                 entity_tags = []
                 for text in df["news_title"]:
                     tags = get_spacey_tags(tagger.get_spacy_entities(str(text)))
                     entity_tags.append(tags)
-
-                #timer_end = timer()
-                #print("getting entity tags: {}".format(str(timer_end - timer_start)))
 
                 fields = ["news_date", "news_title", "news_article_txt", "news_companies", "news_source",
                           "news_publication","news_topics", "news_country", "news_region",
@@ -307,7 +268,6 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 df_bigquery = df[fields]
                 bigquery_data = json.loads(df_bigquery.to_json(orient="records", date_format="iso"))
 
-                #timer_start = timer()
                 # set entity_tag field
                 i = 0
                 for i in range(0, len(bigquery_data)):
@@ -349,7 +309,6 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                     else:
                         bigquery_data[i]["news_topics"] = []
 
-
                     if bigquery_data[i]["news_country"]:
                         try:
                             bigquery_data[i]["news_country"] = [i.strip() for i in bigquery_data[i]["news_country"].split(";")]
@@ -375,7 +334,6 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                     if bigquery_data[i]["news_publication"]:
                         bigquery_data[i]["news_publication"] = str(bigquery_data[i]["news_publication"])
 
-
                     if bigquery_data[i]["news_id"]:
                         try:
                             bigquery_data[i]["news_id"] = int(bigquery_data[i]["news_id"])
@@ -397,14 +355,11 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
                     f.write(json.dumps(bigquery_data[i], cls=MongoEncoder) + '\n')
 
-                #timer_end = timer()
-                #print("writing results: {}".format(str(timer_end - timer_start)))
-
                 # storage.insert_bigquery_data("pecten_dataset", "news", bigquery_data)
 
-                start = start + 10
+                start = start + 20
                 #end = start + 10
-                records += 10
+                records += 20
                 print("Records saved: {}".format(records))
 
         if token:
@@ -747,17 +702,6 @@ def send_mail(param_connection_string, google_key_path, source):
     server.login(username, password)
     server.sendmail(username, toaddrs, message)
     server.quit()
-
-def get_parameters(connection_string, table, column_list, where):
-    storage = Storage()
-
-    data = storage.get_sql_data(connection_string, table, column_list, where)[0]
-    parameters = {}
-
-    for i in range(0, len(column_list)):
-        parameters[column_list[i]] = data[i]
-
-    return parameters
 
 #Development halted for now
 def main_rest(api_key):
