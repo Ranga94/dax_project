@@ -154,7 +154,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
         records = 0
         start = 0
-        max_count = 9
+        max_count = 20
         filename = "bq_news_{}.json".format(constituent_id)
         print("Constituent: {},{}".format(constituent_name,bvdid))
         failed = 0
@@ -357,9 +357,9 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
                 # storage.insert_bigquery_data("pecten_dataset", "news", bigquery_data)
 
-                start = start + 10
+                start = start + 20
                 #end = start + 10
-                records += 10
+                records += 20
                 print("Records saved: {}".format(records))
 
         if token:
