@@ -203,11 +203,11 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                         start, max_count)
 
                     #selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, database)
-                    timer_start = timer()
+                    #timer_start = timer()
                     print("Offset: {}, MaxCount: {}".format(start,max_count))
                     get_data_result = soap.get_data(token, selection_token, selection_count, query, database, timeout=None)
-                    timer_end = timer()
-                    print("API call: {}, token {}".format(str(timer_end - timer_start), token))
+                    #timer_end = timer()
+                    #print("API call: {}, token {}".format(str(timer_end - timer_start), token))
                 except Exception as e:
                     print(str(e))
                     continue
