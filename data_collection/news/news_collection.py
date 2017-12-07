@@ -218,8 +218,8 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
         failed = 0
 
         if constituent_name == "BASF SE":
-            start = 5540
-            records = 5540
+            start = 6380
+            records = 6380
 
         try:
             token = soap.get_token(user, pwd, database)
@@ -230,6 +230,9 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
         with open(filename, "a") as f:
             while limit > end:
+                if records % 500 == 0:
+                    tagger = TU()
+
                 try:
                     query = "SELECT LINE BVDNEWS.NEWS_DATE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_date, " \
                             "LINE BVDNEWS.NEWS_TITLE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_title," \
@@ -245,9 +248,10 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                         start, end)
 
                     #selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, database)
-
+                    timer_start = timer()
                     get_data_result = soap.get_data(token, selection_token, selection_count, query, database, timeout=None)
-
+                    timer_end = timer()
+                    print("API call: {}".format(str(timer_end - timer_start)))
                 except Exception as e:
                     print(str(e))
                     continue
@@ -283,11 +287,14 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 timer_end = timer()
                 print("Removing duplicates: {}".format(str(timer_end - timer_start)))
 
+                timer_start = timer()
                 # Get sentiment score
                 df["score"] = df.apply(lambda row: get_nltk_sentiment(str(row["news_article_txt"])), axis=1)
 
                 # get sentiment word
                 df["sentiment"] = df.apply(lambda row: get_sentiment_word(row["score"]), axis=1)
+                timer_end = timer()
+                print("Getting sentiment: {}".format(str(timer_end - timer_start)))
 
                 # add constituent name, id and old name
                 df["constituent_id"] = constituent_id
