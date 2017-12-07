@@ -152,10 +152,10 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                                         sql_table_name=table,
                                         sql_column_list=columns)
 
-    to_skip = ["BAYERISCHE MOTOREN WERKE AG","DEUTSCHE BANK AG",
+    to_skip = ["BASF SE","BAYERISCHE MOTOREN WERKE AG","DEUTSCHE BANK AG",
                "SIEMENS AG", "SAP SE", "VOLKSWAGEN AG"]
 
-    #"BASF SE"
+    #
 
     for constituent_id, constituent_name, bvdid in constituents:
         limit = get_number_of_news_items(constituent_name)
@@ -166,7 +166,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
         retry_flag = False
         records = 0
         start = 0
-        end = 10
+        max_count = 9
         filename = "bq_news_{}.json".format(constituent_id)
         print("Constituent: {},{}".format(constituent_name,bvdid))
         failed = 0
@@ -183,7 +183,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
             return
 
         with open(filename, "a") as f:
-            while limit > end:
+            while limit > records:
                 if records % 500 == 0:
                     tagger = TU()
                     #sia = SIA()
@@ -200,14 +200,14 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                             "LINE BVDNEWS.NEWS_SOURCE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_source," \
                             "LINE BVDNEWS.NEWS_PUBLICATION USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_publication," \
                             "LINE BVDNEWS.NEWS_ID USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_id FROM RemoteAccess.A".format(
-                        start, end)
+                        start, max_count)
 
                     #selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, database)
-                    timer_start = timer()
-                    print("Offset: {}, MaxCount: {}".format(start,end))
+                    #timer_start = timer()
+                    print("Offset: {}, MaxCount: {}".format(start,max_count))
                     get_data_result = soap.get_data(token, selection_token, selection_count, query, database, timeout=None)
-                    timer_end = timer()
-                    print("API call: {}, token {}".format(str(timer_end - timer_start), token))
+                    #timer_end = timer()
+                    #print("API call: {}, token {}".format(str(timer_end - timer_start), token))
                 except Exception as e:
                     print(str(e))
                     continue
@@ -402,7 +402,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
                 # storage.insert_bigquery_data("pecten_dataset", "news", bigquery_data)
 
-                start = start + 11
+                start = start + 10
                 #end = start + 10
                 records += 10
                 print("Records saved: {}".format(records))
