@@ -9,6 +9,7 @@ import json
 from pprint import pprint, pformat
 import smtplib
 from timeit import default_timer as timer
+from nltk.sentiment.vader import SentimentIntensityAnalyzer as SIA
 
 #Deprecated
 def get_orbis_news(user, pwd):
@@ -192,6 +193,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
     soap = SOAPUtils()
     storage = Storage(google_key_path)
     tagger = TU()
+    sia = SIA()
 
     columns = ["CONSTITUENT_ID", "CONSTITUENT_NAME", "BVDID"]
     table = "MASTER_CONSTITUENTS"
@@ -232,6 +234,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
             while limit > end:
                 if records % 500 == 0:
                     tagger = TU()
+                    sia = SIA()
 
                 try:
                     query = "SELECT LINE BVDNEWS.NEWS_DATE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_date, " \
@@ -289,7 +292,8 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
                 timer_start = timer()
                 # Get sentiment score
-                df["score"] = df.apply(lambda row: get_nltk_sentiment(str(row["news_article_txt"])), axis=1)
+                #df["score"] = df.apply(lambda row: get_nltk_sentiment(str(row["news_article_txt"])), axis=1)
+                df["score"] = df.apply(lambda row: sia.polarity_scores(str(row["news_article_txt"]))['compound'] , axis=1)
 
                 # get sentiment word
                 df["sentiment"] = df.apply(lambda row: get_sentiment_word(row["score"]), axis=1)
