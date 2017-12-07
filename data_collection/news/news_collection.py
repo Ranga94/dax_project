@@ -254,7 +254,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                     timer_start = timer()
                     get_data_result = soap.get_data(token, selection_token, selection_count, query, database, timeout=None)
                     timer_end = timer()
-                    print("API call: {}, token {}".format(str(timer_end - timer_start)), token)
+                    print("API call: {}, token {}".format(str(timer_end - timer_start), token))
                 except Exception as e:
                     print(str(e))
                     continue
