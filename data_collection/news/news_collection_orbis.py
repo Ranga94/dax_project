@@ -141,7 +141,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
 
     constituents = storage.get_sql_data(sql_connection_string=param_connection_string,
                                         sql_table_name=table,
-                                        sql_column_list=columns)
+                                        sql_column_list=columns)[2:]
 
     to_skip = ["BAYERISCHE MOTOREN WERKE AG","DEUTSCHE BANK AG",
                "SIEMENS AG", "SAP SE", "VOLKSWAGEN AG"]
@@ -158,6 +158,9 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
         filename = "bq_news_{}.json".format(constituent_id)
         print("Constituent: {},{}".format(constituent_name,bvdid))
         failed = 0
+
+        if constituent_name == "BASF SE":
+            start = 4280
 
         try:
             token = soap.get_token(user, pwd, database)
