@@ -1,5 +1,4 @@
 from pymongo import MongoClient, errors
-from google.cloud import storage
 from google.cloud.exceptions import GoogleCloudError, NotFound
 import os
 from sqlalchemy import *
@@ -218,7 +217,17 @@ class MongoEncoder(json.JSONEncoder):
         return ts
 
 if __name__ == "__main__":
-    pass
+    storage = Storage(google_key_path="C:/Users/Uly/Desktop/Desktop/DAX/dax_project/keys/igenie-project-key.json")
+    query = """
+    UPDATE `pecten_dataset.all_news_bkp`
+    SET news_publication = 'test'
+    WHERE news_source = 'Bloomberg';
+    """
+
+    try:
+        result = storage.get_bigquery_data(query)
+    except Exception as e:
+        print(e)
 
 
 
