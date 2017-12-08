@@ -106,7 +106,7 @@ def data_analyst_parameter():
 
 
 if __name__ == "__main__":
-    sql_string = 'mysql+pymysql://igenie_readwrite:igenie@35.197.246.202/dax_project'
+    sql_string = 'mysql+pymysql://igenie_readwrite:igenie@127.0.0.1/dax_project'
     url_df_ws,url_df_bi = data_analyst_parameter()
     dict_ws = url_df_ws.to_dict(orient='records')
     dict_bi = url_df_bi.to_dict(orient='records')
