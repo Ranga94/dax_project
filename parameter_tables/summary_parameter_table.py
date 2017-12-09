@@ -27,12 +27,17 @@ def summary_parameter():
     collection_get_profitability = 'Profitability scores'
     collection_get_risk = 'Risk scores'
     collection_store_summary = 'summary_box'
-    summary_param_table=summary_param_table.append(pd.DataFrame({'MONGODB_CONNECTION_STRING':mongodb_string,'CONSTITUENT_LIST':constituent_list,'DATABASE':database,'COLLECTION_GET_PROFITABILITY_SCORE':collection_get_profitability,'COLLECTION_GET_RISK_SCORE':collection_get_risk,'COLLECTION_STORE_SUMMARY':collection_store_summary},index=[0]),ignore_index=True)
+    project_name = 'igenie-project'
+    table_collect_profitability_scores_bq = 'pecten_dataset.Profitability_scores'
+    table_collect_risk_scores_bq = 'pecten_dataset.Risk_scores'
+    script_name = 'Color_ranking'
+    table_store_summary_bq = 'pecten_dataset.summary_box'
+    summary_param_table=summary_param_table.append(pd.DataFrame({'MONGODB_CONNECTION_STRING':mongodb_string,'CONSTITUENT_LIST':constituent_list,'DATABASE':database,'COLLECTION_GET_PROFITABILITY_SCORE':collection_get_profitability,'COLLECTION_GET_RISK_SCORE':collection_get_risk,'COLLECTION_STORE_SUMMARY':collection_store_summary,
+                                                                'PROJECT_NAME_BQ':project_name,'TABLE_COLLECT_RISK_SCORES_BQ':table_collect_risk_scores_bq,'TABLE_COLLECT_PROFITABILITY_SCORES_BQ':table_collect_profitability_scores_bq,'TABLE_STORE_SUMMARY_BQ':table_store_summary_bq,'SCRIPT_NAME':script_name},index=[0]),ignore_index=True)
     return summary_param_table
 
-
 if __name__ == "__main__":
-    sql_string = 'mysql+pymysql://igenie_readwrite:igenie@35.197.246.202/dax_project'
+    sql_string = 'mysql+pymysql://igenie_readwrite:igenie@127.0.0.1/dax_project'
     summary_param_table = summary_parameter()
     dict_summary_param =  summary_param_table.to_dict(orient='records')
     insert_to_sql(sql_connection_string=sql_string, sql_table_name='PARAM_SUMMARY_TABLE', data=dict_summary_param)

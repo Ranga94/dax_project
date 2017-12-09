@@ -49,9 +49,10 @@ def data_analyst_parameter():
                     'Volkswagen (VW) vz':'Volkswagen_vz','Vonovia':'Vonovia'}
 
     for constituent in all_constituents_dict_bi:
-        #print constituent
+        print constituent
         constituent_name = constituent
         url = 'http://markets.businessinsider.com/analyst/'+all_constituents_dict_bi[constituent]
+        print url
         source_name = 'Business Insider'
         mongo_db_string = 'mongodb://igenie_readwrite:igenie@35.197.207.148:27017/dax_gcp'
         database_for_storage = 'dax_gcp'
@@ -68,7 +69,7 @@ def data_analyst_parameter():
             status = 'inactive'
             print "The url for ", constituent, 'is not avaliable.'
         
-        url_df_bi=url_df_bi.append(pd.DataFrame({'CONSTITUENT_NAME':constituent,'ANALYST_SOURCE_URL':url,'SOURCE_NAME':source_name,'MONGODB_CONNECTION_STRING':mongo_db_string,'DATABASE_FOR_STORAGE':database_for_storage,'COLLECTION_FOR_STORAGE':collection_for_storage,'SOURCE_STATUS':status,'DAY_OF_UPDATE':day_of_update},index=[0]),ignore_index=True)  
+        url_df_bi=url_df_bi.append(pd.DataFrame({'CONSTITUENT_NAME':constituent,'ANALYST_SOURCE_URL':url,'SOURCE_NAME':source_name,'MONGODB_CONNECTION_STRING':mongo_db_string,'DATABASE_FOR_STORAGE':database_for_storage,'COLLECTION_FOR_STORAGE':collection_for_storage,'SOURCE_STATUS':status,'DAY_OF_UPDATE':day_of_update,'PROJECT_NAME_BQ':'igenie-project','TABLE_STORE_ANALYSTS_BQ':'pecten_dataset.analyst_opinions'},index=[0]),ignore_index=True)  
     url_df_bi
 
 
@@ -78,7 +79,7 @@ def data_analyst_parameter():
     constituent_dict = {'Adidas':'ADS','Commerzbank':'CBK','Deutsche Bank':'DBK', 'EON':'EOAN', 'BMW':'BMW'}
 
     for constituent in constituent_dict:
-    #print constituent
+        print constituent
         constituent_name = constituent
         url = 'http://quotes.wsj.com/DE/XFRA/'+constituent_dict[constituent]+'/research-ratings'
         source_name = 'Wall Street Journal'
@@ -99,14 +100,13 @@ def data_analyst_parameter():
             status = 'inactive'
             print "The url for ", constituent, 'is not avaliable.'
         
-        url_df_ws=url_df_ws.append(pd.DataFrame({'CONSTITUENT_NAME':constituent,'ANALYST_SOURCE_URL':url,'SOURCE_NAME':source_name,'MONGODB_CONNECTION_STRING':mongo_db_string,'DATABASE_FOR_STORAGE':database_for_storage,'COLLECTION_FOR_STORAGE':collection_for_storage,'SOURCE_STATUS':status,'DAY_OF_UPDATE':day_of_update},index=[0]),ignore_index=True)  
+        url_df_ws=url_df_ws.append(pd.DataFrame({'CONSTITUENT_NAME':constituent,'ANALYST_SOURCE_URL':url,'SOURCE_NAME':source_name,'MONGODB_CONNECTION_STRING':mongo_db_string,'DATABASE_FOR_STORAGE':database_for_storage,'COLLECTION_FOR_STORAGE':collection_for_storage,'SOURCE_STATUS':status,'DAY_OF_UPDATE':day_of_update,'PROJECT_NAME_BQ':'igenie-project','TABLE_STORE_ANALYSTS_BQ':'pecten_dataset.analyst_opinions'},index=[0]),ignore_index=True)  
     url_df_ws.head()
     return url_df_ws,url_df_bi
 
 
-
 if __name__ == "__main__":
-    sql_string = 'mysql+pymysql://igenie_readwrite:igenie@35.197.246.202/dax_project'
+    sql_string = 'mysql+pymysql://igenie_readwrite:igenie@127.0.0.1/dax_project'
     url_df_ws,url_df_bi = data_analyst_parameter()
     dict_ws = url_df_ws.to_dict(orient='records')
     dict_bi = url_df_bi.to_dict(orient='records')
