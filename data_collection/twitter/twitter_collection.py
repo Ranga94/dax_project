@@ -92,7 +92,7 @@ def get_tweets(args):
 
             try:
                 tweets, tmp_tweet_count, max_id = downloader.download(constituent_name, search_query,
-                                                                      language, parameters["TWEETS_PER_QUER\y"], sinceId, max_id)
+                                                                      language, parameters["TWEETS_PER_QUERY"], sinceId, max_id)
             except Exception as e:
                 continue
 
