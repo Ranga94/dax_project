@@ -10,52 +10,364 @@ from pprint import pprint, pformat
 import smtplib
 from timeit import default_timer as timer
 
-#Needs some work
-def get_zephyr_ma_deals(user,pwd):
-    query = ""
+
+def get_historical_zephyr_ma_deals(args):
+    query = """
+    DEFINE P1 AS [Parameters.Currency=SESSION;],
+    P2 AS [Parameters.RepeatingDimension=NrOfTargets],
+    P3 AS [Parameters.RepeatingDimension=NrOfBidders],
+    P5 AS [Parameters.RepeatingDimension=NrOfVendors];
+    SELECT LINE RECORD_ID as record_id,
+    LINE DEAL_OVERVIEW.DEAL_HEADLINE AS deal_headline,
+    LINE DEAL_OVERVIEW.TGNAME USING P2 AS target,
+    LINE DEAL_OVERVIEW.BDNAME USING P3 AS acquiror,
+    LINE DEAL_OVERVIEW.VDNAME USING P5 AS vendor,
+    LINE DEAL_OVERVIEW.DEALTYPE AS deal_type,
+    LINE DEAL_OVERVIEW.DEAL_STATUS AS deal_status,
+    LINE DEAL_STRUCTURE_AND_DATES.COMPLETION_DATE AS completion_date,
+    LINE DEAL_STRUCTURE_AND_DATES.RUMOUR_DATE AS rumour_date,
+    LINE DEAL_STRUCTURE_AND_DATES.ANNOUNCE_DATE AS announced_date,
+    LINE DEAL_STRUCTURE_AND_DATES.EXPECTED_COMPLETION_DATE AS expected_completion_date,
+    LINE DEAL_STRUCTURE_AND_DATES.ASSUMED_COMPLETION_DATE AS assumed_completion_date,
+    LINE DEAL_STRUCTURE_AND_DATES.POSTPONED_DATE AS postponed_date,
+    LINE DEAL_STRUCTURE_AND_DATES.WITHDRAWN_DATE AS withdrawn_date,
+    LINE DEAL_OVERVIEW.ALLDLVALUE USING P1 AS deal_value
+    FROM RemoteAccess.U ORDERBY 1 DESCENDING
+    """
+
+    #Get parametesr
+    # Get parameters
+    param_table = "PARAM_NEWS_COLLECTION"
+    parameters_list = ['BVD_USERNAME', 'BVD_PASSWORD', "LOGGING"]
+    where = lambda x: x["SOURCE"] == 'Zephyr'
+
+    parameters = get_parameters(args.param_connection_string, param_table, parameters_list, where)
+
+    #Get constituents
     soap = SOAPUtils()
+    storage = Storage.Storage(args.google_key_path)
 
-    strategies = ["adidas_strategy",
-                  "Allianz_strategy",
-                  "BASF_strategy",
-                  "Bayer_strategy",
-                  "Beiersdorf_strategy",
-                  "BMW_strategy",
-                  "Commerzbank_strategy",
-                  "Continental_strategy",
-                  "Daimler_strategy",
-                  "Deutsche_Boerse_strategy",
-                  "Deutsche_Post_strategy",
-                  "Deutsche_strategy",
-                  "Deutsche_Telekom_strategy",
-                  "EON_strategy",
-                  "Fresenius_medical_strategy",
-                  "Fresenius_strategy",
-                  "HeidelbergCement_strategy",
-                  "Henkel_strategy",
-                  "Infineon_strategy",
-                  "Linde_strategy",
-                  "Lufthansa_strategy",
-                  "Merck_strategy",
-                  "Munchener_strategy",
-                  "Prosiebel_strategy",
-                  "RWE_strategy",
-                  "SAP_strategy",
-                  "Siemens_strategy",
-                  "thyssenkrupp_strategy",
-                  "Volkswagen_strategy",
-                  "Vonovia_strategy"]
+    columns = ["CONSTITUENT_ID", "CONSTITUENT_NAME", "STRATEGY"]
+    table = "PARAM_NEWS_ZEPHYR_STRATEGIES"
 
-    data = "all_deals"
+    constituents = storage.get_sql_data(sql_connection_string=args.param_connection_string,
+                                        sql_table_name=table,
+                                        sql_column_list=columns)
 
-    for strategy in strategies:
-        token = soap.get_token(user, pwd, "zephyr")
-        if not token:
-            return None
+    fields = ["record_id", "deal_headline", "target", "acquiror", "vendor", "deal_type", "deal_status", "completion_date", "deal_value",
+              "rumour_date","announced_date","expected_completion_date","assumed_completion_date", "postponed_date", "withdrawn_date"]
+
+    for constituent_id, constituent_name, strategy in constituents:
+        if constituent_name != "DEUTSCHE BANK AG":
+            continue
+        print("Getting M&A deals for {}".format(constituent_name))
         try:
+            token = soap.get_token(parameters['BVD_USERNAME'], parameters['BVD_PASSWORD'], 'zephyr')
             selection_token, selection_count = soap.find_with_strategy(token, strategy, "zephyr")
-            get_data_result = soap.get_data(token, selection_token, selection_count, long_query, data, strategy, "zephyr")
+            get_data_result = soap.get_data(token, selection_token, selection_count, query, 'zephyr', timeout=None, number_of_records=selection_count)
         except Exception as e:
             print(str(e))
+            soap.close_connection(token, 'zephyr')
+            break
         finally:
-            soap.close_connection(token, "zephyr")
+            pass
+
+        result = ET.fromstring(get_data_result)
+        csv_result = result[0][0][0].text
+
+        TESTDATA = StringIO(csv_result)
+        try:
+            df = pd.read_csv(TESTDATA, sep=",", parse_dates=["completion_date","rumour_date","announced_date",
+                                                             "expected_completion_date","assumed_completion_date",
+                                                             "postponed_date", "withdrawn_date"])
+        except Exception as e:
+            print(e)
+            continue
+
+        print(df.shape[0])
+        # Make news_title column a string
+        #df.astype({"news_title": str}, copy=False, errors='ignore')
+        df = df[fields]
+
+        # add constituent name, id and old name
+        df["constituent_id"] = constituent_id
+        df["constituent_name"] = constituent_name
+        old_constituent_name = get_old_constituent_name(constituent_id)
+        df["constituent"] = old_constituent_name
+
+        data = json.loads(df.to_json(orient="records", date_format="iso"))
+        print(len(data))
+
+        for item in data:
+            if "completion_date" in item and item["completion_date"]:
+                date = item["completion_date"]
+                ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                item["completion_date"] = ts
+
+            if "rumour_date" in item and item["rumour_date"]:
+                date = item["rumour_date"]
+                ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                item["rumour_date"] = ts
+
+            if "announced_date" in item and item["announced_date"]:
+                date = item["announced_date"]
+                ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                item["announced_date"] = ts
+
+            if "expected_completion_dat" in item and item["expected_completion_dat"]:
+                date = item["expected_completion_dat"]
+                ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                item["expected_completion_date"] = ts
+
+            if "assumed_completion_date" in item and item["assumed_completion_date"]:
+                date = item["assumed_completion_date"]
+                ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                item["assumed_completion_datee"] = ts
+
+            if "postponed_date" in item and item["postponed_date"]:
+                date = item["postponed_date"]
+                ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                item["postponed_date"] = ts
+
+            if "withdrawn_date" in item and item["withdrawn_date"]:
+                date = item["withdrawn_date"]
+                ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                item["withdrawn_date"] = ts
+
+        if data:
+            print("Inserting records to BQ")
+            try:
+                open("ma_deals.json", 'w').write("\n".join(json.dumps(e, cls=MongoEncoder) for e in data))
+                #storage.insert_bigquery_data('pecten_dataset', 'ma_deals', data)
+            except Exception as e:
+                print(e)
+
+            if parameters["LOGGING"]:
+                doc = [{"date": datetime.now().date().strftime('%Y-%m-%d %H:%M:%S'),
+                        "constituent_name": constituent_name,
+                        "constituent_id": constituent_id,
+                        "downloaded_deals": len(data),
+                        "source": "Zephyr"}]
+                # logging(doc,'pecten_dataset',"news_logs",storage)
+
+        if token:
+            soap.close_connection(token, 'zephyr')
+
+def get_daily_zephyr_ma_deals(args):
+    query = """
+        DEFINE P1 AS [Parameters.Currency=SESSION;],
+        P2 AS [Parameters.RepeatingDimension=NrOfTargets],
+        P3 AS [Parameters.RepeatingDimension=NrOfBidders],
+        P5 AS [Parameters.RepeatingDimension=NrOfVendors];
+        SELECT LINE RECORD_ID as record_id,
+        LINE DEAL_OVERVIEW.DEAL_HEADLINE AS deal_headline,
+        LINE DEAL_OVERVIEW.TGNAME USING P2 AS target,
+        LINE DEAL_OVERVIEW.BDNAME USING P3 AS acquiror,
+        LINE DEAL_OVERVIEW.VDNAME USING P5 AS vendor,
+        LINE DEAL_OVERVIEW.DEALTYPE AS deal_type,
+        LINE DEAL_OVERVIEW.DEAL_STATUS AS deal_status,
+        LINE DEAL_STRUCTURE_AND_DATES.COMPLETION_DATE AS completion_date,
+        LINE DEAL_STRUCTURE_AND_DATES.RUMOUR_DATE AS rumour_date,
+        LINE DEAL_STRUCTURE_AND_DATES.ANNOUNCE_DATE AS announced_date,
+        LINE DEAL_STRUCTURE_AND_DATES.EXPECTED_COMPLETION_DATE AS expected_completion_date,
+        LINE DEAL_STRUCTURE_AND_DATES.ASSUMED_COMPLETION_DATE AS assumed_completion_date,
+        LINE DEAL_STRUCTURE_AND_DATES.POSTPONED_DATE AS postponed_date,
+        LINE DEAL_STRUCTURE_AND_DATES.WITHDRAWN_DATE AS withdrawn_date,
+        LINE DEAL_OVERVIEW.ALLDLVALUE USING P1 AS deal_value
+        FROM RemoteAccess.U ORDERBY 1 DESCENDING
+        """
+
+    # Get parameters
+    param_table = "PARAM_NEWS_COLLECTION"
+    parameters_list = ['BVD_USERNAME', 'BVD_PASSWORD', "LOGGING"]
+    where = lambda x: x["SOURCE"] == 'Zephyr'
+
+    parameters = get_parameters(args.param_connection_string, param_table, parameters_list, where)
+
+    # Get constituents
+    soap = SOAPUtils()
+    storage = Storage.Storage(args.google_key_path)
+
+    columns = ["CONSTITUENT_ID", "CONSTITUENT_NAME", "STRATEGY"]
+    table = "PARAM_NEWS_ZEPHYR_STRATEGIES"
+
+    constituents = storage.get_sql_data(sql_connection_string=args.param_connection_string,
+                                        sql_table_name=table,
+                                        sql_column_list=columns)
+
+    fields = ["record_id", "deal_headline", "target", "acquiror", "vendor", "deal_type", "deal_status",
+              "completion_date", "deal_value",
+              "rumour_date", "announced_date", "expected_completion_date", "assumed_completion_date", "postponed_date",
+              "withdrawn_date"]
+
+    for constituent_id, constituent_name, strategy in constituents:
+        # get last deal
+        query = """
+                SELECT max(record_id) as max_id FROM `pecten_dataset.ma_deals`
+                WHERE constituent_id = '{}';
+        """.format(constituent_id)
+
+        try:
+            result = storage.get_bigquery_data(query=query, iterator_flag=False)
+        except Exception as e:
+            print(e)
+            return
+
+        max_id = result[0]["max_id"]
+
+        print("Getting M&A deals for {}".format(constituent_name))
+        try:
+            token = soap.get_token(parameters['BVD_USERNAME'], parameters['BVD_PASSWORD'], 'zephyr')
+            selection_token, selection_count = soap.find_with_strategy(token, strategy, "zephyr")
+            get_data_result = soap.get_data(token, selection_token, selection_count, query, 'zephyr', timeout=None,
+                                            number_of_records=100)
+        except Exception as e:
+            print(str(e))
+            soap.close_connection(token, 'zephyr')
+            break
+        finally:
+            pass
+
+        result = ET.fromstring(get_data_result)
+        csv_result = result[0][0][0].text
+
+        TESTDATA = StringIO(csv_result)
+        try:
+            df = pd.read_csv(TESTDATA, sep=",", parse_dates=["completion_date", "rumour_date", "announced_date",
+                                                             "expected_completion_date", "assumed_completion_date",
+                                                             "postponed_date", "withdrawn_date"])
+        except Exception as e:
+            print(e)
+            continue
+
+        df.astype({"record_id": int}, copy=False, errors='ignore')
+        df = df.loc[df["record_id"] > max_id]
+
+        if df.shape[0] == 0:
+            continue
+
+        df = df[fields]
+
+        # add constituent name, id and old name
+        df["constituent_id"] = constituent_id
+        df["constituent_name"] = constituent_name
+        old_constituent_name = get_old_constituent_name(constituent_id)
+        df["constituent"] = old_constituent_name
+
+        data = json.loads(df.to_json(orient="records", date_format="iso"))
+        print(len(data))
+
+        for item in data:
+            if "completion_date" in item and item["completion_date"]:
+                date = item["completion_date"]
+                ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                item["completion_date"] = ts
+
+            if "rumour_date" in item and item["rumour_date"]:
+                date = item["rumour_date"]
+                ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                item["rumour_date"] = ts
+
+            if "announced_date" in item and item["announced_date"]:
+                date = item["announced_date"]
+                ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                item["announced_date"] = ts
+
+            if "expected_completion_dat" in item and item["expected_completion_dat"]:
+                date = item["expected_completion_dat"]
+                ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                item["expected_completion_date"] = ts
+
+            if "assumed_completion_date" in item and item["assumed_completion_date"]:
+                date = item["assumed_completion_date"]
+                ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                item["assumed_completion_datee"] = ts
+
+            if "postponed_date" in item and item["postponed_date"]:
+                date = item["postponed_date"]
+                ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                item["postponed_date"] = ts
+
+            if "withdrawn_date" in item and item["withdrawn_date"]:
+                date = item["withdrawn_date"]
+                ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                item["withdrawn_date"] = ts
+
+        if data:
+            print("Inserting records to BQ")
+            try:
+                open("ma_deals.json", 'w').write("\n".join(json.dumps(e, cls=MongoEncoder) for e in data))
+                # storage.insert_bigquery_data('pecten_dataset', 'ma_deals', data)
+            except Exception as e:
+                print(e)
+
+            if parameters["LOGGING"]:
+                doc = [{"date": datetime.now().date().strftime('%Y-%m-%d %H:%M:%S'),
+                        "constituent_name": constituent_name,
+                        "constituent_id": constituent_id,
+                        "downloaded_deals": len(data),
+                        "source": "Zephyr"}]
+                logging(doc,'pecten_dataset',"news_logs",storage)
+
+        if token:
+            soap.close_connection(token, 'zephyr')
+
+def main(args):
+    get_daily_zephyr_ma_deals(args)
+
+    q1 = """
+        SELECT a.constituent_name, a.downloaded_news, a.date, a.source
+        FROM
+        (SELECT constituent_name, SUM(downloaded_news) as downloaded_news, DATE(date) as date, source
+        FROM `pecten_dataset.news_logs`
+        WHERE source = 'Zephyr'
+        GROUP BY constituent_name, date, source
+        ) a,
+        (SELECT constituent_name, MAX(DATE(date)) as date
+         FROM `igenie-project.pecten_dataset.news_logs`
+         WHERE source = 'Zephyr'
+         GROUP BY constituent_name
+         ) b
+         WHERE a.constituent_name = b.constituent_name AND a.date = b.date
+         GROUP BY a.constituent_name, a.downloaded_news, a.date, a.source;
+    """
+
+    q2 = """
+         SELECT constituent_name,count(*) as count
+         FROM `pecten_dataset.ma_deals`
+         GROUP BY constituent_name
+        """
+
+    send_mail(args.param_connection_string, args.google_key_path, "Zephyr",
+              "PARAM_NEWS_COLLECTION", lambda x: x["SOURCE"] == "Zephyr", q1, q2)
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('python_path', help='The connection string')
+    parser.add_argument('google_key_path', help='The path of the Google key')
+    parser.add_argument('param_connection_string', help='The MySQL connection string')
+    args = parser.parse_args()
+    sys.path.insert(0, args.python_path)
+    from utils.Storage import Storage
+    from utils.Storage import MongoEncoder
+    from utils.SOAPUtils import SOAPUtils
+    from utils.twitter_analytics_helpers import *
+    from utils.TaggingUtils import TaggingUtils as TU
+    from utils.logging_utils import *
+    from utils.email_tools import *
+    main(args)
