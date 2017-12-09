@@ -406,7 +406,7 @@ def get_number_of_news_items(constituent_name):
 def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_string):
     # get parameters
     soap = SOAPUtils()
-    storage = Storage(google_key_path)
+    storage = Storage.Storage(google_key_path)
     tagger = TU()
 
     columns = ["CONSTITUENT_ID", "CONSTITUENT_NAME", "BVDID"]
@@ -416,11 +416,18 @@ def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_
                                         sql_table_name=table,
                                         sql_column_list=columns)
 
+    # Get parameters
+    param_table = "PARAM_NEWS_COLLECTION"
+    parameters_list = ["LOGGING"]
+    where = lambda x: x["SOURCE"] == 'Orbis'
+
+    parameters = get_parameters(args.param_connection_string, param_table, parameters_list, where)
+
     for constituent_id, constituent_name, bvdid in constituents:
         #get last news date for the constituent
         query = """
-            SELECT max(news_date) as last_date FROM `pecten_dataset.news`
-            WHERE constituent_id = '{}'
+            SELECT max(news_date) as last_date FROM `pecten_dataset.all_news_bkp`
+            WHERE constituent_id = '{}' AND url is NULL
             """.format(constituent_id)
 
         try:
@@ -601,110 +608,21 @@ def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_
                 if bigquery_data[i]["constituent"]:
                     bigquery_data[i]["constituent"] = str(bigquery_data[i]["constituent"])
 
-            storage.insert_bigquery_data("pecten_dataset", "news_test", bigquery_data)
+            storage.insert_bigquery_data("pecten_dataset", "all_news_bkp", bigquery_data)
 
             start = end + 1
             end = start + 10
             records += 10
             print("Records saved: {}".format(records))
 
-def logging(constituent_name, constituent_id, news_count, source, dataset_name, table_name, storage_object):
-    doc = [{"date": time.strftime('%Y-%m-%d %H:%M:%S', datetime.now().date().timetuple()),
-            "constituent_name": constituent_name,
-            "constituent_id": constituent_id,
-            "downloaded_news": news_count,
-            "source": source}]
+            log = [{"date": datetime.now().date().strftime('%Y-%m-%d %H:%M:%S'),
+                    "constituent_name": constituent_name,
+                    "constituent_id": constituent_id,
+                    "downloaded_news": len(bigquery_data),
+                    "source": "Orbis"}]
 
-    try:
-        storage_object.insert_bigquery_data(dataset_name, table_name, doc)
-    except Exception as e:
-        print(e)
-
-def send_mail(param_connection_string, google_key_path, source):
-    storage = Storage(google_key_path=google_key_path)
-
-    if source == 'orbis':
-        parameters = get_parameters(param_connection_string, "PARAM_NEWS_COLLECTION",
-                                    ["EMAIL_USERNAME", "EMAIL_PASSWORD"],
-                                    lambda x: x["SOURCE"] == 'orbis')
-
-        q1 = """
-                SELECT a.constituent_name, a.downloaded_news, a.date, a.source
-                FROM
-                (SELECT constituent_name, SUM(downloaded_news) as downloaded_news, DATE(date) as date, source
-                FROM `pecten_dataset.news_logs`
-                WHERE source = 'orbis'
-                GROUP BY constituent_name, date, source
-                ) a,
-                (SELECT constituent_name, MAX(DATE(date)) as date
-                FROM `igenie-project.pecten_dataset.news_logs`
-                WHERE source = 'orbis'
-                GROUP BY constituent_name
-                ) b
-                WHERE a.constituent_name = b.constituent_name AND a.date = b.date
-                GROUP BY a.constituent_name, a.downloaded_news, a.date, a.source;
-        """
-
-        latest_logs = storage.get_bigquery_data(query=q1, iterator_flag=False)
-        latest_logs_list = [l.values() for l in latest_logs]
-
-        q2 = """
-                SELECT constituent_name,count(*)
-                FROM `pecten_dataset.all_news`
-                GROUP BY constituent_name;
-                """
-    elif source == "zephyr":
-        parameters = get_parameters(param_connection_string, "PARAM_NEWS_COLLECTION",
-                                    ["EMAIL_USERNAME", "EMAIL_PASSWORD"],
-                                    lambda x: x["SOURCE"] == 'zephyr')
-
-        q1 = """
-            SELECT a.constituent_name, a.downloaded_news, a.date, a.source
-            FROM
-            (SELECT constituent_name, SUM(downloaded_news) as downloaded_news, DATE(date) as date, source
-            FROM `pecten_dataset.news_logs`
-            WHERE source = 'zephyr'
-            GROUP BY constituent_name, date, source
-            ) a,
-            (SELECT constituent_name, MAX(DATE(date)) as date
-            FROM `igenie-project.pecten_dataset.news_logs`
-            WHERE source = 'zephyr'
-            GROUP BY constituent_name
-            ) b
-            WHERE a.constituent_name = b.constituent_name AND a.date = b.date
-            GROUP BY a.constituent_name, a.downloaded_news, a.date, a.source;
-        """
-
-        latest_logs = storage.get_bigquery_data(query=q1, iterator_flag=False)
-        latest_logs_list = [l.values() for l in latest_logs]
-
-        q2 = """
-                SELECT
-                FROM `pecten_dataset.ma_deals`
-                GROUP BY ;
-                """
-
-    total_tweets = storage.get_bigquery_data(query=q2, iterator_flag=False)
-    total_tweets_list = [l.values() for l in total_tweets]
-
-    body = "Latest news collected\n" + pformat(latest_logs_list) + "\n\n\n" + \
-            "Total news\n" + pformat(total_tweets_list)
-    subject = "News collection logs: {}".format(time.strftime("%d/%m/%Y"))
-
-    message = 'Subject: {}\n\n{}'.format(subject, body)
-
-    # Credentials (if needed)
-    username = parameters["EMAIL_USERNAME"]
-    password = parameters["EMAIL_PASSWORD"]
-
-    toaddrs = ["ulysses@igenieconsulting.com", "twitter@igenieconsulting.com"]
-
-    # The actual mail send
-    server = smtplib.SMTP('smtp.gmail.com:587')
-    server.starttls()
-    server.login(username, password)
-    server.sendmail(username, toaddrs, message)
-    server.quit()
+            if parameters["LOGGING"] and bigquery_data:
+                logging(log, 'pecten_dataset', "news_logs", storage)
 
 #Development halted for now
 def main_rest(api_key):
@@ -742,6 +660,33 @@ def main(args):
     get_historical_orbis_news(args.user,args.pwd, "orbis", args.google_key_path, args.param_connection_string)
     #get_daily_orbis_news(args.user,args.pwd,"orbis",args.google_key_path,args.param_connection_string)
 
+    q1 = """
+                    SELECT a.constituent_name, a.downloaded_news, a.date, a.source
+                    FROM
+                    (SELECT constituent_name, SUM(downloaded_news) as downloaded_news, DATE(date) as date, source
+                    FROM `pecten_dataset.news_logs`
+                    WHERE source = 'Orbis'
+                    GROUP BY constituent_name, date, source
+                    ) a,
+                    (SELECT constituent_name, MAX(DATE(date)) as date
+                    FROM `igenie-project.pecten_dataset.news_logs`
+                    WHERE source = 'Orbis'
+                    GROUP BY constituent_name
+                    ) b
+                    WHERE a.constituent_name = b.constituent_name AND a.date = b.date
+                    GROUP BY a.constituent_name, a.downloaded_news, a.date, a.source;
+            """
+
+    q2 = """
+                        SELECT constituent_name,count(*)
+                        FROM `pecten_dataset.all_news_bkp`
+                        WHERE news_source = "Orbis"
+                        GROUP BY constituent_name
+    """
+
+    send_mail(args.param_connection_string, args.google_key_path, "Orbis",
+              "PARAM_NEWS_COLLECTION", lambda x: x["SOURCE"] == "Orbis", q1, q2)
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
@@ -757,6 +702,8 @@ if __name__ == "__main__":
     from utils.SOAPUtils import SOAPUtils
     from utils.twitter_analytics_helpers import *
     from utils.TaggingUtils import TaggingUtils as TU
+    from utils.logging_utils import *
+    from utils.email_tools import *
     main(args)
 
 

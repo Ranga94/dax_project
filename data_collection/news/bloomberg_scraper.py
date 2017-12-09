@@ -46,8 +46,8 @@ def get_article(link, ua):
     published = datetime.strptime(published, '%B %d %Y %I:%M %p')
     published = published.strftime('%Y-%m-%d %H:%M:%S')
 
-    doc = {'news_title': title, 'news_article_txt': news_text, 'news_date': published, 'news_source': "Bloomberg",
-            'news_pubication':source}
+    doc = {'news_title': title, 'news_article_txt': news_text, 'news_date': published, 'news_origin': "Bloomberg",
+            'news_source':source}
     return doc
 
 def get_bloomberg_news(args):
@@ -79,8 +79,8 @@ def get_bloomberg_news(args):
     for constituent_id, constituent_name, url_key,pages in all_constituents:
         # Get date of latest news article for this constituent for Bloomberg
         query = """
-        SELECT max(news_date) as last_date FROM `pecten_dataset.all_news_bkp`
-        WHERE constituent_id = '{}' AND news_source = 'Bloomberg'
+        SELECT max(news_date) as last_date FROM `pecten_dataset.all_news`
+        WHERE constituent_id = '{}' AND news_origin = 'Bloomberg'
         """.format(constituent_id)
 
         try:
@@ -130,8 +130,8 @@ def get_bloomberg_news(args):
                     if d is None:
                         continue
 
-                    if last_date_bq is not None:
-                        if d["news_date"] <= last_date_bq:
+                    if last_date_bq:
+                        if datetime.strptime(d["news_date"], "%Y-%m-%d %H:%M:%S") < last_date_bq:
                             continue
 
                     #set extra fields:
@@ -162,7 +162,7 @@ def get_bloomberg_news(args):
             if to_insert:
                 print("Inserting records to BQ")
                 try:
-                    storage_client.insert_bigquery_data('pecten_dataset', 'all_news_bkp', to_insert)
+                    storage_client.insert_bigquery_data('pecten_dataset', 'all_news', to_insert)
                 except Exception as e:
                     print(e)
 
@@ -198,8 +198,8 @@ def main(args):
 
     q2 = """
                     SELECT constituent_name,count(*)
-                    FROM `pecten_dataset.all_news_bkp`
-                    WHERE news_source = "Bloomberg"
+                    FROM `pecten_dataset.all_news`
+                    WHERE news_origin = "Bloomberg"
                     GROUP BY constituent_name
     """
 

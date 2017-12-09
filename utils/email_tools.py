@@ -4,10 +4,13 @@ from .twitter_analytics_helpers import *
 from pprint import pformat
 
 def send_mail(param_connection_string, google_key_path, logging_process,
-              param_table, param_where, query1, query2, param_columns=["EMAIL_USERNAME", "EMAIL_PASSWORD"]):
+              param_table, param_where, query1, query2, param_columns=["EMAIL_USERNAME", "EMAIL_PASSWORD", "LOGGING"]):
     storage = Storage.Storage(google_key_path=google_key_path)
 
     parameters = get_parameters(param_connection_string, param_table,param_columns, param_where)
+
+    if not parameters["LOGGING"]:
+        return
 
     latest_logs = storage.get_bigquery_data(query=query1, iterator_flag=False)
     latest_logs_list = [l.values() for l in latest_logs]
