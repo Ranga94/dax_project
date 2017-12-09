@@ -55,7 +55,7 @@ def get_tweets(args):
     storage = Storage.Storage(google_key_path=args.google_key_path, mongo_connection_string=parameters["CONNECTION_STRING"])
     tagger = TU()
 
-    downloader = TwitterDownloader.TwitterDownloader(parameters["TWITTER_API_KEY"], parameters["TWITTER_API_SECRET"])
+    downloader = TwitterDownloader(parameters["TWITTER_API_KEY"], parameters["TWITTER_API_SECRET"])
     downloader.load_api()
 
     all_constituents = storage.get_sql_data(sql_connection_string=args.param_connection_string,
