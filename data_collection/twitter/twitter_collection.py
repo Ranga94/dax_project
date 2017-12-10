@@ -20,10 +20,12 @@ def main(args):
                     FROM
                     (SELECT constituent_name, SUM(downloaded_tweets) as downloaded_tweets, DATE(date) as date, language
                     FROM `pecten_dataset.tweet_logs`
+                    where language != 'StockTwits'
                     GROUP BY constituent_name, date, language
                     ) a,
                     (SELECT constituent_name, MAX(DATE(date)) as date
                     FROM `igenie-project.pecten_dataset.tweet_logs`
+                    WHERE language != 'StockTwits'
                     GROUP BY constituent_name
                     ) b
                     WHERE a.constituent_name = b.constituent_name AND a.date = b.date AND a.language = "en"
@@ -33,6 +35,7 @@ def main(args):
     q2 = """
         SELECT constituent_name,count(*)
         FROM `pecten_dataset.tweets`
+        where source = 'Twitter'
         GROUP BY constituent_name;
         """
 

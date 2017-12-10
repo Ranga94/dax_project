@@ -71,7 +71,7 @@ class SOAPUtils:
         SelectionResult_count = FindByBvdId[0][0][0][1].text
         return SelectionResult_token, SelectionResult_count
 
-    def find_with_strategy(token, strategy, database):
+    def find_with_strategy(self, token, strategy, database):
         url = 'https://webservices.bvdep.com/{}/remoteaccess.asmx'.format(database)
         headers = {'Content-Type': 'text/xml'}
 
@@ -98,7 +98,7 @@ class SOAPUtils:
         print(SelectionResult_count)
         return SelectionResult_token, SelectionResult_count
 
-    def get_data(self, token, SelectionResult_token, SelectionResult_count, query, database, timeout):
+    def get_data(self, token, SelectionResult_token, SelectionResult_count, query, database, timeout, number_of_records=5):
         url = 'https://webservices.bvdep.com/{}/remoteaccess.asmx'.format(database)
         headers = {'Content-Type': 'text/xml'}
         data = """<?xml version="1.0" encoding="utf-8"?>
@@ -112,11 +112,11 @@ class SOAPUtils:
               </selection>
               <query>{3}</query>
               <fromRecord>0</fromRecord>
-              <nrRecords>5</nrRecords>
+              <nrRecords>{4}</nrRecords>
               <resultFormat>CSV</resultFormat>
             </GetData>
           </soap12:Body>
-        </soap12:Envelope>""".format(token, SelectionResult_token, SelectionResult_count, query)
+        </soap12:Envelope>""".format(token, SelectionResult_token, SelectionResult_count, query, number_of_records)
 
         response = requests.post(url, headers=headers, data=data, timeout=timeout)
         return response.text

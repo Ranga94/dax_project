@@ -1,134 +1,10 @@
 import requests
 import xml.etree.ElementTree as ET
-import os
 from datetime import datetime
 from io import StringIO
 import pandas as pd
 import sys
 import json
-from pprint import pprint, pformat
-import smtplib
-from timeit import default_timer as timer
-from nltk.sentiment.vader import SentimentIntensityAnalyzer as SIA
-
-#Deprecated
-def get_orbis_news(user, pwd):
-    soap = SOAPUtils()
-
-    query = """" SELECT NEWS_DATE USING [Parameters.RepeatingDimension=NewsDim],
-NEWS_TITLE USING [Parameters.RepeatingDimension=NewsDim],
-NEWS_ARTICLE_TXT USING [Parameters.RepeatingDimension=NewsDim],
-NEWS_COMPANIES USING [Parameters.RepeatingDimension=NewsDim],
-NEWS_TOPICS USING [Parameters.RepeatingDimension=NewsDim],
-NEWS_COUNTRY USING [Parameters.RepeatingDimension=NewsDim],
-NEWS_REGION USING [Parameters.RepeatingDimension=NewsDim],
-NEWS_SOURCE USING [Parameters.RepeatingDimension=NewsDim],
-NEWS_PUBLICATION USING [Parameters.RepeatingDimension=NewsDim],
-NEWS_ID USING [Parameters.RepeatingDimension=NewsDim] FROM RemoteAccess.A"""
-
-    constituents = [('Allianz', 'DEFEI1007380'), ('adidas', 'DE8190216927'),
-                    ('BASF', 'DE7150000030'), ('Bayer', 'DE5330000056'),
-                    ('Beiersdorf', 'DE2150000164'), ("BMW", "DE8170003036"),
-                    ('Continental', 'DE2190001578'), ('Commerzbank', 'DEFEB13190'),
-                    ('Daimler', 'DE7330530056'), ("Deutsche Bank", "DEFEB13216"),
-                    ('Deutsche Börse', 'DEFEB54555'), ('Deutsche Post', 'DE5030147191'),
-                    ('Deutsche Telekom', 'DE5030147137'), ('EON', 'DE5050056484'),
-                    ('Fresenius Medical Care', 'DE8110066557'),
-                    ('Fresenius', 'DE6290014544'), ('HeidelbergCement', 'DE7050000100'),
-                    ('Henkel vz', 'DE5050001329'), ('Infineon', 'DE8330359160'),
-                    ('Linde', 'DE8170014684'), ('Lufthansa', 'DE5190000974'),
-                    ('Merck', 'DE6050108507'),
-                    ('Münchener Rückversicherungs-Gesellschaft', 'DEFEI1007130'),
-                    ('ProSiebenSat1 Media', 'DE8330261794'), ('RWE', 'DE5110206610'),
-                    ('SAP', 'DE7050001788'), ('Siemens', 'DE2010000581'),
-                    ('thyssenkrupp', 'DE5110216866'), ('Volkswagen (VW) vz', 'DE2070000543'),
-                    ('Vonovia', 'DE5050438829')]
-
-    data = "all_news"
-
-    for name, bvdid in constituents:
-        token = soap.get_token(user, pwd, "orbis")
-        if not token:
-            return None
-        try:
-            selection_token = soap.find_by_bvd_id(token, bvdid, "orbis")
-            get_data_result = soap.get_data(token, selection_token, "1", query, data, name, "orbis")
-        except Exception as e:
-            print(str(e))
-        finally:
-            soap.close_connection(token, "zephyr")
-
-#Deprecated
-def get_historical_orbis_news_old(user, pwd, database, google_key_path, param_connection_string):
-    soap = SOAPUtils()
-    storage = Storage()
-
-    fields = ["NEWS_DATE", "NEWS_TITLE", "NEWS_ARTICLE_TXT",
-              "NEWS_COMPANIES", "NEWS_TOPICS", "NEWS_COUNTRY", "NEWS_REGION",
-              "NEWS_LANGUAGE", "NEWS_SOURCE", "NEWS_PUBLICATION", "NEWS_ID"]
-
-    filter = ["NEWS_DATE_NewsDim", "NEWS_TITLE_NewsDim", "NEWS_ARTICLE_TXT_NewsDim",
-              "NEWS_COMPANIES_NewsDim", "NEWS_TOPICS_NewsDim", "NEWS_COUNTRY_NewsDim", "NEWS_REGION_NewsDim",
-              "NEWS_LANGUAGE_NewsDim", "NEWS_SOURCE_NewsDim", "NEWS_PUBLICATION_NewsDim", "NEWS_ID_NewsDim"]
-
-    columns = ["NAME", "ISIN"]
-    table = "CONSTITUENTS_MASTER"
-
-    constituents = storage.get_sql_data(sql_connection_string=param_connection_string,
-                          sql_table_name=table,
-                          sql_column_list=columns)
-
-    constituents = [('Allianz', 'DEFEI1007380')]
-
-    for name, bvdid in constituents:
-
-        file_name = "{}_historical_news.json".format(name)
-
-        all_df = []
-
-        i = 0
-        while i < len(fields):
-            print("i:{}".format(i))
-            token = soap.get_token(user, pwd, database)
-            query = "SELECT {} USING [Parameters.RepeatingDimension=NewsDim] FROM RemoteAccess.A".format(fields[i])
-            selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, database)
-            print("Getting {} data".format(fields[i]))
-            try:
-                get_data_result = soap.get_data(token, selection_token, selection_count, query, fields[i], name, database)
-            except Exception as e:
-                print(str(e))
-                continue
-            finally:
-                soap.close_connection(token, database)
-
-            result = ET.fromstring(get_data_result)
-            csv_result = result[0][0][0].text
-
-            TESTDATA = StringIO(csv_result)
-
-            if fields[i] == "NEWS_DATE":
-                all_df.append(pd.read_csv(TESTDATA, sep=",", parse_dates=["NEWS_DATE_NewsDim"]))
-            else:
-                all_df.append(pd.read_csv(TESTDATA, sep=","))
-
-            i += 1
-
-        df = pd.concat(all_df, axis=1)
-        df = df[filter]
-        df.columns = fields
-        df.to_json(file_name, orient="records", date_format="iso")
-
-        # Save to MongoDB
-
-        # Save to cloud
-        if os.path.isfile(file_name):
-            cloud_destination = "2017/{}".format(file_name)
-            if storage.upload_to_cloud_storage(google_key_path,"igenie-news", file_name,cloud_destination):
-                os.remove(file_name)
-            else:
-                print("File not uploaded to Cloud storage.")
-        else:
-            print("File does not exists in the local filesystem.")
 
 def get_historical_orbis_news(user, pwd, database, google_key_path, param_connection_string):
     #get parameters
@@ -403,16 +279,16 @@ def get_number_of_news_items(constituent_name):
 
     return mapping[constituent_name]
 
-def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_string):
-    # get parameters
+def get_daily_orbis_news(args):
+    # get constituents
     soap = SOAPUtils()
-    storage = Storage.Storage(google_key_path)
+    storage = Storage.Storage(args.google_key_path)
     tagger = TU()
 
     columns = ["CONSTITUENT_ID", "CONSTITUENT_NAME", "BVDID"]
     table = "MASTER_CONSTITUENTS"
 
-    constituents = storage.get_sql_data(sql_connection_string=param_connection_string,
+    constituents = storage.get_sql_data(sql_connection_string=args.param_connection_string,
                                         sql_table_name=table,
                                         sql_column_list=columns)
 
@@ -426,27 +302,26 @@ def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_
     for constituent_id, constituent_name, bvdid in constituents:
         #get last news date for the constituent
         query = """
-            SELECT max(news_date) as last_date FROM `pecten_dataset.all_news_bkp`
-            WHERE constituent_id = '{}' AND url is NULL
+            SELECT max(news_id) as max_id FROM `pecten_dataset.all_news`
+            WHERE constituent_id = '{}' and news_origin = "Orbis"
             """.format(constituent_id)
 
         try:
             result = storage.get_bigquery_data(query=query, iterator_flag=False)
+            max_id = result[0]["max_id"]
         except Exception as e:
-            print(e)
-            return
+            max_id = None
+            continue
 
-        last_date_bq = result[0]["last_date"]
-        records = 0
         start = 0
-        end = 10
+        max_count = 20
         print("Constituent: {},{}".format(constituent_name, bvdid))
 
         stop = False
 
         while not stop:
             try:
-                token = soap.get_token(user, pwd, database)
+                token = soap.get_token(parameters["BVD_USERNAME"], parameters["BVD_PASSWORD"], 'orbis')
                 query = "SELECT LINE BVDNEWS.NEWS_DATE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_date, " \
                         "LINE BVDNEWS.NEWS_TITLE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_title," \
                         "LINE BVDNEWS.NEWS_ARTICLE_TXT USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_article_txt, " \
@@ -458,18 +333,17 @@ def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_
                         "LINE BVDNEWS.NEWS_SOURCE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_source," \
                         "LINE BVDNEWS.NEWS_PUBLICATION USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_publication," \
                         "LINE BVDNEWS.NEWS_ID USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_id FROM RemoteAccess.A".format(
-                    start, end)
+                    start, max_count)
 
-                selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, database)
-
-                get_data_result = soap.get_data(token, selection_token, selection_count, query, database,
+                selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, 'orbis')
+                get_data_result = soap.get_data(token, selection_token, selection_count, query, 'orbis',
                                                 timeout=None)
             except Exception as e:
                 print(str(e))
-                continue
-            finally:
                 if token:
-                    soap.close_connection(token, database)
+                    soap.close_connection(token, 'orbis')
+                    token = None
+                break
 
             result = ET.fromstring(get_data_result)
             csv_result = result[0][0][0].text
@@ -479,7 +353,7 @@ def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_
                 df = pd.read_csv(TESTDATA, sep=",", parse_dates=["news_date"])
             except Exception as e:
                 print(e)
-                continue
+                break
 
             if df.shape[0] == 0:
                 print("No records in df")
@@ -487,8 +361,12 @@ def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_
 
             initial_shape = df.shape[0]
 
-            # only get items that have a date greater than the last_date_bq
-            df = df.loc[df["news_date"] > last_date_bq]
+            df.astype({"news_id": int}, copy=False, errors='ignore')
+            df = df.loc[df["news_id"] > max_id]
+
+            if df.shape[0] == 0:
+                print("No new data")
+                break
 
             if df.shape[0] != initial_shape:
                 stop = True
@@ -554,32 +432,44 @@ def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_
 
                 if bigquery_data[i]["news_companies"]:
                     try:
-                        bigquery_data[i]["news_companies"] = bigquery_data[i]["news_companies"].split(";")
+                        bigquery_data[i]["news_companies"] = [i.strip() for i in
+                                                              bigquery_data[i]["news_companies"].split(";")]
                     except Exception as e:
-                        bigquery_data[i]["news_companies"] = str(bigquery_data[i]["news_companies"])
+                        bigquery_data[i]["news_companies"] = []
+                else:
+                    bigquery_data[i]["news_companies"] = []
 
                 if bigquery_data[i]["news_topics"]:
                     try:
                         if bigquery_data[i]["news_topics"].isdigit():
-                            bigquery_data[i]["news_topics"] = None
+                            bigquery_data[i]["news_topics"] = []
                         elif bigquery_data[i]["news_topics"] == 'None':
-                            bigquery_data[i]["news_topics"] = None
+                            bigquery_data[i]["news_topics"] = []
                         else:
-                            bigquery_data[i]["news_topics"] = bigquery_data[i]["news_topics"].split(";")
+                            bigquery_data[i]["news_topics"] = [i.strip() for i in
+                                                               bigquery_data[i]["news_topics"].split(";")]
                     except Exception as e:
-                        bigquery_data[i]["news_topics"] = None
+                        bigquery_data[i]["news_topics"] = []
+                else:
+                    bigquery_data[i]["news_topics"] = []
 
                 if bigquery_data[i]["news_country"]:
                     try:
-                        bigquery_data[i]["news_country"] = bigquery_data[i]["news_country"].split(";")
+                        bigquery_data[i]["news_country"] = [i.strip() for i in
+                                                            bigquery_data[i]["news_country"].split(";")]
                     except Exception as e:
-                        bigquery_data[i]["news_country"] = str(bigquery_data[i]["news_country"])
+                        bigquery_data[i]["news_country"] = []
+                else:
+                    bigquery_data[i]["news_country"] = []
 
                 if bigquery_data[i]["news_region"]:
                     try:
-                        bigquery_data[i]["news_region"] = bigquery_data[i]["news_region"].split(";")
+                        bigquery_data[i]["news_region"] = [i.strip() for i in
+                                                           bigquery_data[i]["news_region"].split(";")]
                     except Exception as e:
-                        bigquery_data[i]["news_region"] = str(bigquery_data[i]["news_region"])
+                        bigquery_data[i]["news_region"] = []
+                else:
+                    bigquery_data[i]["news_region"] = []
 
                 if bigquery_data[i]["news_language"]:
                     bigquery_data[i]["news_language"] = str(bigquery_data[i]["news_language"])
@@ -608,21 +498,26 @@ def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_
                 if bigquery_data[i]["constituent"]:
                     bigquery_data[i]["constituent"] = str(bigquery_data[i]["constituent"])
 
-            storage.insert_bigquery_data("pecten_dataset", "all_news_bkp", bigquery_data)
+            try:
+                storage.insert_bigquery_data("pecten_dataset", "all_news", bigquery_data)
+            except Exception as e:
+                print(e)
 
-            start = end + 1
-            end = start + 10
-            records += 10
-            print("Records saved: {}".format(records))
+            start = start + 20
+
+            print("Records saved: {}".format(df.shape[0]))
 
             log = [{"date": datetime.now().date().strftime('%Y-%m-%d %H:%M:%S'),
                     "constituent_name": constituent_name,
                     "constituent_id": constituent_id,
-                    "downloaded_news": len(bigquery_data),
+                    "downloaded_news": df.shape[0],
                     "source": "Orbis"}]
 
             if parameters["LOGGING"] and bigquery_data:
                 logging(log, 'pecten_dataset', "news_logs", storage)
+
+        if token:
+            soap.close_connection(token, 'orbis')
 
 #Development halted for now
 def main_rest(api_key):
@@ -655,8 +550,6 @@ def main_rest(api_key):
         return True
 
 def main(args):
-    #get_zephyr_data(args.user,args.pwd)
-    #get_orbis_news(args.user,args.pwd)
     get_historical_orbis_news(args.user,args.pwd, "orbis", args.google_key_path, args.param_connection_string)
     #get_daily_orbis_news(args.user,args.pwd,"orbis",args.google_key_path,args.param_connection_string)
 
@@ -679,8 +572,8 @@ def main(args):
 
     q2 = """
                         SELECT constituent_name,count(*)
-                        FROM `pecten_dataset.all_news_bkp`
-                        WHERE news_source = "Orbis"
+                        FROM `pecten_dataset.all_news`
+                        WHERE news_origin = "Orbis"
                         GROUP BY constituent_name
     """
 
@@ -693,8 +586,6 @@ if __name__ == "__main__":
     parser.add_argument('python_path', help='The connection string')
     parser.add_argument('google_key_path', help='The path of the Google key')
     parser.add_argument('param_connection_string', help='The MySQL connection string')
-    parser.add_argument('user', help='SOAP user')
-    parser.add_argument('pwd', help='SOAP pwd')
     args = parser.parse_args()
     sys.path.insert(0, args.python_path)
     from utils.Storage import Storage
