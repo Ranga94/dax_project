@@ -13,7 +13,7 @@ def get_stocktwits(args):
 
     all_constituents = storage.get_sql_data(sql_connection_string=args.param_connection_string,
                                         sql_table_name=table,
-                                        sql_column_list=columns)[:2]
+                                        sql_column_list=columns)
 
     # Get parameters
     param_table = "PARAM_STOCKTWITS_COLLECTION"
