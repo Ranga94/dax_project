@@ -279,16 +279,16 @@ def get_number_of_news_items(constituent_name):
 
     return mapping[constituent_name]
 
-def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_string):
-    # get parameters
+def get_daily_orbis_news(args):
+    # get constituents
     soap = SOAPUtils()
-    storage = Storage.Storage(google_key_path)
+    storage = Storage.Storage(args.google_key_path)
     tagger = TU()
 
     columns = ["CONSTITUENT_ID", "CONSTITUENT_NAME", "BVDID"]
     table = "MASTER_CONSTITUENTS"
 
-    constituents = storage.get_sql_data(sql_connection_string=param_connection_string,
+    constituents = storage.get_sql_data(sql_connection_string=args.param_connection_string,
                                         sql_table_name=table,
                                         sql_column_list=columns)
 
@@ -308,7 +308,7 @@ def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_
 
         try:
             result = storage.get_bigquery_data(query=query, iterator_flag=False)
-            max_id = result[0]["last_date"]
+            max_id = result[0]["max_id"]
         except Exception as e:
             max_id = None
             continue
@@ -321,7 +321,7 @@ def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_
 
         while not stop:
             try:
-                token = soap.get_token(user, pwd, database)
+                token = soap.get_token(parameters["BVD_USERNAME"], parameters["BVD_PASSWORD"], 'orbis')
                 query = "SELECT LINE BVDNEWS.NEWS_DATE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_date, " \
                         "LINE BVDNEWS.NEWS_TITLE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_title," \
                         "LINE BVDNEWS.NEWS_ARTICLE_TXT USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_article_txt, " \
@@ -335,13 +335,13 @@ def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_
                         "LINE BVDNEWS.NEWS_ID USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_id FROM RemoteAccess.A".format(
                     start, max_count)
 
-                selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, database)
-                get_data_result = soap.get_data(token, selection_token, selection_count, query, database,
+                selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, 'orbis')
+                get_data_result = soap.get_data(token, selection_token, selection_count, query, 'orbis',
                                                 timeout=None)
             except Exception as e:
                 print(str(e))
                 if token:
-                    soap.close_connection(token, database)
+                    soap.close_connection(token, 'orbis')
                     token = None
                 break
 
@@ -517,7 +517,7 @@ def get_daily_orbis_news(user, pwd, database, google_key_path, param_connection_
                 logging(log, 'pecten_dataset', "news_logs", storage)
 
         if token:
-            soap.close_connection(token, database)
+            soap.close_connection(token, 'orbis')
 
 #Development halted for now
 def main_rest(api_key):
@@ -572,8 +572,8 @@ def main(args):
 
     q2 = """
                         SELECT constituent_name,count(*)
-                        FROM `pecten_dataset.all_news_bkp`
-                        WHERE news_source = "Orbis"
+                        FROM `pecten_dataset.all_news`
+                        WHERE news_origin = "Orbis"
                         GROUP BY constituent_name
     """
 
@@ -586,8 +586,6 @@ if __name__ == "__main__":
     parser.add_argument('python_path', help='The connection string')
     parser.add_argument('google_key_path', help='The path of the Google key')
     parser.add_argument('param_connection_string', help='The MySQL connection string')
-    parser.add_argument('user', help='SOAP user')
-    parser.add_argument('pwd', help='SOAP pwd')
     args = parser.parse_args()
     sys.path.insert(0, args.python_path)
     from utils.Storage import Storage
