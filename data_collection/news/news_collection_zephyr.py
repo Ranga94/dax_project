@@ -155,7 +155,7 @@ def get_historical_zephyr_ma_deals(args):
                         "constituent_id": constituent_id,
                         "downloaded_deals": len(data),
                         "source": "Zephyr"}]
-                # logging(doc,'pecten_dataset',"news_logs",storage)
+                logging(doc,'pecten_dataset',"news_logs",storage)
 
         if token:
             soap.close_connection(token, 'zephyr')
