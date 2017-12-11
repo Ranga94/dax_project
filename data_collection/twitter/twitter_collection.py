@@ -1,14 +1,14 @@
 from sqlalchemy import *
 from datetime import datetime
-import time
-import smtplib
 import sys
-from bson.son import SON
-from pymongo import MongoClient
 from copy import deepcopy
-from pprint import pprint, pformat
 
 def main(args):
+    param_table = "PARAM_TWITTER_COLLECTION"
+    parameters_list = ["BQ_DATASET"]
+
+    where = lambda x: x["ENVIRONMENT"] == args.environment
+    parameters = tap.get_parameters(args.param_connection_string, param_table, parameters_list, where)
 
     try:
         get_tweets(args)
@@ -19,25 +19,25 @@ def main(args):
                     SELECT a.constituent_name, a.downloaded_tweets, a.date, a.language
                     FROM
                     (SELECT constituent_name, SUM(downloaded_tweets) as downloaded_tweets, DATE(date) as date, language
-                    FROM `pecten_dataset.tweet_logs`
+                    FROM `{0}.tweet_logs`
                     where language != 'StockTwits'
                     GROUP BY constituent_name, date, language
                     ) a,
                     (SELECT constituent_name, MAX(DATE(date)) as date
-                    FROM `igenie-project.pecten_dataset.tweet_logs`
+                    FROM `{0}.tweet_logs`
                     WHERE language != 'StockTwits'
                     GROUP BY constituent_name
                     ) b
                     WHERE a.constituent_name = b.constituent_name AND a.date = b.date AND a.language = "en"
                     GROUP BY a.constituent_name, a.downloaded_tweets, a.date, a.language;
-                """
+                """.format(parameters["BQ_DATASET"])
 
     q2 = """
         SELECT constituent_name,count(*)
-        FROM `pecten_dataset.tweets`
+        FROM `{}.tweets`
         where source = 'Twitter'
         GROUP BY constituent_name;
-        """
+    """.format(parameters["BQ_DATASET"])
 
     send_mail(args.param_connection_string, args.google_key_path, "Twitter", "PARAM_TWITTER_COLLECTION",
                   None,q1,q2)
@@ -49,9 +49,11 @@ def get_tweets(args):
                        "DATABASE_NAME", "COLLECTION_NAME",
                        "LOGGING", "EMAIL_USERNAME",
                        "EMAIL_PASSWORD", "TWITTER_API_KEY",
-                       "TWITTER_API_SECRET", "BUCKET_NAME"]
+                       "TWITTER_API_SECRET", "BUCKET_NAME","BQ_DATASET"]
 
-    parameters = tap.get_parameters(args.param_connection_string, param_table, parameters_list)
+    where = lambda x: x["ENVIRONMENT"] == args.environment
+
+    parameters = tap.get_parameters(args.param_connection_string, param_table, parameters_list, where)
 
     language = parameters["LANGUAGE"].split(",")[0]
 
@@ -77,7 +79,8 @@ def get_tweets(args):
                                          "PARAM_TWITTER_EXCLUSIONS")
 
         #Get max id of all tweets to extract tweets with id highe than that
-        q = "SELECT MAX(id) as max_id FROM `pecten_dataset.tweets` WHERE constituent_id = '{}';".format(constituent_id)
+        q = "SELECT MAX(id) as max_id FROM `{}.tweets` WHERE constituent_id = '{}';".format(parameters["BQ_DATASET"],
+                                                                                            constituent_id)
         try:
             sinceId =  int(storage.get_bigquery_data(q,iterator_flag=False)[0]["max_id"])
         except Exception as e:
@@ -144,11 +147,11 @@ def get_tweets(args):
             #ps_utils.publish("igenie-project", "tweets-unmodified", tweets_unmodified)
             #ps_utils.publish("igenie-project", "tweets", tweets_modified)
             try:
-                storage.insert_bigquery_data('pecten_dataset', 'tweets_unmodified', tweets_unmodified)
+                storage.insert_bigquery_data(parameters["BQ_DATASET"], 'tweets_unmodified', tweets_unmodified)
             except Exception as e:
                 print(e)
             try:
-                storage.insert_bigquery_data('pecten_dataset', 'tweets', tweets_modified)
+                storage.insert_bigquery_data(parameters["BQ_DATASET"], 'tweets', tweets_modified)
             except Exception as e:
                 print(e)
             try:
@@ -167,7 +170,7 @@ def get_tweets(args):
                     "constituent_id": constituent_id,
                     "downloaded_tweets": tweetCount,
                     "language": language}]
-            logging(doc, 'pecten_dataset', 'tweet_logs', storage)
+            logging(doc, parameters["BQ_DATASET"], 'tweet_logs', storage)
 
     return "Downloaded tweets"
 
@@ -202,6 +205,7 @@ if __name__ == "__main__":
     parser.add_argument('python_path', help='The connection string')
     parser.add_argument('google_key_path', help='The path of the Google key')
     parser.add_argument('param_connection_string', help='The connection string')
+    parser.add_argument('environment', help='production or test')
     args = parser.parse_args()
     sys.path.insert(0, args.python_path)
     from utils.TwitterDownloader import TwitterDownloader
