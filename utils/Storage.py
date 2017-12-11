@@ -118,7 +118,6 @@ class Storage:
 
         return rows
 
-
     def insert_to_sql(self, sql_connection_string=None, sql_table_name=None, data=None):
         engine = create_engine(sql_connection_string)
         metadata = MetaData(engine)

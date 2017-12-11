@@ -23,7 +23,7 @@ def get_reuters_news(args, driver):
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
-    common_where = lambda x: x["ENVIRONMENT"] == args.environment & x["STAUTS"] == 'active'
+    common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
     common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
@@ -32,7 +32,7 @@ def get_reuters_news(args, driver):
                                                    sql_table_name="PARAM_NEWS_REUTERS_KEYS",
                                                    sql_column_list=["CONSTITUENT_ID",
                                                                     "CONSTITUENT_NAME",
-                                                                    "URL_KEY"])
+                                                                    "URL_KEY"])[9:]
 
     for constituent_id, constituent_name, url_key in all_constituents:
         to_insert = []
@@ -41,119 +41,125 @@ def get_reuters_news(args, driver):
                 SELECT max(news_date) as last_date FROM `{}.all_news`
                 WHERE constituent_id = '{}' AND news_origin = 'Reuters'
                 """.format(common_parameters["BQ_DATASET"],constituent_id)
-
         try:
-            result = storage_client.get_bigquery_data(query=query, iterator_flag=False)
-            last_date_bq = result[0]["last_date"]
-        except Exception as e:
-            last_date_bq = None
-
-        company_name = url_key
-        print('Scraping articles for {}'.format(company_name))
-        query_url = 'https://reuters.com/search/news?blob={}&sortBy=date&dateRange=all'.format(company_name)
-        # Find last article with date specified
-        driver.get(query_url)
-        sleep(2)
-
-        skip = False
-        if last_date_bq:
             try:
-                last_date = \
-                driver.find_elements_by_xpath('//*[@id="content"]/section[2]/div/div[1]/div[4]/div/div[3]/div/div/h5')[
-                    0].get_attribute('innerHTML')
-            except:
-                last_date = BeautifulSoup(driver.page_source).findAll('h5', {'class': 'search-result-timestamp'})[
-                    0].text.strip()
-            last_date = ' '.join(last_date.split(' ')[:-1])
-            month = [last_date.split(' ')[0][:3]]
-            last_date = ' '.join(month + last_date.split(' ')[1:]).strip().replace(',', '')
-            last_date = datetime.strptime(last_date, '%b %d %Y %I:%M%p')
+                result = storage_client.get_bigquery_data(query=query, iterator_flag=False)
+                last_date_bq = result[0]["last_date"]
+            except Exception as e:
+                last_date_bq = None
 
-            if last_date <= last_date_bq:
-                print("No newer articles")
-                skip = True
+            company_name = url_key
+            print('Scraping articles for {}'.format(company_name))
+            query_url = 'https://reuters.com/search/news?blob={}&sortBy=date&dateRange=all'.format(company_name)
+            # Find last article with date specified
+            driver.get(query_url)
+            sleep(2)
 
-        if skip:
+            skip = False
+            if last_date_bq:
+                try:
+                    last_date = \
+                    driver.find_elements_by_xpath('//*[@id="content"]/section[2]/div/div[1]/div[4]/div/div[3]/div/div/h5')[
+                        0].get_attribute('innerHTML')
+                except:
+                    last_date = BeautifulSoup(driver.page_source).findAll('h5', {'class': 'search-result-timestamp'})[
+                        0].text.strip()
+
+                last_date = ' '.join(last_date.split(' ')[:-1])
+                month = [last_date.split(' ')[0][:3]]
+                last_date = ' '.join(month + last_date.split(' ')[1:]).strip().replace(',', '')
+                last_date = datetime.strptime(last_date, '%b %d %Y %I:%M%p')
+
+                if last_date <= last_date_bq:
+                    print("No newer articles")
+                    skip = True
+
+            if skip:
+                continue
+
+            soup = BeautifulSoup(driver.page_source, 'html.parser')
+            search = soup.find('div', {'class': 'search-result-list news-search'}).findAll('div',
+                                                                                           {'class': 'search-result-indiv'})
+            print("Getting articles")
+            for article in search:
+                title_elem = article.find('h3', {'class': 'search-result-title'})
+                title = title_elem.text.strip()
+                url = "https://reuters.com" + title_elem.find('a')['href']
+
+                date_published = article.find('h5', {'class': 'search-result-timestamp'}).text
+                date_published = ' '.join(date_published.split(' ')[:-1])
+                month = [date_published.split(' ')[0][:3]]
+                date_published = ' '.join(month + date_published.split(' ')[1:]).strip().replace(',', '')
+                date_published_dtype = datetime.strptime(date_published, '%b %d %Y %I:%M%p')
+                date_published = date_published_dtype.strftime("%Y-%m-%d %H:%M:%S")
+
+                if last_date_bq:
+                    if date_published_dtype < last_date_bq:
+                        print("Skipping article")
+                        continue
+
+                soup = BeautifulSoup(
+                    requests.get(url, headers={'User-Agent': random.choice(AGENTS)}).content,
+                    'html.parser')
+                article_body = soup.find('div', {'class': 'ArticleBody_body_2ECha'}).text.strip()
+                try:
+                    source = soup.find('p', {'class': 'Attribution_content_27_rw'}).text.strip()
+                except AttributeError:
+                    source = None
+
+                d = {'news_title': title, 'news_date': date_published, 'news_source': source, 'news_origin':"Reuters", "news_article_txt": article_body}
+                # set extra fields:
+                # score
+                if d["news_article_txt"]:
+                    d['score'] = get_nltk_sentiment(str(d["news_article_txt"]))
+
+                # sentiment
+                d['sentiment'] = get_sentiment_word(d["score"])
+
+                # constituent fields
+                d["constituent_id"] = constituent_id
+                d["constituent_name"] = constituent_name
+                d["constituent"] = get_old_constituent_name(constituent_id)
+
+                # url
+                d["url"] = url
+
+                # show
+                d["show"] = True
+
+                # entity_tags
+                d["entity_tags"] = get_spacey_tags(tagger.get_spacy_entities(str(d["news_title"])))
+
+                to_insert.append(d)
+                print('Article scraped...')
+                #break
+                # Save data to json
+
+            if to_insert:
+                print("Inserting records to BQ")
+                try:
+                    storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], 'all_news', to_insert)
+                except Exception as e:
+                    print(e)
+
+                if parameters["LOGGING"]:
+                    doc = [{"date": datetime.now().date().strftime('%Y-%m-%d %H:%M:%S'),
+                            "constituent_name": constituent_name,
+                            "constituent_id": constituent_id,
+                            "downloaded_news": len(to_insert),
+                            "source": "Reuters"}]
+                    logging(doc, common_parameters["BQ_DATASET"], "news_logs", storage_client)
+
+        except Exception as e:
+            print(e)
             continue
 
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
-        search = soup.find('div', {'class': 'search-result-list news-search'}).findAll('div',
-                                                                                       {'class': 'search-result-indiv'})
-        print("Getting articles")
-        for article in search:
-            title_elem = article.find('h3', {'class': 'search-result-title'})
-            title = title_elem.text.strip()
-            url = "https://reuters.com" + title_elem.find('a')['href']
-
-            date_published = article.find('h5', {'class': 'search-result-timestamp'}).text
-            date_published = ' '.join(date_published.split(' ')[:-1])
-            month = [date_published.split(' ')[0][:3]]
-            date_published = ' '.join(month + date_published.split(' ')[1:]).strip().replace(',', '')
-            date_published_dtype = datetime.strptime(date_published, '%b %d %Y %I:%M%p')
-            date_published = date_published_dtype.strftime("%Y-%m-%d %H:%M:%S")
-
-            if last_date_bq:
-                if date_published_dtype < last_date_bq:
-                    print("Skipping article")
-                    continue
-
-            soup = BeautifulSoup(
-                requests.get(url, headers={'User-Agent': random.choice(AGENTS)}).content,
-                'html.parser')
-            article_body = soup.find('div', {'class': 'ArticleBody_body_2ECha'}).text.strip()
-            try:
-                source = soup.find('p', {'class': 'Attribution_content_27_rw'}).text.strip()
-            except AttributeError:
-                source = None
-
-            d = {'news_title': title, 'news_date': date_published, 'news_source': source, 'news_origin':"Reuters", "news_article_txt": article_body}
-            # set extra fields:
-            # score
-            if d["news_article_txt"]:
-                d['score'] = get_nltk_sentiment(str(d["news_article_txt"]))
-
-            # sentiment
-            d['sentiment'] = get_sentiment_word(d["score"])
-
-            # constituent fields
-            d["constituent_id"] = constituent_id
-            d["constituent_name"] = constituent_name
-            d["constituent"] = get_old_constituent_name(constituent_id)
-
-            # url
-            d["url"] = url
-
-            # show
-            d["show"] = True
-
-            # entity_tags
-            d["entity_tags"] = get_spacey_tags(tagger.get_spacy_entities(str(d["news_title"])))
-
-            to_insert.append(d)
-            print('Article scraped...')
-            #break
-            # Save data to json
-
-        if to_insert:
-            print("Inserting records to BQ")
-            try:
-                storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], 'all_news', to_insert)
-            except Exception as e:
-                print(e)
-
-            if parameters["LOGGING"]:
-                doc = [{"date": datetime.now().date().strftime('%Y-%m-%d %H:%M:%S'),
-                        "constituent_name": constituent_name,
-                        "constituent_id": constituent_id,
-                        "downloaded_news": len(to_insert),
-                        "source": "Reuters"}]
-                logging(doc, common_parameters["BQ_DATASET"], "news_logs", storage_client)
 
 def main(args):
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
-    common_where = lambda x: x["ENVIRONMENT"] == args.environment & x["STAUTS"] == 'active'
+    common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
     common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
 

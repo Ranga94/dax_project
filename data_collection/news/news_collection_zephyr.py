@@ -167,7 +167,7 @@ def get_historical_zephyr_ma_deals(args):
             soap.close_connection(token, 'zephyr')
 
 def get_daily_zephyr_ma_deals(args):
-    query = """
+    zephyr_query = """
         DEFINE P1 AS [Parameters.Currency=SESSION;],
         P2 AS [Parameters.RepeatingDimension=NrOfTargets],
         P3 AS [Parameters.RepeatingDimension=NrOfBidders],
@@ -192,7 +192,7 @@ def get_daily_zephyr_ma_deals(args):
 
     # Get parameters
     param_table = "PARAM_NEWS_COLLECTION"
-    parameters_list = ['BVD_USERNAME', 'BVD_PASSWORD', "LOGGING", "BQ_DATASET"]
+    parameters_list = ['BVD_USERNAME', 'BVD_PASSWORD', "LOGGING"]
     where = lambda x: x["SOURCE"] == 'Zephyr'
 
     parameters = get_parameters(args.param_connection_string, param_table, parameters_list, where)
@@ -200,7 +200,7 @@ def get_daily_zephyr_ma_deals(args):
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
-    common_where = lambda x: x["ENVIRONMENT"] == args.environment & x["STAUTS"] == 'active'
+    common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
     common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
@@ -229,112 +229,110 @@ def get_daily_zephyr_ma_deals(args):
 
         try:
             result = storage.get_bigquery_data(query=query, iterator_flag=False)
-        except Exception as e:
-            print(e)
-            return
+            max_id = result[0]["max_id"]
+            print("Getting M&A deals for {}".format(constituent_name))
 
-        max_id = result[0]["max_id"]
-
-        print("Getting M&A deals for {}".format(constituent_name))
-        try:
             token = soap.get_token(parameters['BVD_USERNAME'], parameters['BVD_PASSWORD'], 'zephyr')
             selection_token, selection_count = soap.find_with_strategy(token, strategy, "zephyr")
-            get_data_result = soap.get_data(token, selection_token, selection_count, query, 'zephyr', timeout=None,
+            get_data_result = soap.get_data(token, selection_token, selection_count, zephyr_query, 'zephyr',
+                                            timeout=None,
                                             number_of_records=100)
-        except Exception as e:
-            print(str(e))
-            soap.close_connection(token, 'zephyr')
-            break
-        finally:
-            pass
 
-        result = ET.fromstring(get_data_result)
-        csv_result = result[0][0][0].text
+            result = ET.fromstring(get_data_result)
+            csv_result = result[0][0][0].text
 
-        TESTDATA = StringIO(csv_result)
-        try:
+            TESTDATA = StringIO(csv_result)
             df = pd.read_csv(TESTDATA, sep=",", parse_dates=["completion_date", "rumour_date", "announced_date",
-                                                             "expected_completion_date", "assumed_completion_date",
-                                                             "postponed_date", "withdrawn_date"])
+                                                         "expected_completion_date", "assumed_completion_date",
+                                                         "postponed_date", "withdrawn_date"])
+
+            df.astype({"record_id": int}, copy=False, errors='ignore')
+            print("Retrieved {} items".format(df.shape[0]))
+
+            df = df.loc[df["record_id"] > max_id]
+            print("New records {} items".format(df.shape[0]))
+
+            if df.shape[0] == 0:
+                if token:
+                    soap.close_connection(token, 'zephyr')
+                continue
+
+            df = df[fields]
+
+            # add constituent name, id and old name
+            df["constituent_id"] = constituent_id
+            df["constituent_name"] = constituent_name
+            old_constituent_name = get_old_constituent_name(constituent_id)
+            df["constituent"] = old_constituent_name
+
+            data = json.loads(df.to_json(orient="records", date_format="iso"))
+            print(len(data))
+
+            for item in data:
+                if "completion_date" in item and item["completion_date"]:
+                    date = item["completion_date"]
+                    ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                    ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                    item["completion_date"] = ts
+
+                if "rumour_date" in item and item["rumour_date"]:
+                    date = item["rumour_date"]
+                    ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                    ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                    item["rumour_date"] = ts
+
+                if "announced_date" in item and item["announced_date"]:
+                    date = item["announced_date"]
+                    ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                    ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                    item["announced_date"] = ts
+
+                if "expected_completion_dat" in item and item["expected_completion_dat"]:
+                    date = item["expected_completion_dat"]
+                    ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                    ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                    item["expected_completion_date"] = ts
+
+                if "assumed_completion_date" in item and item["assumed_completion_date"]:
+                    date = item["assumed_completion_date"]
+                    ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                    ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                    item["assumed_completion_datee"] = ts
+
+                if "postponed_date" in item and item["postponed_date"]:
+                    date = item["postponed_date"]
+                    ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                    ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                    item["postponed_date"] = ts
+
+                if "withdrawn_date" in item and item["withdrawn_date"]:
+                    date = item["withdrawn_date"]
+                    ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                    ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
+                    item["withdrawn_date"] = ts
+
+            if data:
+                print("Inserting records to BQ")
+                try:
+                    #open("ma_deals.json", 'w').write("\n".join(json.dumps(e, cls=MongoEncoder) for e in data))
+                    storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'ma_deals', data)
+                except Exception as e:
+                    print(e)
+                    soap.close_connection(token, 'zephyr')
+
+                if parameters["LOGGING"]:
+                    doc = [{"date": datetime.now().date().strftime('%Y-%m-%d %H:%M:%S'),
+                            "constituent_name": constituent_name,
+                            "constituent_id": constituent_id,
+                            "downloaded_deals": len(data),
+                            "source": "Zephyr"}]
+                    logging(doc,common_parameters["BQ_DATASET"],"news_logs",storage)
+
         except Exception as e:
             print(e)
+            if token:
+                soap.close_connection(token, 'zephyr')
             continue
-
-        df.astype({"record_id": int}, copy=False, errors='ignore')
-        df = df.loc[df["record_id"] > max_id]
-
-        if df.shape[0] == 0:
-            continue
-
-        df = df[fields]
-
-        # add constituent name, id and old name
-        df["constituent_id"] = constituent_id
-        df["constituent_name"] = constituent_name
-        old_constituent_name = get_old_constituent_name(constituent_id)
-        df["constituent"] = old_constituent_name
-
-        data = json.loads(df.to_json(orient="records", date_format="iso"))
-        print(len(data))
-
-        for item in data:
-            if "completion_date" in item and item["completion_date"]:
-                date = item["completion_date"]
-                ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
-                ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
-                item["completion_date"] = ts
-
-            if "rumour_date" in item and item["rumour_date"]:
-                date = item["rumour_date"]
-                ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
-                ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
-                item["rumour_date"] = ts
-
-            if "announced_date" in item and item["announced_date"]:
-                date = item["announced_date"]
-                ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
-                ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
-                item["announced_date"] = ts
-
-            if "expected_completion_dat" in item and item["expected_completion_dat"]:
-                date = item["expected_completion_dat"]
-                ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
-                ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
-                item["expected_completion_date"] = ts
-
-            if "assumed_completion_date" in item and item["assumed_completion_date"]:
-                date = item["assumed_completion_date"]
-                ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
-                ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
-                item["assumed_completion_datee"] = ts
-
-            if "postponed_date" in item and item["postponed_date"]:
-                date = item["postponed_date"]
-                ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
-                ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
-                item["postponed_date"] = ts
-
-            if "withdrawn_date" in item and item["withdrawn_date"]:
-                date = item["withdrawn_date"]
-                ts = time.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
-                ts = time.strftime('%Y-%m-%d %H:%M:%S', ts)
-                item["withdrawn_date"] = ts
-
-        if data:
-            print("Inserting records to BQ")
-            try:
-                open("ma_deals.json", 'w').write("\n".join(json.dumps(e, cls=MongoEncoder) for e in data))
-                # storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'ma_deals', data)
-            except Exception as e:
-                print(e)
-
-            if parameters["LOGGING"]:
-                doc = [{"date": datetime.now().date().strftime('%Y-%m-%d %H:%M:%S'),
-                        "constituent_name": constituent_name,
-                        "constituent_id": constituent_id,
-                        "downloaded_deals": len(data),
-                        "source": "Zephyr"}]
-                logging(doc,common_parameters["BQ_DATASET"],"news_logs",storage)
 
         if token:
             soap.close_connection(token, 'zephyr')
@@ -343,7 +341,7 @@ def main(args):
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
-    common_where = lambda x: x["ENVIRONMENT"] == args.environment & x["STAUTS"] == 'active'
+    common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
     common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
 

@@ -18,7 +18,7 @@ def get_rss_feed(args):
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
-    common_where = lambda x: x["ENVIRONMENT"] == args.environment & x["STAUTS"] == 'active'
+    common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
     common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
@@ -27,7 +27,7 @@ def get_rss_feed(args):
                                                    sql_table_name="MASTER_CONSTITUENTS",
                                                    sql_column_list=["CONSTITUENT_ID",
                                                                     "CONSTITUENT_NAME",
-                                                                    "SYMBOL"])
+                                                                    "SYMBOL"])[1:]
 
     for constituent_id, constituent_name, symbol in all_constituents:
         # get last news date for the constituent
@@ -49,9 +49,13 @@ def get_rss_feed(args):
         to_insert = []
 
         for post in d.entries:
-            date = datetime.fromtimestamp(mktime(post.published_parsed))
-            if max_date and date < max_date:
-                continue
+            date = datetime(post.published_parsed[0], post.published_parsed[1], post.published_parsed[2],
+                            post.published_parsed[3], post.published_parsed[4])
+            if max_date:
+                max_date = str(max_date)[:19]
+                max_date = datetime.strptime(max_date, '%Y-%m-%d %H:%M:%S')
+                if date < max_date:
+                    continue
             else:
                 doc = {"url": post.link, "news_date": date.strftime('%Y-%m-%d %H:%M:%S'),
                        "news_language":post.summary_detail["language"],
@@ -87,14 +91,12 @@ def get_rss_feed(args):
         if parameters["LOGGING"] and to_insert:
             logging(log, common_parameters["BQ_DATASET"], "news_logs", storage_client)
 
-        break
-
 
 def main(args):
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
-    common_where = lambda x: x["ENVIRONMENT"] == args.environment & x["STAUTS"] == 'active'
+    common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
     common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
@@ -104,12 +106,12 @@ def main(args):
                         SELECT a.constituent_name, a.downloaded_news, a.date, a.source
                         FROM
                         (SELECT constituent_name, SUM(downloaded_news) as downloaded_news, DATE(date) as date, source
-                        FROM `{}.news_logs`
+                        FROM `{0}.news_logs`
                         WHERE source = 'Yahoo Finance RSS'
                         GROUP BY constituent_name, date, source
                         ) a,
                         (SELECT constituent_name, MAX(DATE(date)) as date
-                        FROM `{}.news_logs`
+                        FROM `{0}.news_logs`
                         WHERE source = 'Yahoo Finance RSS'
                         GROUP BY constituent_name
                         ) b

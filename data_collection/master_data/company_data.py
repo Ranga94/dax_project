@@ -540,10 +540,17 @@ def extract_meta_data(args):
     base_url = 'http://en.boerse-frankfurt.de/stock/'
     date_of_collection = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
+    # Get dataset name
+    common_table = "PARAM_READ_DATE"
+    common_list = ["BQ_DATASET"]
+    common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
+
+    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
+
     # Get constituents
     storage = Storage.Storage(args.google_key_path)
 
-    columns = ["CONSTITUENT_ID", "CONSTITUENT_NAME", "URL_KEY", "COMPANY_NAME"]
+    columns = ["CONSTITUENT_NAME", "CONSTITUENT_ID", "URL_KEY", "COMPANY_NAME"]
     table = "PARAM_COMPANY_DATA_KEYS"
 
     all_constituents = storage.get_sql_data(sql_connection_string=args.param_connection_string,
@@ -650,52 +657,52 @@ def extract_meta_data(args):
 
         try:
             print("Inserting {} into BQ".format('dividend'))
-            storage.insert_bigquery_data('pecten_dataset', 'dividend', dividend)
+            storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'dividend', dividend)
         except Exception as e:
             print(e)
         try:
             print("Inserting {} into BQ".format('recent_report'))
-            storage.insert_bigquery_data('pecten_dataset', 'recent_report', recent_report)
+            storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'recent_report', recent_report)
         except Exception as e:
             print(e)
         try:
             print("Inserting {} into BQ".format('master_data'))
-            storage.insert_bigquery_data('pecten_dataset', 'master_data', master_data)
+            storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'master_data', master_data)
         except Exception as e:
             print(e)
         try:
             print("Inserting {} into BQ".format('frankfurt_trading_parameters'))
-            storage.insert_bigquery_data('pecten_dataset', 'frankfurt_trading_parameters', frankfurt_trading_parameters)
+            storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'frankfurt_trading_parameters', frankfurt_trading_parameters)
         except Exception as e:
             print(e)
         try:
             print("Inserting {} into BQ".format('liquidity'))
-            storage.insert_bigquery_data('pecten_dataset', 'liquidity', liquidity)
+            storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'liquidity', liquidity)
         except Exception as e:
             print(e)
         try:
             print("Inserting {} into BQ".format('instrument_information'))
-            storage.insert_bigquery_data('pecten_dataset', 'instrument_information', instrument_information)
+            storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'instrument_information', instrument_information)
         except Exception as e:
             print(e)
         try:
             print("Inserting {} into BQ".format('trading_parameters'))
-            storage.insert_bigquery_data('pecten_dataset', 'trading_parameters', trading_parameters)
+            storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'trading_parameters', trading_parameters)
         except Exception as e:
             print(e)
         try:
             print("Inserting {} into BQ".format('business_ratio'))
-            storage.insert_bigquery_data('pecten_dataset', 'business_ratio', business_ratio)
+            storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'business_ratio', business_ratio)
         except Exception as e:
             print(e)
         try:
             print("Inserting {} into BQ".format('technical_figures'))
-            storage.insert_bigquery_data('pecten_dataset', 'technical_figures', technical_figures)
+            storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'technical_figures', technical_figures)
         except Exception as e:
             print(e)
         try:
             print("Inserting {} into BQ".format('historical_key_data'))
-            storage.insert_bigquery_data('pecten_dataset', 'historical_key_data', historical_key_data_list)
+            storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'historical_key_data', historical_key_data_list)
         except Exception as e:
             print(e)
 
@@ -707,6 +714,7 @@ if __name__ == "__main__":
     parser.add_argument('python_path', help='The connection string')
     parser.add_argument('google_key_path', help='The path of the Google key')
     parser.add_argument('param_connection_string', help='The MySQL connection string')
+    parser.add_argument('environment', help='production or test')
     args = parser.parse_args()
     sys.path.insert(0, args.python_path)
     from utils.Storage import Storage
