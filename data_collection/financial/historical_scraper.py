@@ -2,7 +2,7 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 import re
 from pymongo import MongoClient, errors
-from datetime import datetime
+from datetime import datetime, timedelta
 from requests.compat import urljoin
 import time
 import sys
@@ -13,7 +13,7 @@ def main(args):
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
-    common_where = lambda x: x["ENVIRONMENT"] == args.environment & x["STAUTS"] == 'active'
+    common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
     common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
@@ -39,7 +39,7 @@ def main(args):
         print(e)
         return
 
-    from_date = result[0]["last_date"]
+    from_date = result[0]["last_date"] + timedelta(days=1)
     ts = from_date.strftime("%d.%m.%Y")
     from_date_parts = ts.split(".")
     if from_date_parts[0][0] == "0":
@@ -70,8 +70,8 @@ def main(args):
         for constituent_id, constituent_name, url_key in all_constituents:
             print("Extracting data for {} from {} to {}".format(constituent_name, from_date, to_date))
             extract_historical_data(urljoin(constituent_base_url, url_key + constituent_date_url),
-                                    driver, storage, constituent=(constituent_id, constituent_name))
-            time.sleep(60)
+                                    driver, storage, common_parameters["BQ_DATASET"],constituent=(constituent_id, constituent_name))
+            time.sleep(10)
     else:
         if args.constituent == 'DAX':
             extract_historical_data(dax_url, driver, storage, common_parameters["BQ_DATASET"],constituent='DAX')

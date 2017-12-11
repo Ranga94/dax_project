@@ -17,7 +17,7 @@ def extract_ticker_data(args):
     #Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
-    common_where = lambda x: x["ENVIRONMENT"] == args.environment & x["STAUTS"] == 'active'
+    common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
     common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
@@ -29,7 +29,7 @@ def extract_ticker_data(args):
 
     all_constituents = storage.get_sql_data(sql_connection_string=args.param_connection_string,
                                         sql_table_name=table,
-                                        sql_column_list=columns)
+                                        sql_column_list=columns)[:2]
 
     i = 0
     for constituent_id, constituent_name, url_key in all_constituents:
@@ -148,7 +148,7 @@ def main(args):
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
-    common_where = lambda x: x["ENVIRONMENT"] == args.environment & x["STAUTS"] == 'active'
+    common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
     common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
 

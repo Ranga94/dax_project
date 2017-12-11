@@ -62,7 +62,7 @@ def get_bloomberg_news(args):
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
-    common_where = lambda x: x["ENVIRONMENT"] == args.environment & x["STAUTS"] == 'active'
+    common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
     common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
@@ -72,7 +72,7 @@ def get_bloomberg_news(args):
                                                    sql_column_list=["CONSTITUENT_ID",
                                                                     "CONSTITUENT_NAME",
                                                                     "URL_KEY",
-                                                                    "PAGES"])
+                                                                    "PAGES"])[:2]
 
     # Define random user agent object
     ua = UserAgent()
@@ -183,7 +183,7 @@ def main(args):
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
-    common_where = lambda x: x["ENVIRONMENT"] == args.environment & x["STAUTS"] == 'active'
+    common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
     common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
     get_bloomberg_news(args)

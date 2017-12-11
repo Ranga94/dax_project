@@ -294,7 +294,7 @@ def get_daily_orbis_news(args):
 
     # Get parameters
     param_table = "PARAM_NEWS_COLLECTION"
-    parameters_list = ["LOGGING"]
+    parameters_list = ["LOGGING", "BVD_USERNAME","BVD_PASSWORD"]
     where = lambda x: x["SOURCE"] == 'Orbis'
 
     parameters = get_parameters(args.param_connection_string, param_table, parameters_list, where)
@@ -302,7 +302,7 @@ def get_daily_orbis_news(args):
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
-    common_where = lambda x: x["ENVIRONMENT"] == args.environment & x["STAUTS"] == 'active'
+    common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
     common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
@@ -326,9 +326,15 @@ def get_daily_orbis_news(args):
 
         stop = False
 
+        try:
+            token = soap.get_token(parameters["BVD_USERNAME"], parameters["BVD_PASSWORD"], 'orbis')
+            selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, 'orbis')
+        except Exception as e:
+            print(e)
+            return
+
         while not stop:
             try:
-                token = soap.get_token(parameters["BVD_USERNAME"], parameters["BVD_PASSWORD"], 'orbis')
                 query = "SELECT LINE BVDNEWS.NEWS_DATE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_date, " \
                         "LINE BVDNEWS.NEWS_TITLE USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_title," \
                         "LINE BVDNEWS.NEWS_ARTICLE_TXT USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_article_txt, " \
@@ -342,7 +348,6 @@ def get_daily_orbis_news(args):
                         "LINE BVDNEWS.NEWS_ID USING [Parameters.RepeatingDimension=NewsDim;Parameters.RepeatingOffset={0};Parameters.RepeatingMaxCount={1}] AS news_id FROM RemoteAccess.A".format(
                     start, max_count)
 
-                selection_token, selection_count = soap.find_by_bvd_id(token, bvdid, 'orbis')
                 get_data_result = soap.get_data(token, selection_token, selection_count, query, 'orbis',
                                                 timeout=None)
             except Exception as e:
@@ -560,12 +565,12 @@ def main(args):
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
-    common_where = lambda x: x["ENVIRONMENT"] == args.environment & x["STAUTS"] == 'active'
+    common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
     common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
-    get_historical_orbis_news(args.user,args.pwd, "orbis", args.google_key_path, args.param_connection_string)
-    #get_daily_orbis_news(args.user,args.pwd,"orbis",args.google_key_path,args.param_connection_string)
+    #get_historical_orbis_news(args.user,args.pwd, "orbis", args.google_key_path, args.param_connection_string)
+    get_daily_orbis_news(args)
 
     q1 = """
                     SELECT a.constituent_name, a.downloaded_news, a.date, a.source
@@ -576,7 +581,7 @@ def main(args):
                     GROUP BY constituent_name, date, source
                     ) a,
                     (SELECT constituent_name, MAX(DATE(date)) as date
-                    FROM `{}.news_logs`
+                    FROM `{0}.news_logs`
                     WHERE source = 'Orbis'
                     GROUP BY constituent_name
                     ) b
