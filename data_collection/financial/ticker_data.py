@@ -8,11 +8,18 @@ def extract_ticker_data(args):
     ua = UserAgent()
     base_url = "http://charts.finanzen.net/ChartData.ashx?request="
 
-    # Get parameters
+    #Get parameters
     param_table = "PARAM_TICKER_COLLECTION"
     parameters_list = ["LOGGING"]
 
     parameters = get_parameters(args.param_connection_string, param_table, parameters_list)
+
+    #Get dataset name
+    common_table = "PARAM_READ_DATE"
+    common_list = ["BQ_DATASET"]
+    common_where = lambda x: x["ENVIRONMENT"] == args.environment & x["STAUTS"] == 'active'
+
+    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
     # Get constituents
     storage = Storage.Storage(args.google_key_path)
@@ -22,7 +29,7 @@ def extract_ticker_data(args):
 
     all_constituents = storage.get_sql_data(sql_connection_string=args.param_connection_string,
                                         sql_table_name=table,
-                                        sql_column_list=columns)[:2]
+                                        sql_column_list=columns)
 
     i = 0
     for constituent_id, constituent_name, url_key in all_constituents:
@@ -31,9 +38,9 @@ def extract_ticker_data(args):
 
         # get last deal
         query = """
-                SELECT max(datetime) as max_date FROM `pecten_dataset.ticker_data_copy`
+                SELECT max(datetime) as max_date FROM `{}.ticker_data_copy`
                 WHERE constituent_id = '{}';
-        """.format(constituent_id)
+        """.format(common_parameters["BQ_DATASET"], constituent_id)
 
         try:
             result = storage.get_bigquery_data(query=query, iterator_flag=False)
@@ -76,7 +83,7 @@ def extract_ticker_data(args):
                 if list_of_ticks:
                     try:
                         print("Inserting into BQ")
-                        storage.insert_bigquery_data('pecten_dataset', 'ticker_data_copy', list_of_ticks)
+                        storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'ticker_data_copy', list_of_ticks)
                         # pprint(list_of_ticks)
                     except Exception as e:
                         print(e)
@@ -86,7 +93,7 @@ def extract_ticker_data(args):
                                 "constituent_name": constituent_name,
                                 "constituent_id": constituent_id,
                                 "downloaded_ticks": len(list_of_ticks)}]
-                        logging(doc, 'pecten_dataset', "ticker_logs_copy", storage)
+                        logging(doc, common_parameters["BQ_DATASET"], "ticker_logs_copy", storage)
 
                 i += 1
 
@@ -116,7 +123,7 @@ def extract_ticker_data(args):
                     if list_of_ticks:
                         try:
                             print("Inserting into BQ")
-                            storage.insert_bigquery_data('pecten_dataset', 'ticker_data_copy', list_of_ticks)
+                            storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'ticker_data_copy', list_of_ticks)
                         except Exception as e:
                             print(e)
 
@@ -125,7 +132,7 @@ def extract_ticker_data(args):
                                     "constituent_name": constituent_name,
                                     "constituent_id": constituent_id,
                                     "downloaded_ticks": len(list_of_ticks)}]
-                            logging(doc, 'pecten_dataset', "ticker_logs_copy", storage)
+                            logging(doc, common_parameters["BQ_DATASET"], "ticker_logs_copy", storage)
 
                     i += 1
 
@@ -138,6 +145,13 @@ def extract_ticker_data(args):
             time.sleep(5)
 
 def main(args):
+    # Get dataset name
+    common_table = "PARAM_READ_DATE"
+    common_list = ["BQ_DATASET"]
+    common_where = lambda x: x["ENVIRONMENT"] == args.environment & x["STAUTS"] == 'active'
+
+    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
+
     try:
         extract_ticker_data(args)
     except Exception as e:
@@ -147,22 +161,22 @@ def main(args):
             SELECT a.constituent_name, a.downloaded_ticks, a.date
             FROM
             (SELECT constituent_name, SUM(downloaded_ticks) as downloaded_ticks, DATE(date) as date
-            FROM `pecten_dataset.ticker_logs_copy`
+            FROM `{0}.ticker_logs_copy`
             GROUP BY constituent_name, date
             ) a,
             (SELECT constituent_name, MAX(DATE(date)) as date
-             FROM `igenie-project.pecten_dataset.ticker_logs_copy`
+             FROM `{0}.ticker_logs_copy`
              GROUP BY constituent_name
              ) b
              WHERE a.constituent_name = b.constituent_name AND a.date = b.date
              GROUP BY a.constituent_name, a.downloaded_ticks, a.date;
-        """
+        """.format(common_parameters['BQ_DATASET'])
 
     q2 = """
              SELECT constituent_name,count(*) as count
-             FROM `pecten_dataset.ticker_data_copy`
+             FROM `{}.ticker_data_copy`
              GROUP BY constituent_name
-    """
+    """.format(common_parameters["BQ_DATASET"])
 
     send_mail(args.param_connection_string, args.google_key_path, "Ticker",
               "PARAM_TICKER_COLLECTION", None, q1, q2)
@@ -174,6 +188,7 @@ if __name__ == "__main__":
     parser.add_argument('python_path', help='The connection string')
     parser.add_argument('google_key_path', help='The path of the Google key')
     parser.add_argument('param_connection_string', help='The MySQL connection string')
+    parser.add_argument('environment', help='production or test')
     args = parser.parse_args()
     sys.path.insert(0, args.python_path)
     from utils.Storage import Storage

@@ -21,12 +21,19 @@ def get_stocktwits(args):
 
     parameters = get_parameters(args.param_connection_string, param_table, parameters_list)
 
+    # Get dataset name
+    common_table = "PARAM_READ_DATE"
+    common_list = ["BQ_DATASET"]
+    common_where = lambda x: x["ENVIRONMENT"] == args.environment & x["STAUTS"] == 'active'
+
+    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
+
     for constituent_id, constituent_name, url_key in all_constituents:
         #Get the last id
         query = """
-                SELECT max(id) as max_id FROM `pecten_dataset.tweets`
+                SELECT max(id) as max_id FROM `{}.tweets`
                 WHERE constituent_id = '{}' and source = 'StockTwits'
-        """.format(constituent_id)
+        """.format(common_parameters["BQ_DATASET"],constituent_id)
 
         try:
             result = storage.get_bigquery_data(query=query, iterator_flag=False)
@@ -74,7 +81,7 @@ def get_stocktwits(args):
                 to_insert.append(doc)
 
             try:
-                storage.insert_bigquery_data('pecten_dataset', 'tweets', to_insert)
+                storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'tweets', to_insert)
             except Exception as e:
                 print(e)
 
@@ -84,12 +91,19 @@ def get_stocktwits(args):
                         "constituent_id": constituent_id,
                         "downloaded_tweets": len(to_insert),
                         "language": 'StockTwits'}]
-                logging(doc, 'pecten_dataset', 'tweet_logs', storage)
+                logging(doc, common_parameters["BQ_DATASET"], 'tweet_logs', storage)
 
         else:
             print(response.text)
 
 def main(args):
+    # Get dataset name
+    common_table = "PARAM_READ_DATE"
+    common_list = ["BQ_DATASET"]
+    common_where = lambda x: x["ENVIRONMENT"] == args.environment & x["STAUTS"] == 'active'
+
+    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
+
     try:
         get_stocktwits(args)
     except Exception as e:
@@ -99,25 +113,25 @@ def main(args):
                     SELECT a.constituent_name, a.downloaded_tweets, a.date, a.language
                     FROM
                     (SELECT constituent_name, SUM(downloaded_tweets) as downloaded_tweets, DATE(date) as date, language
-                    FROM `pecten_dataset.tweet_logs`
+                    FROM `{0}.tweet_logs`
                     WHERE language = 'StockTwits'
                     GROUP BY constituent_name, date, language
                     ) a,
                     (SELECT constituent_name, MAX(DATE(date)) as date
-                    FROM `igenie-project.pecten_dataset.tweet_logs`
+                    FROM `{0}.tweet_logs`
                     WHERE language = 'StockTwits'
                     GROUP BY constituent_name
                     ) b
                     WHERE a.constituent_name = b.constituent_name AND a.date = b.date
                     GROUP BY a.constituent_name, a.downloaded_tweets, a.date, a.language;
-                """
+                """.format(common_parameters["BQ_DATASET"])
 
     q2 = """
         SELECT constituent_name,count(*)
-        FROM `pecten_dataset.tweets`
+        FROM `{}.tweets`
         WHERE source = 'StockTwits'
         GROUP BY constituent_name;
-        """
+        """.format(common_parameters["BQ_DATASET"])
 
     send_mail(args.param_connection_string, args.google_key_path, "StockTwits", "PARAM_STOCKTWITS_COLLECTION",
                   None,q1,q2)
@@ -128,11 +142,10 @@ if __name__ == "__main__":
     parser.add_argument('python_path', help='The connection string')
     parser.add_argument('google_key_path', help='The path of the Google key')
     parser.add_argument('param_connection_string', help='The MySQL connection string')
+    parser.add_argument('environment', help='production or test')
     args = parser.parse_args()
     sys.path.insert(0, args.python_path)
     from utils.Storage import Storage
-    from utils.Storage import MongoEncoder
-    from utils.SOAPUtils import SOAPUtils
     from utils.twitter_analytics_helpers import *
     from utils.TaggingUtils import TaggingUtils as TU
     from utils.logging_utils import *

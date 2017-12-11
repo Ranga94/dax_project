@@ -36,12 +36,18 @@ def get_historical_zephyr_ma_deals(args):
     """
 
     #Get parametesr
-    # Get parameters
     param_table = "PARAM_NEWS_COLLECTION"
     parameters_list = ['BVD_USERNAME', 'BVD_PASSWORD', "LOGGING"]
     where = lambda x: x["SOURCE"] == 'Zephyr'
 
     parameters = get_parameters(args.param_connection_string, param_table, parameters_list, where)
+
+    # Get dataset name
+    common_table = "PARAM_READ_DATE"
+    common_list = ["BQ_DATASET"]
+    common_where = lambda x: x["ENVIRONMENT"] == args.environment & x["STAUTS"] == 'active'
+
+    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
     #Get constituents
     soap = SOAPUtils()
@@ -145,7 +151,7 @@ def get_historical_zephyr_ma_deals(args):
             print("Inserting records to BQ")
             try:
                 open("ma_deals.json", 'w').write("\n".join(json.dumps(e, cls=MongoEncoder) for e in data))
-                #storage.insert_bigquery_data('pecten_dataset', 'ma_deals', data)
+                #storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'ma_deals', data)
             except Exception as e:
                 print(e)
 
@@ -155,7 +161,7 @@ def get_historical_zephyr_ma_deals(args):
                         "constituent_id": constituent_id,
                         "downloaded_deals": len(data),
                         "source": "Zephyr"}]
-                logging(doc,'pecten_dataset',"news_logs",storage)
+                logging(doc,common_parameters["BQ_DATASET"],"news_logs",storage)
 
         if token:
             soap.close_connection(token, 'zephyr')
@@ -186,10 +192,17 @@ def get_daily_zephyr_ma_deals(args):
 
     # Get parameters
     param_table = "PARAM_NEWS_COLLECTION"
-    parameters_list = ['BVD_USERNAME', 'BVD_PASSWORD', "LOGGING"]
+    parameters_list = ['BVD_USERNAME', 'BVD_PASSWORD', "LOGGING", "BQ_DATASET"]
     where = lambda x: x["SOURCE"] == 'Zephyr'
 
     parameters = get_parameters(args.param_connection_string, param_table, parameters_list, where)
+
+    # Get dataset name
+    common_table = "PARAM_READ_DATE"
+    common_list = ["BQ_DATASET"]
+    common_where = lambda x: x["ENVIRONMENT"] == args.environment & x["STAUTS"] == 'active'
+
+    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
     # Get constituents
     soap = SOAPUtils()
@@ -210,9 +223,9 @@ def get_daily_zephyr_ma_deals(args):
     for constituent_id, constituent_name, strategy in constituents:
         # get last deal
         query = """
-                SELECT max(record_id) as max_id FROM `pecten_dataset.ma_deals`
+                SELECT max(record_id) as max_id FROM `{}.ma_deals`
                 WHERE constituent_id = '{}';
-        """.format(constituent_id)
+        """.format(common_parameters["BQ_DATASET"],constituent_id)
 
         try:
             result = storage.get_bigquery_data(query=query, iterator_flag=False)
@@ -311,7 +324,7 @@ def get_daily_zephyr_ma_deals(args):
             print("Inserting records to BQ")
             try:
                 open("ma_deals.json", 'w').write("\n".join(json.dumps(e, cls=MongoEncoder) for e in data))
-                # storage.insert_bigquery_data('pecten_dataset', 'ma_deals', data)
+                # storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'ma_deals', data)
             except Exception as e:
                 print(e)
 
@@ -321,36 +334,43 @@ def get_daily_zephyr_ma_deals(args):
                         "constituent_id": constituent_id,
                         "downloaded_deals": len(data),
                         "source": "Zephyr"}]
-                logging(doc,'pecten_dataset',"news_logs",storage)
+                logging(doc,common_parameters["BQ_DATASET"],"news_logs",storage)
 
         if token:
             soap.close_connection(token, 'zephyr')
 
 def main(args):
+    # Get dataset name
+    common_table = "PARAM_READ_DATE"
+    common_list = ["BQ_DATASET"]
+    common_where = lambda x: x["ENVIRONMENT"] == args.environment & x["STAUTS"] == 'active'
+
+    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
+
     get_daily_zephyr_ma_deals(args)
 
     q1 = """
         SELECT a.constituent_name, a.downloaded_news, a.date, a.source
         FROM
         (SELECT constituent_name, SUM(downloaded_news) as downloaded_news, DATE(date) as date, source
-        FROM `pecten_dataset.news_logs`
+        FROM `{0}.news_logs`
         WHERE source = 'Zephyr'
         GROUP BY constituent_name, date, source
         ) a,
         (SELECT constituent_name, MAX(DATE(date)) as date
-         FROM `igenie-project.pecten_dataset.news_logs`
+         FROM `{0}.news_logs`
          WHERE source = 'Zephyr'
          GROUP BY constituent_name
          ) b
          WHERE a.constituent_name = b.constituent_name AND a.date = b.date
          GROUP BY a.constituent_name, a.downloaded_news, a.date, a.source;
-    """
+    """.format(common_parameters["BQ_DATASET"])
 
     q2 = """
          SELECT constituent_name,count(*) as count
-         FROM `pecten_dataset.ma_deals`
+         FROM `{}.ma_deals`
          GROUP BY constituent_name
-        """
+        """.format(common_parameters["BQ_DATASET"])
 
     send_mail(args.param_connection_string, args.google_key_path, "Zephyr",
               "PARAM_NEWS_COLLECTION", lambda x: x["SOURCE"] == "Zephyr", q1, q2)
@@ -361,13 +381,13 @@ if __name__ == "__main__":
     parser.add_argument('python_path', help='The connection string')
     parser.add_argument('google_key_path', help='The path of the Google key')
     parser.add_argument('param_connection_string', help='The MySQL connection string')
+    parser.add_argument('environment', help='production or test')
     args = parser.parse_args()
     sys.path.insert(0, args.python_path)
     from utils.Storage import Storage
     from utils.Storage import MongoEncoder
     from utils.SOAPUtils import SOAPUtils
     from utils.twitter_analytics_helpers import *
-    from utils.TaggingUtils import TaggingUtils as TU
     from utils.logging_utils import *
     from utils.email_tools import *
     main(args)
