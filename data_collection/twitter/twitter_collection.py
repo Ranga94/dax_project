@@ -1,76 +1,86 @@
 from sqlalchemy import *
 from datetime import datetime
-import time
-import smtplib
 import sys
-from bson.son import SON
-from pymongo import MongoClient
 from copy import deepcopy
-from pprint import pprint, pformat
 
-def main(arguments):
+def main(args):
+    param_table = "PARAM_TWITTER_COLLECTION"
+    parameters_list = ["BQ_DATASET"]
+
+    where = lambda x: x["ENVIRONMENT"] == args.environment
+    parameters = tap.get_parameters(args.param_connection_string, param_table, parameters_list, where)
+
+    try:
+        get_tweets(args)
+    except Exception as e:
+        print(e)
+
+    q1 = """
+                    SELECT a.constituent_name, a.downloaded_tweets, a.date, a.language
+                    FROM
+                    (SELECT constituent_name, SUM(downloaded_tweets) as downloaded_tweets, DATE(date) as date, language
+                    FROM `{0}.tweet_logs`
+                    where language != 'StockTwits'
+                    GROUP BY constituent_name, date, language
+                    ) a,
+                    (SELECT constituent_name, MAX(DATE(date)) as date
+                    FROM `{0}.tweet_logs`
+                    WHERE language != 'StockTwits'
+                    GROUP BY constituent_name
+                    ) b
+                    WHERE a.constituent_name = b.constituent_name AND a.date = b.date AND a.language = "en"
+                    GROUP BY a.constituent_name, a.downloaded_tweets, a.date, a.language;
+                """.format(parameters["BQ_DATASET"])
+
+    q2 = """
+        SELECT constituent_name,count(*)
+        FROM `{}.tweets`
+        where source = 'Twitter'
+        GROUP BY constituent_name;
+    """.format(parameters["BQ_DATASET"])
+
+    send_mail(args.param_connection_string, args.google_key_path, "Twitter", "PARAM_TWITTER_COLLECTION",
+                  None,q1,q2)
+
+def get_tweets(args):
     param_table = "PARAM_TWITTER_COLLECTION"
     parameters_list = ["LANGUAGE", "TWEETS_PER_QUERY",
-                  "MAX_TWEETS", "CONNECTION_STRING",
-                  "DATABASE_NAME", "COLLECTION_NAME",
-                  "LOGGING_FLAG", "EMAIL_USERNAME",
-                  "EMAIL_PASSWORD", "TWITTER_API_KEY",
-                  "TWITTER_API_SECRET","BUCKET_NAME"]
+                       "MAX_TWEETS", "CONNECTION_STRING",
+                       "DATABASE_NAME", "COLLECTION_NAME",
+                       "LOGGING", "EMAIL_USERNAME",
+                       "EMAIL_PASSWORD", "TWITTER_API_KEY",
+                       "TWITTER_API_SECRET", "BUCKET_NAME","BQ_DATASET"]
 
-    parameters = get_parameters(arguments.param_connection_string, param_table, parameters_list)
+    where = lambda x: x["ENVIRONMENT"] == args.environment
 
-    languages = parameters["LANGUAGE"].split(',')
-    parameters["PARAM_CONNECTION_STRING"] = arguments.param_connection_string
-    parameters["GOOGLE_KEY_PATH"] = arguments.google_key_path
+    parameters = tap.get_parameters(args.param_connection_string, param_table, parameters_list, where)
 
-    email_username = parameters.pop("EMAIL_USERNAME", None)
-    email_pwd = parameters.pop("EMAIL_PASSWORD", None)
+    language = parameters["LANGUAGE"].split(",")[0]
 
-    for lang in languages:
-        parameters["LANGUAGE"] = lang
-        get_tweets(**parameters)
-
-    if parameters["LOGGING_FLAG"]:
-        send_mail(arguments.param_connection_string, arguments.google_key_path)
-
-def get_parameters(connection_string, table, column_list):
-    storage = Storage()
-
-    data = storage.get_sql_data(connection_string, table, column_list)[0]
-    parameters = {}
-
-    for i in range(0, len(column_list)):
-        parameters[column_list[i]] = data[i]
-
-    return parameters
-
-def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABASE_NAME, COLLECTION_NAME,
-               LOGGING_FLAG, TWITTER_API_KEY, TWITTER_API_SECRET, PARAM_CONNECTION_STRING, BUCKET_NAME,
-               GOOGLE_KEY_PATH=None):
-
-    storage = Storage(google_key_path=GOOGLE_KEY_PATH, mongo_connection_string=CONNECTION_STRING)
+    storage = Storage.Storage(google_key_path=args.google_key_path, mongo_connection_string=parameters["CONNECTION_STRING"])
     tagger = TU()
 
-    downloader = TwitterDownloader(TWITTER_API_KEY, TWITTER_API_SECRET)
+    downloader = TwitterDownloader(parameters["TWITTER_API_KEY"], parameters["TWITTER_API_SECRET"])
     downloader.load_api()
 
-    all_constituents = storage.get_sql_data(sql_connection_string=PARAM_CONNECTION_STRING,
+    all_constituents = storage.get_sql_data(sql_connection_string=args.param_connection_string,
                                               sql_table_name="MASTER_CONSTITUENTS",
                                               sql_column_list=["CONSTITUENT_ID","CONSTITUENT_NAME"])
 
-    if LANGUAGE != "en":
-        TWEETS_PER_QUERY = 7
+    if language != "en":
+        parameters["TWEETS_PER_QUERY"] = 7
 
     fields_to_keep = ["text", "favorite_count", "source", "retweeted","entities", "id_str",
                       "retweet_count","favorited","user","lang","created_at","place", "constituent_name",
                       "constituent_id", "search_term", "id", "sentiment_score", "entity_tags","relevance"]
 
     for constituent_id, constituent_name in all_constituents:
-        search_query = get_search_string(constituent_id, PARAM_CONNECTION_STRING, "PARAM_TWITTER_KEYWORDS",
+        search_query = get_search_string(constituent_id, args.param_connection_string, "PARAM_TWITTER_KEYWORDS",
                                          "PARAM_TWITTER_EXCLUSIONS")
 
         #Get max id of all tweets to extract tweets with id highe than that
-        q = "SELECT MAX(id) as max_id FROM `pecten_dataset.tweets` WHERE constituent_id = '{}';".format(constituent_id)
+        q = "SELECT MAX(id) as max_id FROM `{}.tweets` WHERE constituent_id = '{}';".format(parameters["BQ_DATASET"],
+                                                                                            constituent_id)
         try:
             sinceId =  int(storage.get_bigquery_data(q,iterator_flag=False)[0]["max_id"])
         except Exception as e:
@@ -80,15 +90,15 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
         max_id = -1
         tweetCount = 0
 
-        print("Downloading max {0} tweets for {1} in {2} on {3}".format(MAX_TWEETS, constituent_name, LANGUAGE, str(datetime.now())))
-        while tweetCount < MAX_TWEETS:
+        print("Downloading max {0} tweets for {1} in {2} on {3}".format(parameters["MAX_TWEETS"], constituent_name, language, str(datetime.now())))
+        while tweetCount < parameters["MAX_TWEETS"]:
             tweets_unmodified = []
             tweets_modified = []
             tweets_mongo = []
 
             try:
                 tweets, tmp_tweet_count, max_id = downloader.download(constituent_name, search_query,
-                                                                      LANGUAGE, TWEETS_PER_QUERY, sinceId, max_id)
+                                                                      language, parameters["TWEETS_PER_QUERY"], sinceId, max_id)
             except Exception as e:
                 continue
 
@@ -137,11 +147,11 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
             #ps_utils.publish("igenie-project", "tweets-unmodified", tweets_unmodified)
             #ps_utils.publish("igenie-project", "tweets", tweets_modified)
             try:
-                storage.insert_bigquery_data('pecten_dataset', 'tweets_unmodified', tweets_unmodified)
+                storage.insert_bigquery_data(parameters["BQ_DATASET"], 'tweets_unmodified', tweets_unmodified)
             except Exception as e:
                 print(e)
             try:
-                storage.insert_bigquery_data('pecten_dataset', 'tweets', tweets_modified)
+                storage.insert_bigquery_data(parameters["BQ_DATASET"], 'tweets', tweets_modified)
             except Exception as e:
                 print(e)
             try:
@@ -150,65 +160,22 @@ def get_tweets(LANGUAGE, TWEETS_PER_QUERY, MAX_TWEETS, CONNECTION_STRING, DATABA
             except Exception as e:
                 print(e)
 
-
             time.sleep(1)
 
         print("Saved {} tweets".format(tweetCount))
 
-        if LOGGING_FLAG:
-            logging(constituent_name, constituent_id, tweetCount, LANGUAGE,
-                    'pecten_dataset', 'tweet_logs', storage)
+        if parameters["LOGGING"]:
+            doc = [{"date": time.strftime('%Y-%m-%d %H:%M:%S', datetime.now().date().timetuple()),
+                    "constituent_name": constituent_name,
+                    "constituent_id": constituent_id,
+                    "downloaded_tweets": tweetCount,
+                    "language": language}]
+            logging(doc, parameters["BQ_DATASET"], 'tweet_logs', storage)
 
     return "Downloaded tweets"
 
-def logging(constituent_name, constituent_id, tweetCount, language, dataset_name, table_name, storage_object):
-    doc = [{"date": time.strftime('%Y-%m-%d %H:%M:%S', datetime.now().date().timetuple()),
-           "constituent_name": constituent_name,
-           "constituent_id": constituent_id,
-           "downloaded_tweets": tweetCount,
-           "language": language}]
-
-    try:
-        storage_object.insert_bigquery_data(dataset_name, table_name, doc)
-    except Exception as e:
-        print(e)
-
-    '''
-    client = MongoClient(connection_string)
-    db = client[database]
-    collection = db["tweet_logs"]
-
-
-    try:
-        collection.insert_one(doc)
-    except Exception as e:
-        print("some error : " + str(e))
-    '''
-
-def get_max_id(constituent_id, connection_string, database, table):
-    client = MongoClient(connection_string)
-    db = client[database]
-    collection = db[table]
-
-    res = list(collection.aggregate([
-        {
-            "$match": {"constituent": constituent_id}
-        },
-        {
-            "$group": {
-                "_id": "$constituent",
-                "max_id": {"$max": "$id"}
-            }
-        }
-    ]))
-
-    if not res:
-        return None
-
-    return res[0]["max_id"]
-
 def get_search_string(constituent_id, connection_string, table_keywords, table_exclusions):
-    storage = Storage()
+    storage = Storage.Storage()
 
     where = lambda x: and_((x["ACTIVE_STATE"] == 1),(x["CONSTITUENT_ID"] == constituent_id))
 
@@ -231,73 +198,6 @@ def get_search_string(constituent_id, connection_string, table_keywords, table_e
     all_words = keywords_string + exclusions_string
 
     return all_words
-    '''
-    client = MongoClient(connection_string)
-    db = client["dax_gcp"]
-    collection = db["constituents"]
-    constituent_data = collection.find_one({'name': constituent_id})
-    keywords = constituent_data['keywords']
-    exclusions = constituent_data['exclusions']
-
-    k = " OR ".join(keywords)
-    ex = " ".join(exclusions)
-    searchQuery = k + " " + ex
-
-
-    return searchQuery
-    '''
-
-def send_mail(param_connection_string, google_key_path):
-    storage = Storage(google_key_path=google_key_path)
-
-    parameters = get_parameters(param_connection_string,"PARAM_TWITTER_COLLECTION",["EMAIL_USERNAME",
-                                                                            "EMAIL_PASSWORD"])
-    q1 = """
-    SELECT a.constituent_name, a.downloaded_tweets, a.date, a.language
-    FROM
-    (SELECT constituent_name, SUM(downloaded_tweets) as downloaded_tweets, DATE(date) as date, language
-    FROM `pecten_dataset.tweet_logs`
-    GROUP BY constituent_name, date, language
-    ) a,
-    (SELECT constituent_name, MAX(DATE(date)) as date
-    FROM `igenie-project.pecten_dataset.tweet_logs`
-    GROUP BY constituent_name
-    ) b
-    WHERE a.constituent_name = b.constituent_name AND a.date = b.date AND a.language = "en"
-    GROUP BY a.constituent_name, a.downloaded_tweets, a.date, a.language;
-    """
-
-    latest_logs = storage.get_bigquery_data(query=q1,iterator_flag=False)
-    latest_logs_list = [l.values() for l in latest_logs]
-
-    q2 = """
-    SELECT constituent_name,count(*)
-    FROM `pecten_dataset.tweets`
-    GROUP BY constituent_name;
-    """
-
-    total_tweets = storage.get_bigquery_data(query=q2, iterator_flag=False)
-    total_tweets_list = [l.values() for l in total_tweets]
-
-
-    body = "Latest tweets collected\n" + pformat(latest_logs_list) + "\n\n\n" + \
-    "Total tweets\n" + pformat(total_tweets_list)
-    subject = "Twitter collection logs: {}".format(time.strftime("%d/%m/%Y"))
-
-    message = 'Subject: {}\n\n{}'.format(subject, body)
-
-    # Credentials (if needed)
-    username = parameters["EMAIL_USERNAME"]
-    password = parameters["EMAIL_PASSWORD"]
-
-    toaddrs = ["ulysses@igenieconsulting.com", "twitter@igenieconsulting.com"]
-
-    # The actual mail send
-    server = smtplib.SMTP('smtp.gmail.com:587')
-    server.starttls()
-    server.login(username, password)
-    server.sendmail(username, toaddrs, message)
-    server.quit()
 
 if __name__ == "__main__":
     import argparse
@@ -305,13 +205,15 @@ if __name__ == "__main__":
     parser.add_argument('python_path', help='The connection string')
     parser.add_argument('google_key_path', help='The path of the Google key')
     parser.add_argument('param_connection_string', help='The connection string')
+    parser.add_argument('environment', help='production or test')
     args = parser.parse_args()
     sys.path.insert(0, args.python_path)
     from utils.TwitterDownloader import TwitterDownloader
     from utils.Storage import Storage
-    from utils.PubsubUtils import PubsubUtils
     from utils import twitter_analytics_helpers as tap
     from utils.TaggingUtils import TaggingUtils as TU
+    from utils.logging_utils import *
+    from utils.email_tools import *
     main(args)
 
 

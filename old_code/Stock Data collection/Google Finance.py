@@ -16,5 +16,4 @@ data.to_json('insert directory of output file')
         #writer.writerow(line)
 
 #with open('test.json', 'a') as outfile:
-    #json.dump(data, outfile)
-
+#json.dump(data, outfile)

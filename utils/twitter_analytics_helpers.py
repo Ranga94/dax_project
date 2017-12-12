@@ -418,8 +418,8 @@ def get_sentiment_word(score):
     else:
         return "neutral"
 
-def get_parameters(connection_string, table, column_list, where):
-    storage = Storage()
+def get_parameters(connection_string, table, column_list, where=None):
+    storage = Storage.Storage()
 
     data = storage.get_sql_data(connection_string, table, column_list, where)[0]
     parameters = {}

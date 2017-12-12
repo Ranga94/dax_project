@@ -2,23 +2,23 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 import re
 from pymongo import MongoClient, errors
-from datetime import datetime
+from datetime import datetime, timedelta
 from requests.compat import urljoin
 import time
 import sys
 
 def main(args):
     driver = webdriver.PhantomJS()
-    # Get collection parameters
-    param_table = "PARAM_FINANCIAL_COLLECTION"
-    parameters_list = ["MONGO_CONNECTION_STRING"]
-    where = lambda x: x["COLLECTION_TABLE"] == 'historical'
 
-    parameters = get_parameters(args.param_connection_string, param_table, parameters_list, where)
+    # Get dataset name
+    common_table = "PARAM_READ_DATE"
+    common_list = ["BQ_DATASET"]
+    common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
+
+    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
     # Get constituents
-    storage = Storage(google_key_path=args.google_key_path,
-                      mongo_connection_string=parameters["MONGO_CONNECTION_STRING"])
+    storage = Storage(google_key_path=args.google_key_path)
 
     query = """
     SELECT a.CONSTITUENT_ID, a.CONSTITUENT_NAME, b.URL_KEY
@@ -30,8 +30,8 @@ def main(args):
 
     # Get dates
     query = """
-    SELECT max(date) as last_date FROM `pecten_dataset.historical`
-    """
+    SELECT max(date) as last_date FROM `{}.historical`
+    """.format(common_parameters["BQ_DATASET"])
 
     try:
         result = storage.get_bigquery_data(query=query,iterator_flag=False)
@@ -39,7 +39,7 @@ def main(args):
         print(e)
         return
 
-    from_date = result[0]["last_date"]
+    from_date = result[0]["last_date"] + timedelta(days=1)
     ts = from_date.strftime("%d.%m.%Y")
     from_date_parts = ts.split(".")
     if from_date_parts[0][0] == "0":
@@ -66,25 +66,25 @@ def main(args):
     constituent_date_url = '-share/FSE/{}_{}#Price_History'.format(from_date,to_date)
 
     if args.all:
-        extract_historical_data(dax_url, driver, storage, constituent='DAX')
+        extract_historical_data(dax_url, driver, storage, common_parameters["BQ_DATASET"],constituent='DAX')
         for constituent_id, constituent_name, url_key in all_constituents:
             print("Extracting data for {} from {} to {}".format(constituent_name, from_date, to_date))
             extract_historical_data(urljoin(constituent_base_url, url_key + constituent_date_url),
-                                    driver, storage, constituent=(constituent_id, constituent_name))
-            time.sleep(60)
+                                    driver, storage, common_parameters["BQ_DATASET"],constituent=(constituent_id, constituent_name))
+            time.sleep(10)
     else:
         if args.constituent == 'DAX':
-            extract_historical_data(dax_url, driver, storage, constituent='DAX')
+            extract_historical_data(dax_url, driver, storage, common_parameters["BQ_DATASET"],constituent='DAX')
         else:
             for constituent_id, constituent_name, url_key in all_constituents:
                 if constituent_id == args.constituent:
                     print("Extracting data for {} from {} to {}".format(constituent_name, from_date, to_date))
                     constituent_url = urljoin(constituent_base_url, url_key + constituent_date_url)
-                    extract_historical_data(constituent_url, driver, storage, constituent=(constituent_id, constituent_name))
+                    extract_historical_data(constituent_url, driver, storage, common_parameters["BQ_DATASET"],constituent=(constituent_id, constituent_name))
 
     driver.quit()
 
-def extract_historical_data(url, driver, storage_client, constituent=None):
+def extract_historical_data(url, driver, storage_client, dataset_name,constituent=None):
     if isinstance(constituent, tuple):
         constituent_id = constituent[0]
         constituent_name = constituent[1]
@@ -187,7 +187,7 @@ def extract_historical_data(url, driver, storage_client, constituent=None):
             print(e)
 
     try:
-        storage_client.insert_bigquery_data('pecten_dataset', 'historical', rows)
+        storage_client.insert_bigquery_data(dataset_name, 'historical', rows)
     except Exception as e:
         print(e)
 
@@ -208,6 +208,7 @@ if __name__ == "__main__":
     parser.add_argument('python_path', help='The connection string')
     parser.add_argument('google_key_path', help='The path of the Google key')
     parser.add_argument('param_connection_string', help='The connection string')
+    parser.add_argument('environment', help='production or test')
     group = parser.add_mutually_exclusive_group()
     group.add_argument("-a", "--all", action="store_true", help='save historical data for all constituents')
     group.add_argument("-c", "--constituent", help="save historical data for specific constituent")

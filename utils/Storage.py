@@ -1,5 +1,4 @@
 from pymongo import MongoClient, errors
-from google.cloud import storage
 from google.cloud.exceptions import GoogleCloudError, NotFound
 import os
 from sqlalchemy import *
@@ -119,7 +118,6 @@ class Storage:
 
         return rows
 
-
     def insert_to_sql(self, sql_connection_string=None, sql_table_name=None, data=None):
         engine = create_engine(sql_connection_string)
         metadata = MetaData(engine)
@@ -162,20 +160,23 @@ class Storage:
         else:
             return list(iterator)
 
-        '''
-        return iterator
+    def get_bigquery_data_legacy(self, query, timeout=None, iterator_flag=True):
+        if self.bigquery_client:
+            client = self.bigquery_client
+        else:
+            client = bigquery.Client()
 
-        print(query_job.state)
+        config = bigquery.job.QueryJobConfig()
+        config.use_legacy_sql = True
 
-        if query_job.state == 'RUNNING':
-            print("Running query...")
-            iterator = query_job.result(timeout=timeout)
+        print("Running query...")
+        query_job = client.query(query, job_config=config)
+        iterator = query_job.result(timeout=timeout)
 
-            if iterator_flag:
-                return iterator
-            else:
-                return list(iterator)
-        '''
+        if iterator_flag:
+            return iterator
+        else:
+            return list(iterator)
 
     def insert_bigquery_data(self, dataset_name, table_name, data):
         if self.bigquery_client:
@@ -218,7 +219,29 @@ class MongoEncoder(json.JSONEncoder):
         return ts
 
 if __name__ == "__main__":
-    pass
+    storage = Storage(google_key_path="C:/Users/Uly/Desktop/Desktop/DAX/dax_project/keys/igenie-project-key.json")
+    query = """
+    SELECT
+  text, constituent, sentiment_score, constituent_name, constituent_id, date as tweet_date,
+  GROUP_CONCAT(SPLIT(REGEXP_REPLACE(text, r'[^\d]+', '.'))) AS price,
+  CASE
+        WHEN date > '2017-11-01 00:00:00' THEN '2017-12-09 00:00:00 UTC'
+    END AS date,
+CASE
+        WHEN date > '2017-11-01 00:00:00' THEN '2017-12-01 00:00:00 UTC'
+    END AS from_date,
+CASE
+        WHEN date > '2017-11-01 00:00:00' THEN '2017-12-11 00:00:00 UTC'
+    END AS to_date
+FROM [igenie-project:pecten_dataset.twitter_analytics_latest_price_tweets]
+WHERE date between TIMESTAMP ('2017-11-01 00:00:00') and TIMESTAMP ('2017-12-01 00:00:00');
+    """
+    from pprint import pprint
+    try:
+        result = storage.get_bigquery_data_legacy(query,iterator_flag=False)
+        pprint(result)
+    except Exception as e:
+        print(e)
 
 
 
