@@ -23,6 +23,7 @@ from google.cloud.exceptions import GoogleCloudError, NotFound
 import os
 from google.cloud import datastore
 from google.cloud import bigquery
+
 #python Fundamental_ranking_BQ.py 'mysql+pymysql://igenie_readwrite:igenie@127.0.0.1/dax_project' 'PARAM_SCORING' 'igenie-project-key.json' 
 
 def fundamental_ranking_main(args):
@@ -61,8 +62,6 @@ def fundamental_ranking_main(args):
     store_result(args,project_name, table_store,fundamental_growth_score_board,choice=0)
     store_result(args,project_name, table_store,current_fundamental_score_board,choice=1)
     print "all done"
-
-
 
 
 
@@ -112,7 +111,7 @@ def fundamental_growth_scoring(args,table_list,value_list,constituent_list):
                 print str(value_list[i]) + ' for '+ str(constituent) + ' is not avaliable'
             total_score = sum(fundamental_score_array)
             
-        fundamental_score_board = fundamental_score_board.append(pd.DataFrame({'Constituent':constituent, 'Constituent_name':constituent_name,'Constituent_id':constituent_id,'Fundamental_growth_score':total_score,'Sales_score':fundamental_score_array[0],'Profit_margin_score':fundamental_score_array[1],'PER_score':fundamental_score_array[2],'EPS_score':fundamental_score_array[3],'EBITDA_score':fundamental_score_array[4],'Table':'Fundamental growth ranking','Status':'active','Date':date},index=[0]),ignore_index=True)
+        fundamental_score_board = fundamental_score_board.append(pd.DataFrame({'Constituent':constituent, 'Constituent_name':constituent_name,'Constituent_id':constituent_id,'Fundamental_growth_score':total_score,'Sales_score':fundamental_score_array[0],'Profit_margin_score':fundamental_score_array[1],'PER_score':fundamental_score_array[2],'EPS_score':fundamental_score_array[3],'EBITDA_score':fundamental_score_array[4],'Table':'Fundamental growth ranking','Status':'active','Date_of_analysis':date},index=[0]),ignore_index=True)
         #fundamental_score_board= fundamental_score_board.sort_values('Fundamental_growth_score',axis=0, ascending=False).reset_index(drop=True)
     return fundamental_score_board
     
@@ -205,12 +204,13 @@ def current_fundamental_scoring(stats_table,current_values_list,table_list,const
         
         #current_fundamental_array stores all the info needed to calculate scores
     for i in range(n): ## loop constituents
-        temp = {'Constituent':constituent_list[i],'Constituent_name':constituent_name_list[i],'Constituent_id':constituent_id_list[i],'Table':'Current_fundamental_ranking', 'Current_fundamental_total_score':sum(current_fundamental_array[i,:]),'Status':'active','Date':date}
+        temp = {'Constituent':constituent_list[i],'Constituent_name':constituent_name_list[i],'Constituent_id':constituent_id_list[i],'Table':'Current_fundamental_ranking', 'Current_fundamental_total_score':sum(current_fundamental_array[i,:]),'Status':'active','Date_of_analysis':date}
         score_dict = {str(current_values_list[j]):int(current_fundamental_array[i,j]) for j in range(m)}
         score_dict.update(temp.copy())
         current_fundamental_board=current_fundamental_board.append(pd.DataFrame(score_dict,index=[0]),ignore_index=True)
         
     return current_fundamental_board
+
 
 def get_parameters(args):
     script = 'Fundamental_ranking'
@@ -228,9 +228,9 @@ def get_parameters(args):
 
 def update_result(table_store,choice):
     if choice == 1:
-        table_store = 'pecten_dataset_test.Fundamental_current_ranking_t'
+        table_store = 'pecten_dataset_test.Fundamental_current_ranking'
     else:
-        table_store = 'pecten_dataset_test.Fundamental_growth_ranking_t'
+        table_store = 'pecten_dataset_test.Fundamental_growth_ranking'
     
     storage = Storage(google_key_path='/Users/kefei/Documents/Igenie_Consulting/keys/igenie-project-key.json')
     storage = Storage(google_key_path='igenie-project-key.json' )
@@ -244,9 +244,9 @@ def update_result(table_store,choice):
 
 def store_result(args,project_name,table_store,result_df,choice):
     if choice == 1:
-        table_store = 'pecten_dataset_test.Fundamental_current_ranking_t'
+        table_store = 'pecten_dataset_test.Fundamental_current_ranking'
     else:
-        table_store = 'pecten_dataset_test.Fundamental_growth_ranking_t'
+        table_store = 'pecten_dataset_test.Fundamental_growth_ranking'
         
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.service_key_path
     client = bigquery.Client()
@@ -330,7 +330,7 @@ if __name__ == "__main__":
     parser.add_argument('sql_connection_string', help='The connection string to mysql for parameter table') 
     parser.add_argument('parameter_table',help="The name of the parameter table in MySQL")
     parser.add_argument('service_key_path',help='google service key path')
-
+    
     args = parser.parse_args()
     
     fundamental_ranking_main(args)

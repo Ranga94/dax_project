@@ -22,12 +22,17 @@ import os
 from google.cloud import datastore
 from google.cloud import bigquery
 
-#python ATR_analysis_BQ.py 'mysql+pymysql://igenie_readwrite:igenie@127.0.0.1/dax_project' 'PARAM_FINANCIAL_KEY_COLLECTION' 'igenie-project-key.json' 'pecten_dataset.ATR_t'
+#python ATR_analysis_BQ.py 'mysql+pymysql://igenie_readwrite:igenie@127.0.0.1/dax_project' 'PARAM_FINANCIAL_KEY_COLLECTION' 'igenie-project-key.json' 'pecten_dataset_test.ATR'
 
 ##Record the current ATR, the average ATR of this year, the average ATR in the last 5 years
 def ATR_main(args):
     ATR_table = pd.DataFrame()
     project_name, constituent_list,table_store,table_historical = get_parameters(args)
+    table_historical = 'pecten_dataset_test.historical'
+    from_date, to_date = get_timerange(args)
+    table_store = args.table_storage
+    from_date = datetime.strftime(from_date,'%Y-%m-%d %H:%M:%S') #Convert to the standard time format
+    to_date = datetime.strftime(to_date,'%Y-%m-%d %H:%M:%S') 
     
     for constituent in constituent_list:
         
@@ -40,14 +45,14 @@ def ATR_main(args):
         constituent_name = get_constituent_id_name(constituent)[1]
         constituent_id = get_constituent_id_name(constituent)[0]  
         
-        his = get_historical_price(project_name,table_historical,constituent)
+        his = get_historical_price(project_name,table_historical,constituent,to_date)
         ATR_array = ATR_calculate(his)
-        ATR_table = ATR_table.append(pd.DataFrame({'Constituent': constituent,'Constituent_name':constituent_name, 'Constituent_id':constituent_id, 'Current_14_day_ATR': round(ATR_array[-1],2), 'Average_ATR_in_the_last_12_months': round(ATR_array[-252:].mean(),2), 'Average_ATR_in_the_last_3_years':round(ATR_array[-756:].mean(),2),'Table':'ATR analysis','Date':date,'Status':"active"}, index=[0]), ignore_index=True)
+        ATR_table = ATR_table.append(pd.DataFrame({'Constituent': constituent,'Constituent_name':constituent_name, 'Constituent_id':constituent_id, 'Current_14_day_ATR': round(ATR_array[-1],2), 'Average_ATR_in_the_last_12_months': round(ATR_array[-252:].mean(),2), 'Average_ATR_in_the_last_3_years':round(ATR_array[-756:].mean(),2),'Table':'ATR analysis','Date_of_analysis':date,'From_date':from_date,'To_date':to_date,'Status':'active'}, index=[0]), ignore_index=True)
     
     print "table done"
-    update_result(args)
+    update_result(table_store)
     print "update done"
-    store_result(args,project_name, ATR_table)
+    store_result(args,project_name, table_store,ATR_table)
     print "all done"
     
     return ATR_table
@@ -64,6 +69,14 @@ def ATR_calculate(his):
         ATR_array[i] = ATR
         ATR0 = ATR
     return ATR_array
+
+
+def get_timerange(args):
+    query = 'SELECT * FROM PARAM_READ_DATE WHERE STATUS = "active";'
+    timetable = pd.read_sql(query, con=args.sql_connection_string)
+    from_date = timetable['FROM_DATE'].loc[timetable['ENVIRONMENT']=='test']
+    to_date = timetable['TO_DATE'].loc[timetable['ENVIRONMENT']=='test']
+    return from_date[0], to_date[0]
 
 
 def get_parameters(args):
@@ -86,8 +99,7 @@ def get_parameters(args):
 
 #this makes all the out-dated data in the collection 'inactive'
 ##alter the status of collection
-def update_result(args):
-    table_store = args.table_store
+def update_result(table_store):
     storage = Storage(google_key_path='/Users/kefei/Documents/Igenie_Consulting/keys/igenie-project-key.json')
     storage = Storage(google_key_path='igenie-project-key.json')
     query = 'UPDATE `' + table_store +'` SET Status = "inactive" WHERE Status = "active"'
@@ -97,8 +109,7 @@ def update_result(args):
     except Exception as e:
         print(e) 
 
-def store_result(args,project_name,result_df):
-    table_store = args.table_store
+def store_result(args,project_name,table_store,result_df):
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.service_key_path
     client = bigquery.Client()
     #Store result to bigquery
@@ -106,14 +117,16 @@ def store_result(args,project_name,result_df):
     
 
 #this obtains the historical price data as a pandas dataframe from source for one constituent. 
-def get_historical_price(project_name,table_historical,constituent):
+def get_historical_price(project_name,table_historical,constituent,to_date):
     #Obtain project name, table for historical data in MySQL
-    QUERY ='SELECT * FROM '+ table_historical + ' WHERE Constituent= "'+constituent+'"'+ " AND date between TIMESTAMP ('2008-01-01 00:00:00 UTC') and TIMESTAMP ('2017-12-11 00:00:00 UTC') ;"
-    print QUERY
+    #QUERY ='SELECT closing_price, date FROM '+ table_historical + ' WHERE Constituent= "'+constituent+'"'+ " AND date between TIMESTAMP ('2008-01-01 00:00:00 UTC') and TIMESTAMP ('2017-12-11 00:00:00 UTC') ;"
+    QUERY ='SELECT * FROM '+ table_historical + ' WHERE Constituent= "'+constituent+'"'+ " AND date between TIMESTAMP ('2009-01-01 00:00:00 UTC') and TIMESTAMP ('" + to_date + " UTC') ;"
+   
     his=pd.read_gbq(QUERY, project_id=project_name)
     his['date'] = pd.to_datetime(his['date'],format="%Y-%m-%dT%H:%M:%S") #read the date format
     his = his.sort_values('date',ascending=1).reset_index(drop=True) #sort by date (from oldest to newest) and reset the index
     return his
+
 
 
 def get_constituent_id_name(old_constituent_name):

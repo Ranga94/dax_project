@@ -27,12 +27,23 @@ from google.cloud import bigquery
 
 def combined_profitability_main(args):
     project_name,table_store,table_collect_price,table_collect_fundamental=get_parameters(args)
+    from_date, to_date = get_timerange(args)
+    from_date = datetime.strftime(from_date,'%Y-%m-%d %H:%M:%S') #Convert to the standard time format
+    to_date = datetime.strftime(to_date,'%Y-%m-%d %H:%M:%S') 
+    
     current_fundamental_score_board,fundamental_growth_score_board,price_score_board = scoring_collection(project_name)
     board_list = [current_fundamental_score_board,fundamental_growth_score_board,price_score_board]
     score_list = ['Current_fundamental_total_score','Fundamental_growth_score','Total_price_growth_score']
     constituent_list = current_fundamental_score_board['Constituent'].unique()
-    combined_profitability_score_board=combined_profitability_scoring(board_list, score_list) #
+    
+    combined_profitability_score_board=combined_profitability_scoring(board_list, score_list) 
+    combined_profitability_score_board['From_date']=from_date
+    combined_profitability_score_board['To_date']=to_date
+    
     combined_profitability_tag_table = combined_profitability_tag(combined_profitability_score_board,constituent_list) 
+    combined_profitability_tag_table['From_date']=from_date
+    combined_profitability_tag_table['To_date']=to_date
+    
     print 'combine completed'
     
     print "table done"
@@ -61,7 +72,7 @@ def combined_profitability_scoring(board_list, score_list):
     print temp.columns
     temp['Total_profitability_score']=temp['Total_price_growth_score']+temp['Current_fundamental_total_score']+temp['Fundamental_growth_score']
     combined_profitability_board = pd.DataFrame(temp[['Constituent','Constituent_name','Constituent_id','Total_profitability_score','Total_price_growth_score','Current_fundamental_total_score','Fundamental_growth_score','Status']])
-    combined_profitability_board['Date'] = datetime.strftime(datetime.now().date(),'%Y-%m-%d %H:%M:%S') 
+    combined_profitability_board['Date_of_analysis'] = datetime.strftime(datetime.now().date(),'%Y-%m-%d %H:%M:%S') 
     
     #combined_profitability_board = combined_profitability_board.sort_values('Total profitability score',axis=0, ascending=False).reset_index(drop=True)
     return combined_profitability_board
@@ -73,6 +84,7 @@ def combined_profitability_tag(combined_profitability_board,constituent_list):
     profitability_ranking_table=pd.DataFrame()
     combined_profitability_board = combined_profitability_board.sort_values('Total_profitability_score',axis=0, ascending=False).reset_index(drop=True)
     date = datetime.strftime(datetime.now().date(),'%Y-%m-%d %H:%M:%S') 
+    
     
     for constituent in constituent_list:
         print constituent
@@ -107,10 +119,16 @@ def combined_profitability_tag(combined_profitability_board,constituent_list):
         else :
             growth_fundamental_status = 'Low'
             
-        profitability_ranking_table=profitability_ranking_table.append(pd.DataFrame({'Constituent':constituent,'Constituent_name':constituent_name,'Constituent_id':constituent_id, 'Profitability_rank':index, 'Price_growth':growth_price_status,'Fundamental_growth':growth_fundamental_status,'Date':date,'Status':'active'},index=[0]),ignore_index=True)
+        profitability_ranking_table=profitability_ranking_table.append(pd.DataFrame({'Constituent':constituent,'Constituent_name':constituent_name,'Constituent_id':constituent_id, 'Profitability_rank':index, 'Price_growth':growth_price_status,'Fundamental_growth':growth_fundamental_status,'Status':'active'},index=[0]),ignore_index=True)
     #profitability_ranking_table=profitability_ranking_table.sort_values('Profitability rank',axis=0, ascending=True).reset_index(drop=True)
     return profitability_ranking_table
 
+def get_timerange(args):
+    query = 'SELECT * FROM PARAM_READ_DATE WHERE STATUS = "active";'
+    timetable = pd.read_sql(query, con=args.sql_connection_string)
+    from_date = timetable['FROM_DATE'].loc[timetable['ENVIRONMENT']=='test']
+    to_date = timetable['TO_DATE'].loc[timetable['ENVIRONMENT']=='test']
+    return from_date[0], to_date[0]
 
 
 
@@ -132,9 +150,9 @@ def get_parameters(args):
 
 def update_result(table_store,choice):
     if choice == 1:
-        table_store = 'pecten_dataset_test.Profitability_tag_ranking_t'
+        table_store = 'pecten_dataset_test.Profitability_tag_ranking'
     else:
-        table_store = 'pecten_dataset_test.Profitability_score_ranking_t'
+        table_store = 'pecten_dataset_test.Profitability_score_ranking'
     
     storage = Storage(google_key_path='/Users/kefei/Documents/Igenie_Consulting/keys/igenie-project-key.json')
     storage = Storage(google_key_path='igenie-project-key.json' )
@@ -148,9 +166,9 @@ def update_result(table_store,choice):
 
 def store_result(args,project_name,table_store,result_df,choice):
     if choice == 1:
-        table_store = 'pecten_dataset_test.Profitability_tag_ranking_t'
+        table_store = 'pecten_dataset_test.Profitability_tag_ranking'
     else:
-        table_store = 'pecten_dataset_test.Profitability_score_ranking_t'
+        table_store = 'pecten_dataset_test.Profitability_score_ranking'
         
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.service_key_path
     client = bigquery.Client()

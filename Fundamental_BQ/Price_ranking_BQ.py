@@ -6,6 +6,7 @@ from re import sub
 from decimal import Decimal
 import numpy as np
 import datetime
+from datetime import datetime
 import matplotlib.pyplot as plt
 import pylab
 import scipy
@@ -26,11 +27,15 @@ from google.cloud import datastore
 from google.cloud import bigquery
 
 
-#python Price_ranking_BQ.py 'mysql+pymysql://igenie_readwrite:igenie@127.0.0.1/dax_project' 'PARAM_SCORING' 'igenie-project-key.json' 'pecten_dataset_test.Price_ranking_t'
+#python Price_ranking_BQ.py 'mysql+pymysql://igenie_readwrite:igenie@127.0.0.1/dax_project' 'PARAM_SCORING' 'igenie-project-key.json' 'pecten_dataset_test.Price_ranking'
 
 
 def price_ranking_main(args):
     project_name,table_store,table_collect=get_parameters(args)
+    from_date, to_date = get_timerange(args)
+    from_date = datetime.strftime(from_date,'%Y-%m-%d %H:%M:%S') #Convert to the standard time format
+    to_date = datetime.strftime(to_date,'%Y-%m-%d %H:%M:%S') 
+    
     table_store = args.table_storage
     cumulative_returns_table,quarter_mean_table,standard_dev_table,ATR_table,RSI_table=price_analysis_collection(project_name)
     print "collection done"
@@ -50,6 +55,8 @@ def price_ranking_main(args):
     "stats table done"
     ##Make a scoreboard. 
     price_growth_board =price_growth_scoring(args,price_stats_table,table_list,value_list,constituent_list)
+    price_growth_board['From_date'] = from_date
+    price_growth_board['to_date'] = from_date
     
     ##Update the collection
     
@@ -60,12 +67,13 @@ def price_ranking_main(args):
     print "all done"
 
 
+
 def price_analysis_collection(project_name):  #Want to collect data collected between a certain period? 
-    cumulative_returns_table=pd.read_gbq('SELECT * FROM pecten_dataset.cumulative_returns_t WHERE Status = "active";', project_id=project_name)
-    quarter_mean_table = pd.read_gbq('SELECT * FROM pecten_dataset.quarter_mean_growth_t WHERE Status = "active";', project_id=project_name)
-    standard_dev_table = pd.read_gbq('SELECT * FROM pecten_dataset.standard_deviation_t WHERE Status = "active";', project_id=project_name)
-    ATR_table = pd.read_gbq('SELECT * FROM pecten_dataset.ATR_t WHERE Status = "active";', project_id=project_name)
-    RSI_table = pd.read_gbq('SELECT * FROM pecten_dataset.RSI_t WHERE Status = "active";', project_id=project_name)
+    cumulative_returns_table=pd.read_gbq('SELECT * FROM pecten_dataset_test.cumulative_returns WHERE Status = "active";', project_id=project_name)
+    quarter_mean_table = pd.read_gbq('SELECT * FROM pecten_dataset_test.quarter_mean_growth WHERE Status = "active";', project_id=project_name)
+    standard_dev_table = pd.read_gbq('SELECT * FROM pecten_dataset_test.standard_deviation WHERE Status = "active";', project_id=project_name)
+    ATR_table = pd.read_gbq('SELECT * FROM pecten_dataset_test.ATR WHERE Status = "active";', project_id=project_name)
+    RSI_table = pd.read_gbq('SELECT * FROM pecten_dataset_test.RSI WHERE Status = "active";', project_id=project_name)
     
     #dividend_table = pd.DataFrame(list(collection.find({'Table':'dividend analysis','Status':'active'})))
     return cumulative_returns_table,quarter_mean_table,standard_dev_table,ATR_table,RSI_table
@@ -106,6 +114,7 @@ def price_growth_scoring(args,stats_table,table_list,value_list,constituent_list
     date = datetime.strftime(datetime.now().date(),'%Y-%m-%d %H:%M:%S') 
     constituent_name_list = []
     constituent_id_list = []
+    
     
     for j in range(m): ##loop through fundamental quantities
         table = value_list[j]
@@ -173,10 +182,18 @@ def price_growth_scoring(args,stats_table,table_list,value_list,constituent_list
     columnsTitles = ['Constituent','Constituent_name','Constituent_id','Total_price_growth_score','Price_growth_score','Cumulative_return_consistency_score','Quarterly_growth_consistency_score','one_year_return','three_years_return','Rate_of_change_in_price_in_the_last_365_days_per_quarter','Rate_of_change_in_price_in_the_last_3_years_per_quarter','Current_RSI']
     price_growth_board=price_growth_board.reindex(columns=columnsTitles)
     price_growth_board['Status']='active'
-    price_growth_board['Date']=date
+    price_growth_board['Date_of_analysis']=date
     price_growth_board['Table']='Price growth ranking'
     return price_growth_board
 
+
+
+def get_timerange(args):
+    query = 'SELECT * FROM PARAM_READ_DATE WHERE STATUS = "active";'
+    timetable = pd.read_sql(query, con=args.sql_connection_string)
+    from_date = timetable['FROM_DATE'].loc[timetable['ENVIRONMENT']=='test']
+    to_date = timetable['TO_DATE'].loc[timetable['ENVIRONMENT']=='test']
+    return from_date[0], to_date[0]
 
 
 def get_parameters(args):
@@ -194,7 +211,7 @@ def get_parameters(args):
 
 
 def update_result(table_store):
-    storage = Storage(google_key_path='igenie-project-key.json' )
+    storage = Storage(google_key_path=args.service_key_path )
     query = 'UPDATE `' + table_store +'` SET Status = "inactive" WHERE Status = "active"'
 
     try:

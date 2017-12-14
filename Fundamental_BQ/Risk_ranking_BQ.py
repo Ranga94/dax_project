@@ -31,15 +31,18 @@ from google.cloud import datastore
 from google.cloud import bigquery
 
 
-#python Risk_ranking_BQ.py 'mysql+pymysql://igenie_readwrite:igenie@127.0.0.1/dax_project' 'PARAM_SCORING' 'igenie-project-key.json' 'pecten_dataset_test.Risk_ranking_t'
+#python Risk_ranking_BQ.py 'mysql+pymysql://igenie_readwrite:igenie@127.0.0.1/dax_project' 'PARAM_SCORING' 'igenie-project-key.json' 'pecten_dataset_test.Risk_ranking'
 
 def risk_main(args):
     project_name,table_store,table_collect=get_parameters(args)
+    from_date, to_date = get_timerange(args)
     table_store = args.table_storage
     VaR_table = VaR_collect(project_name)
     VaR_stats_table=VaR_stats(VaR_table)
     constituent_list = VaR_table['Constituent'].unique()
     VaR_risk_board = VaR_ranking(args,VaR_stats_table,VaR_table,constituent_list)
+    VaR_risk_board['From_date'] = datetime.strftime(from_date,'%Y-%m-%d %H:%M:%S') 
+    VaR_risk_board['To_date'] = datetime.strftime(to_date,'%Y-%m-%d %H:%M:%S') 
     print 'board done'
     
     update_result(table_store)
@@ -48,8 +51,16 @@ def risk_main(args):
     print "all done"
 
 
+def get_timerange(args):
+    query = 'SELECT * FROM PARAM_READ_DATE WHERE STATUS = "active";'
+    timetable = pd.read_sql(query, con=args.sql_connection_string)
+    from_date = timetable['FROM_DATE'].loc[timetable['ENVIRONMENT']=='test']
+    to_date = timetable['TO_DATE'].loc[timetable['ENVIRONMENT']=='test']
+    return from_date[0], to_date[0]
+
+
 def VaR_collect(project_name):
-    VaR_table=pd.read_gbq('SELECT * FROM pecten_dataset_test.VaR_t WHERE Status = "active";', project_id=project_name)
+    VaR_table=pd.read_gbq('SELECT * FROM pecten_dataset_test.VaR_t WHERE Status = "active";', project_id=project_name) #Collect the analysis within set dataframe
     return VaR_table
 
 def VaR_stats(VaR_table):
@@ -81,6 +92,8 @@ def get_parameters(args):
     table_collect = parameter_table["TABLE_COLLECT_ANALYSIS_BQ"].loc[parameter_table['SCRIPT_NAME']==script].values[0]
     table_store = parameter_table['TABLE_STORE_SCORES_BQ'].loc[parameter_table['SCRIPT_NAME']==script].values[0]
     return project_name,table_store,table_collect
+
+
 
 ##Allocate the risk score (out of 6) according to Value at Risk, higher the score, risker the stock. 
 def VaR_ranking(args,VaR_stats_table,VaR_table,constituent_list):
@@ -133,27 +146,16 @@ def VaR_ranking(args,VaR_stats_table,VaR_table,constituent_list):
     
     var_score_board = var_score_board.sort_values('Risk_score',axis=0, ascending=True).reset_index(drop=True)
     var_score_board['Status']='active'
-    var_score_board['Date'] = date
+    var_score_board['Date_of_analysis'] = date
     ## Append the consistency scores into the calculation of total price growth score
     return var_score_board
 
 
-def get_parameters(args):
-    script = 'Risk_ranking'
-    query = 'SELECT * FROM'+' '+ args.parameter_table + ';'
-    print query
-    parameter_table = pd.read_sql(query, con=args.sql_connection_string)
-    project_name = parameter_table["PROJECT_NAME_BQ"].loc[parameter_table['SCRIPT_NAME']==script].values[0]
-    
-    #Obtain the table storing historical price
-    table_collect = parameter_table["TABLE_COLLECT_ANALYSIS_BQ"].loc[parameter_table['SCRIPT_NAME']==script].values[0]
-    table_store = parameter_table['TABLE_STORE_SCORES_BQ'].loc[parameter_table['SCRIPT_NAME']==script].values[0]
-    return project_name,table_store,table_collect
 
 
 
 def update_result(table_store):
-    storage = Storage(google_key_path='igenie-project-key.json' )
+    storage = Storage(google_key_path=args.service_key_path )
     query = 'UPDATE `' + table_store +'` SET Status = "inactive" WHERE Status = "active"'
 
     try:
