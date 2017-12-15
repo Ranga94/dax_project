@@ -72,7 +72,8 @@ def get_tweets(args):
 
     fields_to_keep = ["text", "favorite_count", "source", "retweeted","entities", "id_str",
                       "retweet_count","favorited","user","lang","created_at","place", "constituent_name",
-                      "constituent_id", "search_term", "id", "sentiment_score", "entity_tags","relevance"]
+                      "constituent_id", "search_term", "id", "sentiment_score", "entity_tags","relevance",
+                      "constituent"]
 
     for constituent_id, constituent_name in all_constituents:
         search_query = get_search_string(constituent_id, args.param_connection_string, "PARAM_TWITTER_KEYWORDS",
@@ -162,7 +163,7 @@ def get_tweets(args):
 
             time.sleep(1)
 
-        print("Saved {} tweets".format(tweetCount))
+        print("Saved {} tweets for".format(tweetCount, constituent_name))
 
         if parameters["LOGGING"]:
             doc = [{"date": time.strftime('%Y-%m-%d %H:%M:%S', datetime.now().date().timetuple()),

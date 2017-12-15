@@ -27,6 +27,6 @@ def get_news_all(from_date, to_date, google_key_path):
                    (k,item[k]) for k in columns))
 
     try:
-        storage_client.insert_bigquery_data('pecten_dataset', 'all_news_copy', to_insert)
+        storage_client.insert_bigquery_data('pecten_dataset', 'all_news', to_insert)
     except Exception as e:
         print(e)
