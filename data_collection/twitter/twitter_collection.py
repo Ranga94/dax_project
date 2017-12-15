@@ -4,11 +4,12 @@ import sys
 from copy import deepcopy
 
 def main(args):
-    param_table = "PARAM_TWITTER_COLLECTION"
-    parameters_list = ["BQ_DATASET"]
+    # Get dataset name
+    common_table = "PARAM_READ_DATE"
+    common_list = ["BQ_DATASET"]
+    common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
-    where = lambda x: x["ENVIRONMENT"] == args.environment
-    parameters = tap.get_parameters(args.param_connection_string, param_table, parameters_list, where)
+    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
     try:
         get_tweets(args)
@@ -30,14 +31,14 @@ def main(args):
                     ) b
                     WHERE a.constituent_name = b.constituent_name AND a.date = b.date AND a.language = "en"
                     GROUP BY a.constituent_name, a.downloaded_tweets, a.date, a.language;
-                """.format(parameters["BQ_DATASET"])
+                """.format(common_parameters["BQ_DATASET"])
 
     q2 = """
         SELECT constituent_name,count(*)
         FROM `{}.tweets`
         where source = 'Twitter'
         GROUP BY constituent_name;
-    """.format(parameters["BQ_DATASET"])
+    """.format(common_parameters["BQ_DATASET"])
 
     send_mail(args.param_connection_string, args.google_key_path, "Twitter", "PARAM_TWITTER_COLLECTION",
                   None,q1,q2)
@@ -49,11 +50,16 @@ def get_tweets(args):
                        "DATABASE_NAME", "COLLECTION_NAME",
                        "LOGGING", "EMAIL_USERNAME",
                        "EMAIL_PASSWORD", "TWITTER_API_KEY",
-                       "TWITTER_API_SECRET", "BUCKET_NAME","BQ_DATASET"]
+                       "TWITTER_API_SECRET", "BUCKET_NAME"]
 
-    where = lambda x: x["ENVIRONMENT"] == args.environment
+    parameters = tap.get_parameters(args.param_connection_string, param_table, parameters_list)
 
-    parameters = tap.get_parameters(args.param_connection_string, param_table, parameters_list, where)
+    # Get dataset name
+    common_table = "PARAM_READ_DATE"
+    common_list = ["BQ_DATASET"]
+    common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
+
+    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
     language = parameters["LANGUAGE"].split(",")[0]
 
@@ -80,7 +86,7 @@ def get_tweets(args):
                                          "PARAM_TWITTER_EXCLUSIONS")
 
         #Get max id of all tweets to extract tweets with id highe than that
-        q = "SELECT MAX(id) as max_id FROM `{}.tweets` WHERE constituent_id = '{}';".format(parameters["BQ_DATASET"],
+        q = "SELECT MAX(id) as max_id FROM `{}.tweets` WHERE constituent_id = '{}';".format(common_parameters["BQ_DATASET"],
                                                                                             constituent_id)
         try:
             sinceId =  int(storage.get_bigquery_data(q,iterator_flag=False)[0]["max_id"])
@@ -148,11 +154,11 @@ def get_tweets(args):
             #ps_utils.publish("igenie-project", "tweets-unmodified", tweets_unmodified)
             #ps_utils.publish("igenie-project", "tweets", tweets_modified)
             try:
-                storage.insert_bigquery_data(parameters["BQ_DATASET"], 'tweets_unmodified', tweets_unmodified)
+                storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'tweets_unmodified', tweets_unmodified)
             except Exception as e:
                 print(e)
             try:
-                storage.insert_bigquery_data(parameters["BQ_DATASET"], 'tweets', tweets_modified)
+                storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'tweets', tweets_modified)
             except Exception as e:
                 print(e)
             try:
@@ -171,7 +177,7 @@ def get_tweets(args):
                     "constituent_id": constituent_id,
                     "downloaded_tweets": tweetCount,
                     "language": language}]
-            logging(doc, parameters["BQ_DATASET"], 'tweet_logs', storage)
+            logging(doc, common_parameters["BQ_DATASET"], 'tweet_logs', storage)
 
     return "Downloaded tweets"
 
