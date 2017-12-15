@@ -97,6 +97,8 @@ def tweet_table(args):
     else:
         print("File does not exists in the local filesystem.")
 
+
+
 def get_parameters(connection_string, table, column_list):
     storage = Storage()
 
