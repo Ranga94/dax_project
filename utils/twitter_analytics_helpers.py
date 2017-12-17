@@ -56,7 +56,7 @@ def get_old_constituent_name(constituent_id):
     mapping["BMWDE8170003036"] = "BMW"
     mapping["ALVDEFEI1007380"] = "Allianz"
     mapping["CBKDEFEB13190"] = "Commerzbank"
-    mapping["ADSDE8190216927"] = "adidas"
+    mapping["ADSDE8190216927"] = "Adidas"
     mapping["DBKDEFEB13216"] = "Deutsche Bank"
     mapping["EOANDE5050056484"] = "EON"
     mapping["LHADE5190000974"] = "Lufthansa"
