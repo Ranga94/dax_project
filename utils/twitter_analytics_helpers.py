@@ -98,7 +98,7 @@ def get_nltk_sentiment(text):
         print(e)
         sent = None
 
-    print(sent)
+    #print(sent)
     return sent
 
 def do_translation(to_translate):
