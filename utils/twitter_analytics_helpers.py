@@ -96,6 +96,7 @@ def get_nltk_sentiment(text):
     try:
         sent = sia.polarity_scores(text)['compound']
     except Exception as e:
+        print(e)
         sent = None
 
     return sent
