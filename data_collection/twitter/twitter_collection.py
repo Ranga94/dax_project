@@ -36,7 +36,6 @@ def main(args):
     q2 = """
         SELECT constituent_name,count(*)
         FROM `{}.tweets`
-        where source = 'Twitter'
         GROUP BY constituent_name;
     """.format(common_parameters["BQ_DATASET"])
 
