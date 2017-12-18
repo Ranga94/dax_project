@@ -124,10 +124,14 @@ def update_tweets(args):
         with open(file, 'r') as f1, open(out, "a") as f2:
             for line in f1:
                 tweet = json.loads(line)
-                if tweet['sentiment_score'] is None:
-                    tweet['sentiment_score'] = tap.get_nltk_sentiment(str(tweet['text']))
+                if 'sentiment_score' in tweet:
                     if tweet['sentiment_score'] is None:
-                        print("{} had null sentiment_score".format(tweet['text']))
+                        tweet['sentiment_score'] = tap.get_nltk_sentiment(str(tweet['text']))
+                        if tweet['sentiment_score'] is None:
+                            print("{} had null sentiment_score".format(tweet['text']))
+                else:
+                    tweet['sentiment_score'] = tap.get_nltk_sentiment(str(tweet['text']))
+
 
                 f2.write(json.dumps(tweet, cls=MongoEncoder) + '\n')
 
