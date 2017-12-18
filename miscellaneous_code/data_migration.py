@@ -110,7 +110,7 @@ def get_parameters(connection_string, table, column_list):
 
 def update_tweets(args):
     #"tweets_000000000000.json","tweets_000000000001.json",
-    files = ["tweets_000000000002.json"
+    files = ["tweets_000000000002.json",
              "tweets_000000000003.json","tweets_000000000004.json","tweets_000000000005.json",
              "tweets_000000000006.json","tweets_000000000007.json","tweets_000000000008.json",
              "tweets_000000000009.json","tweets_000000000010.json","tweets_000000000011.json",
