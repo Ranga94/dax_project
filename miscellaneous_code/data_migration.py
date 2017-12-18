@@ -122,6 +122,8 @@ def update_tweets(args):
     for file in files:
         print("Processing file: {}".format(file))
         with open(file, 'r') as f1, open(out, "a") as f2:
+            records = 0
+            total = 0
             for line in f1:
                 tweet = json.loads(line)
                 if 'sentiment_score' in tweet:
@@ -132,8 +134,12 @@ def update_tweets(args):
                 else:
                     tweet['sentiment_score'] = tap.get_nltk_sentiment(str(tweet['text']))
 
-
                 f2.write(json.dumps(tweet, cls=MongoEncoder) + '\n')
+                records += 1
+                total += 1
+                if records == 2000:
+                    print("Wrote {} records".format(total))
+                    records = 0
 
 if __name__ == "__main__":
     import argparse
