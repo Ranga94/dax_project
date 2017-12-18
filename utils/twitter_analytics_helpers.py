@@ -92,13 +92,13 @@ def get_old_constituent_name(constituent_id):
 
 def get_nltk_sentiment(text):
     sia = SIA()
-    sent = None
     try:
         sent = sia.polarity_scores(text)['compound']
     except Exception as e:
         print(e)
         sent = None
 
+    print(sent)
     return sent
 
 def do_translation(to_translate):
