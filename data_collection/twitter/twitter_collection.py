@@ -108,10 +108,10 @@ def get_tweets(args):
             except Exception as e:
                 continue
 
-
-            print("Downloaded {} tweets".format(tmp_tweet_count))
             if not tweets:
                 break
+            else:
+                print("Downloaded {} tweets".format(tmp_tweet_count))
 
             tweetCount += tmp_tweet_count
 
