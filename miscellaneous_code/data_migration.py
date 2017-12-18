@@ -120,6 +120,7 @@ def update_tweets(args):
     out = "tweets_fixed.json"
 
     for file in files:
+        print("Processing file: {}".format(file))
         with open(file, 'r') as f1, open(out, "a") as f2:
             for line in f1:
                 tweet = json.loads(line)
@@ -129,7 +130,6 @@ def update_tweets(args):
                         print("{} had null sentiment_score".format(tweet['text']))
 
                 f2.write(json.dumps(tweet, cls=MongoEncoder) + '\n')
-
 
 if __name__ == "__main__":
     import argparse
