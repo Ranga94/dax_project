@@ -40,14 +40,14 @@ def get_historical_zephyr_ma_deals(args):
     parameters_list = ['BVD_USERNAME', 'BVD_PASSWORD', "LOGGING"]
     where = lambda x: x["SOURCE"] == 'Zephyr'
 
-    parameters = get_parameters(args.param_connection_string, param_table, parameters_list, where)
+    parameters = tah.get_parameters(args.param_connection_string, param_table, parameters_list, where)
 
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
     common_where = lambda x: x["ENVIRONMENT"] == args.environment & x["STAUTS"] == 'active'
 
-    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
+    common_parameters = tah.get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
     #Get constituents
     soap = SOAPUtils()
@@ -195,14 +195,14 @@ def get_daily_zephyr_ma_deals(args):
     parameters_list = ['BVD_USERNAME', 'BVD_PASSWORD', "LOGGING"]
     where = lambda x: x["SOURCE"] == 'Zephyr'
 
-    parameters = get_parameters(args.param_connection_string, param_table, parameters_list, where)
+    parameters = tah.get_parameters(args.param_connection_string, param_table, parameters_list, where)
 
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
     common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
-    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
+    common_parameters = tah.get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
     # Get constituents
     soap = SOAPUtils()
@@ -343,7 +343,7 @@ def main(args):
     common_list = ["BQ_DATASET"]
     common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
-    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
+    common_parameters = tah.get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
     get_daily_zephyr_ma_deals(args)
 
@@ -385,7 +385,7 @@ if __name__ == "__main__":
     from utils.Storage import Storage
     from utils.Storage import MongoEncoder
     from utils.SOAPUtils import SOAPUtils
-    from utils.twitter_analytics_helpers import *
+    from utils import twitter_analytics_helpers as tah
     from utils.logging_utils import *
     from utils.email_tools import *
     main(args)

@@ -9,7 +9,7 @@ def main(args):
     common_list = ["BQ_DATASET"]
     common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
-    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
+    common_parameters = tap.get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
     try:
         get_tweets(args)
@@ -58,7 +58,7 @@ def get_tweets(args):
     common_list = ["BQ_DATASET"]
     common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
-    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
+    common_parameters = tap.get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
     languages = parameters["LANGUAGE"].split(",")
 

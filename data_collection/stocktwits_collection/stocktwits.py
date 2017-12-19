@@ -19,14 +19,14 @@ def get_stocktwits(args):
     param_table = "PARAM_STOCKTWITS_COLLECTION"
     parameters_list = ["LOGGING"]
 
-    parameters = get_parameters(args.param_connection_string, param_table, parameters_list)
+    parameters = tah.get_parameters(args.param_connection_string, param_table, parameters_list)
 
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
     common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
-    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
+    common_parameters = tah.get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
     for constituent_id, constituent_name, url_key in all_constituents:
         #Get the last id
@@ -74,7 +74,7 @@ def get_stocktwits(args):
                 doc['search_term'] = ''
                 doc["constituent"] = get_old_constituent_name(constituent_id)
                 doc['relevance'] = 1
-                doc["sentiment_score"] = get_nltk_sentiment(str(doc["text"]))
+                doc["sentiment_score"] = tah.get_nltk_sentiment(str(doc["text"]))
                 tagged_text = tagger.get_spacy_entities(str(doc["text"]))
                 doc["entity_tags"] = get_spacey_tags(tagged_text)
 
@@ -102,7 +102,7 @@ def main(args):
     common_list = ["BQ_DATASET"]
     common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
-    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
+    common_parameters = tah.get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
     try:
         get_stocktwits(args)
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     sys.path.insert(0, args.python_path)
     from utils.Storage import Storage
-    from utils.twitter_analytics_helpers import *
+    from utils import twitter_analytics_helpers as tah
     from utils.TaggingUtils import TaggingUtils as TU
     from utils.logging_utils import *
     from utils.email_tools import *
