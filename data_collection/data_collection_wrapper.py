@@ -12,11 +12,6 @@ def main(args):
     except Exception as e:
         print(e)
     try:
-        print("Executing ticker_data")
-        #ticker_data.main(args)
-    except Exception as e:
-        print(e)
-    try:
         print("Executing bloomberg_scraper")
         #bloomberg_scraper.main(args)
     except Exception as e:
@@ -44,6 +39,11 @@ def main(args):
     try:
         print("Executing stocktwits")
         #stocktwits.main(args)
+    except Exception as e:
+        print(e)
+    try:
+        print("Executing ticker_data")
+        #ticker_data.main(args)
     except Exception as e:
         print(e)
     try:
