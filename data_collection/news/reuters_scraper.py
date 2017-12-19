@@ -76,7 +76,7 @@ def get_reuters_news(args, driver):
                 last_date = ' '.join(month + last_date.split(' ')[1:]).strip().replace(',', '')
                 last_date = datetime.strptime(last_date, '%b %d %Y %I:%M%p')
 
-                if last_date <= last_date_bq:
+                if last_date <= datetime.strptime(last_date_bq.strftime("%Y-%m-%d"), "%Y-%m-%d"):
                     print("No newer articles")
                     skip = True
 
@@ -100,7 +100,7 @@ def get_reuters_news(args, driver):
                 date_published = date_published_dtype.strftime("%Y-%m-%d %H:%M:%S")
 
                 if last_date_bq:
-                    if date_published_dtype < last_date_bq:
+                    if date_published_dtype < datetime.strptime(last_date_bq.strftime("%Y-%m-%d"), "%Y-%m-%d"):
                         print("Skipping article")
                         continue
 
