@@ -4,6 +4,14 @@ import sys
 from copy import deepcopy
 
 def main(args):
+    if __name__ != "__main__":
+        sys.path.insert(0, args.python_path)
+        from utils.TwitterDownloader import TwitterDownloader
+        from utils.Storage import Storage
+        from utils import twitter_analytics_helpers as tap
+        from utils.TaggingUtils import TaggingUtils as TU
+        from utils.logging_utils import *
+        from utils.email_tools import *
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]

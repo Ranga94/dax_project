@@ -145,6 +145,13 @@ def extract_ticker_data(args):
             time.sleep(5)
 
 def main(args):
+    if __name__ != "__main__":
+        sys.path.insert(0, args.python_path)
+        from utils.Storage import Storage
+        from utils import twitter_analytics_helpers as tah
+        from utils.logging_utils import *
+        from utils.email_tools import *
+
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
