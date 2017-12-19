@@ -57,7 +57,7 @@ def get_stocktwits(args):
                 if max_id:
                     if int(item['id']) < max_id:
                         continue
-                doc = create_tweet_skelleton()
+                doc = tah.create_tweet_skelleton()
                 doc['text'] = item['body']
                 doc['created_at'] = item['created_at']
                 doc['date'] = item['created_at']
