@@ -151,12 +151,12 @@ def get_bloomberg_news(args):
                         d['score'] = tah.get_nltk_sentiment(str(d["news_article_txt"]))
 
                     # sentiment
-                    d['sentiment'] = get_sentiment_word(d["score"])
+                    d['sentiment'] = tah.get_sentiment_word(d["score"])
 
                     # constituent fields
                     d["constituent_id"] = constituent_id
                     d["constituent_name"] = constituent_name
-                    d["constituent"] = get_old_constituent_name(constituent_id)
+                    d["constituent"] = tah.get_old_constituent_name(constituent_id)
 
                     #url
                     d["url"] = url
@@ -165,7 +165,7 @@ def get_bloomberg_news(args):
                     d["show"] = True
 
                     # entity_tags
-                    d["entity_tags"] = get_spacey_tags(tagger.get_spacy_entities(str(d["news_title"])))
+                    d["entity_tags"] = tah.get_spacey_tags(tagger.get_spacy_entities(str(d["news_title"])))
 
                     to_insert.append(d)
 

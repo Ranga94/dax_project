@@ -100,7 +100,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 # add constituent name, id and old name
                 df["constituent_id"] = constituent_id
                 df["constituent_name"] = constituent_name
-                old_constituent_name = get_old_constituent_name(constituent_id)
+                old_constituent_name = tah.get_old_constituent_name(constituent_id)
                 df["constituent"] = old_constituent_name
 
                 # add URL
@@ -112,7 +112,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 # get entity tags
                 entity_tags = []
                 for text in df["news_title"]:
-                    tags = get_spacey_tags(tagger.get_spacy_entities(str(text)))
+                    tags = tah.get_spacey_tags(tagger.get_spacy_entities(str(text)))
                     entity_tags.append(tags)
 
                 fields = ["news_date", "news_title", "news_article_txt", "news_companies", "news_source",
@@ -409,7 +409,7 @@ def get_daily_orbis_news(args):
             # add constituent name, id and old name
             df["constituent_id"] = constituent_id
             df["constituent_name"] = constituent_name
-            old_constituent_name = get_old_constituent_name(constituent_id)
+            old_constituent_name = tah.get_old_constituent_name(constituent_id)
             df["constituent"] = old_constituent_name
 
             # add URL
@@ -421,7 +421,7 @@ def get_daily_orbis_news(args):
             # get entity tags
             entity_tags = []
             for text in df["news_title"]:
-                tags = get_spacey_tags(tagger.get_spacy_entities(str(text)))
+                tags = tah.get_spacey_tags(tagger.get_spacy_entities(str(text)))
                 entity_tags.append(tags)
 
             fields = ["news_date", "news_title", "news_article_txt", "news_companies", "news_source",
