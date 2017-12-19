@@ -28,7 +28,7 @@ def main(args):
         print(e)
     try:
         print("Executing reuters_scraper")
-        reuters_scraper.main(args)
+        #reuters_scraper.main(args)
     except Exception as e:
         print(e)
     try:

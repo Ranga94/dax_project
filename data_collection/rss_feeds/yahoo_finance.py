@@ -6,10 +6,10 @@ from datetime import datetime
 
 
 def get_rss_feed(args):
-    if __name__ != "__main__":
-        from utils import logging_utils as logging_utils
-        from utils import twitter_analytics_helpers as tah
-        from utils.Storage import Storage
+    from utils import logging_utils as logging_utils
+    from utils import twitter_analytics_helpers as tah
+    from utils.Storage import Storage
+
 
     storage_client = Storage(google_key_path=args.google_key_path)
 
@@ -32,7 +32,7 @@ def get_rss_feed(args):
                                                    sql_table_name="MASTER_CONSTITUENTS",
                                                    sql_column_list=["CONSTITUENT_ID",
                                                                     "CONSTITUENT_NAME",
-                                                                    "SYMBOL"])[1:]
+                                                                    "SYMBOL"])
 
     for constituent_id, constituent_name, symbol in all_constituents:
         # get last news date for the constituent
@@ -54,6 +54,7 @@ def get_rss_feed(args):
         to_insert = []
 
         for post in d.entries:
+            #print(post)
             date = datetime(post.published_parsed[0], post.published_parsed[1], post.published_parsed[2],
                             post.published_parsed[3], post.published_parsed[4])
             if max_date:
@@ -61,25 +62,25 @@ def get_rss_feed(args):
                 max_date = datetime.strptime(max_date, '%Y-%m-%d %H:%M:%S')
                 if date < max_date:
                     continue
-            else:
-                doc = {"url": post.link, "news_date": date.strftime('%Y-%m-%d %H:%M:%S'),
+
+            doc = {"url": post.link, "news_date": date.strftime('%Y-%m-%d %H:%M:%S'),
                        "news_language":post.summary_detail["language"],
                        "news_title":post.title, "news_article_txt":post.summary, "news_origin":"Yahoo Finance RSS",
                        "show":True}
 
-                # Get sentiment score
-                doc["score"] = tah.get_nltk_sentiment(str(doc["news_article_txt"]))
+            # Get sentiment score
+            doc["score"] = tah.get_nltk_sentiment(str(doc["news_article_txt"]))
 
-                # get sentiment word
-                doc["sentiment"] = get_sentiment_word(doc["score"])
+            # get sentiment word
+            doc["sentiment"] = get_sentiment_word(doc["score"])
 
-                # add constituent name, id and old name
-                doc["constituent_id"] = constituent_id
-                doc["constituent_name"] = constituent_name
-                old_constituent_name = get_old_constituent_name(constituent_id)
-                doc["constituent"] = old_constituent_name
+            # add constituent name, id and old name
+            doc["constituent_id"] = constituent_id
+            doc["constituent_name"] = constituent_name
+            old_constituent_name = get_old_constituent_name(constituent_id)
+            doc["constituent"] = old_constituent_name
 
-                to_insert.append(doc)
+            to_insert.append(doc)
 
         try:
             print("Inserting into BQ")
@@ -98,11 +99,10 @@ def get_rss_feed(args):
 
 
 def main(args):
-    if __name__ != "__main__":
-        sys.path.insert(0, args.python_path)
-        from utils.Storage import Storage
-        from utils import twitter_analytics_helpers as tah
-        from utils import email_tools as email_tools
+    sys.path.insert(0, args.python_path)
+    from utils.Storage import Storage
+    from utils import twitter_analytics_helpers as tah
+    from utils import email_tools as email_tools
 
     # Get dataset name
     common_table = "PARAM_READ_DATE"
