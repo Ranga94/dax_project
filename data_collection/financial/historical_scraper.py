@@ -8,6 +8,11 @@ import time
 import sys
 
 def main(args):
+    if __name__ != "__main__":
+        sys.path.insert(0, args.python_path)
+        from utils.Storage import Storage
+        from utils import twitter_analytics_helpers as tah
+
     driver = webdriver.PhantomJS()
 
     # Get dataset name
