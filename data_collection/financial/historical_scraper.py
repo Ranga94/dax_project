@@ -18,7 +18,7 @@ def main(args):
     common_parameters = tah.get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
     # Get constituents
-    storage = Storage(google_key_path=args.google_key_path)
+    storage = Storage.Storage(google_key_path=args.google_key_path)
 
     query = """
     SELECT a.CONSTITUENT_ID, a.CONSTITUENT_NAME, b.URL_KEY
