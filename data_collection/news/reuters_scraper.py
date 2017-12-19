@@ -12,9 +12,12 @@ AGENTS=['Opera/9.80 (Windows NT 6.1; U; ko) Presto/2.7.62 Version/11.00', 'Mozil
 def get_reuters_news(args, driver):
     if __name__ != "__main__":
         from utils import logging_utils as logging_utils
+        from utils.TaggingUtils import TaggingUtils as TU
+        from utils.Storage import Storage
+        from utils import twitter_analytics_helpers as tah
 
     tagger = TU()
-    storage_client = Storage.Storage(google_key_path=args.google_key_path)
+    storage_client = Storage(google_key_path=args.google_key_path)
 
     # Get parameters
     param_table = "PARAM_NEWS_COLLECTION"
@@ -157,7 +160,6 @@ def get_reuters_news(args, driver):
             print(e)
             continue
 
-
 def main(args):
     if __name__ != "__main__":
         sys.path.insert(0, args.python_path)
@@ -205,7 +207,7 @@ def main(args):
                         GROUP BY constituent_name
         """.format(common_parameters["BQ_DATASET"])
 
-    send_mail(args.param_connection_string, args.google_key_path, "Reuters",
+    email_tools.send_mail(args.param_connection_string, args.google_key_path, "Reuters",
               "PARAM_NEWS_COLLECTION", lambda x: x["SOURCE"] == "Reuters", q1, q2)
 
 if __name__ == "__main__":

@@ -7,8 +7,10 @@ from fake_useragent import UserAgent
 def extract_ticker_data(args):
     if __name__ != "__main__":
         from utils import logging_utils as logging_utils
+        from utils import twitter_analytics_helpers as tah
+        from utils.Storage import Storage
 
-    ua = UserAgent()
+    #ua = UserAgent()
     base_url = "http://charts.finanzen.net/ChartData.ashx?request="
 
     #Get parameters
@@ -25,7 +27,7 @@ def extract_ticker_data(args):
     common_parameters = tah.get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
     # Get constituents
-    storage = Storage.Storage(args.google_key_path)
+    storage = Storage(args.google_key_path)
 
     columns = ["CONSTITUENT_ID", "CONSTITUENT_NAME", "URL_KEY"]
     table = "PARAM_TICKER_KEYS"
@@ -59,7 +61,7 @@ def extract_ticker_data(args):
         list_of_ticks = []
 
         try:
-            response = requests.get(url, headers={'User-Agent': ua.random})
+            response = requests.get(url)
             if response.status_code == requests.codes.ok:
                 data = response.text.splitlines()
 
@@ -103,7 +105,7 @@ def extract_ticker_data(args):
             else:
                 print("Error making request, code {}. Retrying...".format(response.status_code))
                 time.sleep(20)
-                response = requests.get(url, headers={'User-Agent': ua.random})
+                response = requests.get(url)
                 if response.status_code == requests.codes.ok:
                     data = response.text.splitlines()
 

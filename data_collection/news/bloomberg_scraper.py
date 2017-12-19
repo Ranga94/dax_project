@@ -8,7 +8,7 @@ from datetime import datetime
 # Parses Bloomberg article and returns dictionary with data
 def get_article(link, ua):
     # Make a request using random user agent and create bs4 object from <main> tag.
-    soup = BeautifulSoup(requests.get(link, headers={'User-Agent': ua.random}).content, 'html.parser').find('main')
+    soup = BeautifulSoup(requests.get(link).content, 'html.parser').find('main')
 
     # Check if title is there if not it's not correctly formated article
     try:
@@ -50,10 +50,13 @@ def get_article(link, ua):
 
 def get_bloomberg_news(args):
     if __name__ != "__main__":
-        from utils import logging as logging_utils
+        from utils.Storage import Storage
+        from utils import twitter_analytics_helpers as tah
+        from utils.TaggingUtils import TaggingUtils as TU
+        from utils import logging_utils as logging_utils
 
     tagger = TU()
-    storage_client = Storage.Storage(google_key_path=args.google_key_path)
+    storage_client = Storage(google_key_path=args.google_key_path)
 
     #Get parameters
     param_table = "PARAM_NEWS_COLLECTION"
@@ -106,7 +109,7 @@ def get_bloomberg_news(args):
             # format url with company name and current page number and create bs4 object from the response
             url = base.format(url_key.replace('.', '_').replace(' ', '_'), i)
             i += 1
-            main_soup = BeautifulSoup(requests.get(url, headers={'User-Agent': ua.random}).content, 'html.parser')
+            main_soup = BeautifulSoup(requests.get(url).content, 'html.parser')
 
             # check if there are any results on the page and finish the loop if none
             try:

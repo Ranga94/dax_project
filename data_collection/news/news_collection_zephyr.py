@@ -169,6 +169,10 @@ def get_historical_zephyr_ma_deals(args):
 def get_daily_zephyr_ma_deals(args):
     if __name__ != "__main__":
         from utils import logging_utils as logging_utils
+        from utils import twitter_analytics_helpers as tah
+        from utils.Storage import Storage
+        from utils.Storage import MongoEncoder
+        from utils.SOAPUtils import SOAPUtils
 
     zephyr_query = """
         DEFINE P1 AS [Parameters.Currency=SESSION;],
@@ -209,7 +213,7 @@ def get_daily_zephyr_ma_deals(args):
 
     # Get constituents
     soap = SOAPUtils()
-    storage = Storage.Storage(args.google_key_path)
+    storage = Storage(args.google_key_path)
 
     columns = ["CONSTITUENT_ID", "CONSTITUENT_NAME", "STRATEGY"]
     table = "PARAM_NEWS_ZEPHYR_STRATEGIES"

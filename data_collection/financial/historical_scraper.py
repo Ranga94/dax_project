@@ -23,7 +23,7 @@ def main(args):
     common_parameters = tah.get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
     # Get constituents
-    storage = Storage.Storage(google_key_path=args.google_key_path)
+    storage = Storage(google_key_path=args.google_key_path)
 
     query = """
     SELECT a.CONSTITUENT_ID, a.CONSTITUENT_NAME, b.URL_KEY
@@ -90,6 +90,10 @@ def main(args):
     driver.quit()
 
 def extract_historical_data(url, driver, storage_client, dataset_name,constituent=None):
+    if __name__ != "__main__":
+        from utils.Storage import Storage
+        from utils import twitter_analytics_helpers as tah
+
     if isinstance(constituent, tuple):
         constituent_id = constituent[0]
         constituent_name = constituent[1]

@@ -9,8 +9,9 @@ def get_rss_feed(args):
     if __name__ != "__main__":
         from utils import logging_utils as logging_utils
         from utils import twitter_analytics_helpers as tah
+        from utils.Storage import Storage
 
-    storage_client = Storage.Storage(google_key_path=args.google_key_path)
+    storage_client = Storage(google_key_path=args.google_key_path)
 
     # Get parameters
     param_table = "PARAM_NEWS_COLLECTION"

@@ -6,9 +6,12 @@ from datetime import datetime
 def get_stocktwits(args):
     if __name__ != "__main__":
         from utils import logging_utils as logging_utils
+        from utils.Storage import Storage
+        from utils import twitter_analytics_helpers as tah
+        from utils.TaggingUtils import TaggingUtils as TU
 
     # get constituents
-    storage = Storage.Storage(args.google_key_path)
+    storage = Storage(args.google_key_path)
     tagger = TU()
 
     columns = ["CONSTITUENT_ID", "CONSTITUENT_NAME", "URL_KEY"]
