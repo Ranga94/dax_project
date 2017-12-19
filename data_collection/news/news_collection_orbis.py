@@ -280,6 +280,9 @@ def get_number_of_news_items(constituent_name):
     return mapping[constituent_name]
 
 def get_daily_orbis_news(args):
+    if __name__ != "__main__":
+        from utils import logging_utils as logging_utils
+
     # get constituents
     soap = SOAPUtils()
     storage = Storage.Storage(args.google_key_path)
@@ -526,7 +529,7 @@ def get_daily_orbis_news(args):
                     "source": "Orbis"}]
 
             if parameters["LOGGING"] and bigquery_data:
-                logging(log, common_parameters["BQ_DATASET"], "news_logs", storage)
+                logging_utils.logging(log, common_parameters["BQ_DATASET"], "news_logs", storage)
 
         if token:
             soap.close_connection(token, 'orbis')
@@ -569,8 +572,7 @@ def main(args):
         from utils.SOAPUtils import SOAPUtils
         from utils import twitter_analytics_helpers as tah
         from utils.TaggingUtils import TaggingUtils as TU
-        from utils.logging_utils import *
-        from utils.email_tools import *
+        from utils import email_tools as email_tools
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
@@ -605,7 +607,7 @@ def main(args):
                         GROUP BY constituent_name
     """.format(common_parameters["BQ_DATASET"])
 
-    send_mail(args.param_connection_string, args.google_key_path, "Orbis",
+    email_tools.send_mail(args.param_connection_string, args.google_key_path, "Orbis",
               "PARAM_NEWS_COLLECTION", lambda x: x["SOURCE"] == "Orbis", q1, q2)
 
 if __name__ == "__main__":

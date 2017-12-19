@@ -10,8 +10,7 @@ def main(args):
         from utils.Storage import Storage
         from utils import twitter_analytics_helpers as tap
         from utils.TaggingUtils import TaggingUtils as TU
-        from utils.logging_utils import *
-        from utils.email_tools import *
+        from utils import email_tools as email_tools
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
@@ -47,10 +46,13 @@ def main(args):
         GROUP BY constituent_name;
     """.format(common_parameters["BQ_DATASET"])
 
-    send_mail(args.param_connection_string, args.google_key_path, "Twitter", "PARAM_TWITTER_COLLECTION",
+    email_tools.send_mail(args.param_connection_string, args.google_key_path, "Twitter", "PARAM_TWITTER_COLLECTION",
                   None,q1,q2)
 
 def get_tweets(args):
+    if __name__ != "__main__":
+        from utils import logging_utils as logging_utils
+
     param_table = "PARAM_TWITTER_COLLECTION"
     parameters_list = ["LANGUAGE", "TWEETS_PER_QUERY",
                        "MAX_TWEETS", "CONNECTION_STRING",
@@ -91,8 +93,8 @@ def get_tweets(args):
                                              "PARAM_TWITTER_EXCLUSIONS")
 
             #Get max id of all tweets to extract tweets with id highe than that
-            q = "SELECT MAX(id) as max_id FROM `{}.tweets` WHERE constituent_id = '{}';".format(common_parameters["BQ_DATASET"],
-                                                                                                constituent_id)
+            q = "SELECT MAX(id) as max_id FROM `{}.tweets` WHERE constituent_id = '{}' " \
+                "AND lang = {};".format(common_parameters["BQ_DATASET"],constituent_id,language)
             try:
                 sinceId =  int(storage.get_bigquery_data(q,iterator_flag=False)[0]["max_id"])
             except Exception as e:
@@ -182,7 +184,7 @@ def get_tweets(args):
                         "constituent_id": constituent_id,
                         "downloaded_tweets": tweetCount,
                         "language": language}]
-                logging(doc, common_parameters["BQ_DATASET"], 'tweet_logs', storage)
+                logging_utils.logging(doc, common_parameters["BQ_DATASET"], 'tweet_logs', storage)
 
     return "Downloaded tweets"
 

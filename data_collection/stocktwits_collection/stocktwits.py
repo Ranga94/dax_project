@@ -4,6 +4,9 @@ import sys
 from datetime import datetime
 
 def get_stocktwits(args):
+    if __name__ != "__main__":
+        from utils import logging_utils as logging_utils
+
     # get constituents
     storage = Storage.Storage(args.google_key_path)
     tagger = TU()
@@ -91,7 +94,7 @@ def get_stocktwits(args):
                         "constituent_id": constituent_id,
                         "downloaded_tweets": len(to_insert),
                         "language": 'StockTwits'}]
-                logging(doc, common_parameters["BQ_DATASET"], 'tweet_logs', storage)
+                logging_utils.logging(doc, common_parameters["BQ_DATASET"], 'tweet_logs', storage)
 
         else:
             print(response.text)
@@ -102,8 +105,8 @@ def main(args):
         from utils.Storage import Storage
         from utils import twitter_analytics_helpers as tah
         from utils.TaggingUtils import TaggingUtils as TU
-        from utils.logging_utils import *
-        from utils.email_tools import *
+        from utils import email_tools as email_tools
+
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
@@ -140,7 +143,7 @@ def main(args):
         GROUP BY constituent_name;
         """.format(common_parameters["BQ_DATASET"])
 
-    send_mail(args.param_connection_string, args.google_key_path, "StockTwits", "PARAM_STOCKTWITS_COLLECTION",
+    email_tools.send_mail(args.param_connection_string, args.google_key_path, "StockTwits", "PARAM_STOCKTWITS_COLLECTION",
                   None,q1,q2)
 
 if __name__ == "__main__":
