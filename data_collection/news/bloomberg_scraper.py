@@ -173,7 +173,8 @@ def get_bloomberg_news(args):
             if to_insert:
                 print("Inserting records to BQ")
                 try:
-                    storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], 'all_news', to_insert)
+                    #storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], 'all_news', to_insert)
+                    pass
                 except Exception as e:
                     print(e)
 
@@ -225,8 +226,10 @@ def main(args):
                     GROUP BY constituent_name
     """.format(common_parameters["BQ_DATASET"])
 
+    '''
     email_tools.send_mail(args.param_connection_string,args.google_key_path,"Bloomberg",
               "PARAM_NEWS_COLLECTION",lambda x: x["SOURCE"] == "Bloomberg",q1,q2)
+    '''
 
 if __name__ == "__main__":
     import argparse

@@ -3,6 +3,7 @@ from datetime import datetime
 import requests
 from pprint import pprint
 from fake_useragent import UserAgent
+import time
 
 def extract_ticker_data(args):
     if __name__ != "__main__":
