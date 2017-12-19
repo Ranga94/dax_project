@@ -4,6 +4,7 @@ import pandas as pd
 #sys.path.insert(0, 'dax_project-master')
 from utils.Storage import Storage
 from datetime import datetime
+from langdetect import detect
 
 def get_news_all(args):
     # Get dataset name
@@ -52,12 +53,17 @@ WHERE row_num = 1;
     to_insert = []
 
     for item in result:
+        if detect(item["NEWS_ARTICLE_TXT_NewsDim"]) != 'en':
+            print('Detected article in other language')
+            continue
         to_insert.append(dict((k,item[k].strftime('%Y-%m-%d %H:%M:%S')) if isinstance(item[k],datetime) else
                    (k,item[k]) for k in columns))
 
     try:
         print("Inserting to BQ")
-
+    except Exception as e:
+        print(e)
+    '''
         storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], 'news_all', to_insert[:int(len(to_insert)*0.25)])
         storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], 'news_all',
                                             to_insert[int(len(to_insert)*0.25):int(len(to_insert)*0.5)])
@@ -65,8 +71,8 @@ WHERE row_num = 1;
                                             to_insert[int(len(to_insert)*0.5):int(len(to_insert)*0.75)])
         storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], 'news_all',
                                             to_insert[int(len(to_insert)*0.75):])
-    except Exception as e:
-        print(e)
+    '''
+
 
 if __name__ == "__main__":
     import argparse
