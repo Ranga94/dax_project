@@ -15,7 +15,7 @@ def main(args):
     common_list = ["BQ_DATASET"]
     common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
-    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
+    common_parameters = tah.get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
     # Get constituents
     storage = Storage(google_key_path=args.google_key_path)
@@ -190,17 +190,6 @@ def extract_historical_data(url, driver, storage_client, dataset_name,constituen
         storage_client.insert_bigquery_data(dataset_name, 'historical', rows)
     except Exception as e:
         print(e)
-
-def get_parameters(connection_string, table, column_list, where=None):
-    storage = Storage()
-
-    data = storage.get_sql_data(connection_string, table, column_list, sql_where=where)[0]
-    parameters = {}
-
-    for i in range(0, len(column_list)):
-        parameters[column_list[i]] = data[i]
-
-    return parameters
 
 if __name__ == "__main__":
     import argparse

@@ -4,47 +4,47 @@ from datetime import datetime
 def main(args):
     print("Collection logs: {}".format(str(datetime.now())))
     try:
-        print("Exeecuting historical_scraper")
+        print("Executing historical_scraper")
         historical_scraper.main(args)
     except Exception as e:
         print(e)
     try:
-        print("Exeecuting ticker_data")
+        print("Executing ticker_data")
         ticker_data.main(args)
     except Exception as e:
         print(e)
     try:
-        print("Exeecuting bloomberg_scraper")
+        print("Executing bloomberg_scraper")
         bloomberg_scraper.main(args)
     except Exception as e:
         print(e)
     try:
-        print("Exeecuting news_collection_orbis")
+        print("Executing news_collection_orbis")
         news_collection_orbis.main(args)
     except Exception as e:
         print(e)
     try:
-        print("Exeecuting news_collection_zephyr")
+        print("Executing news_collection_zephyr")
         news_collection_zephyr.main(args)
     except Exception as e:
         print(e)
     try:
-        print("Exeecuting reuters_scraper")
+        print("Executing reuters_scraper")
         reuters_scraper.main(args)
     except Exception as e:
         print(e)
     try:
-        print("Exeecuting yahoo_finance")
+        print("Executing yahoo_finance")
         yahoo_finance.main(args)
     except Exception as e:
         print(e)
     try:
-        print("Exeecuting stocktwits")
+        print("Executing stocktwits")
         stocktwits.main(args)
     except Exception as e:
         print(e)
     try:
-        print("Exeecuting twitter_collection")
+        print("Executing twitter_collection")
         print()
         twitter_collection.main(args)
     except Exception as e:
