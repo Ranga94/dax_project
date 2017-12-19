@@ -60,7 +60,7 @@ def get_tweets(args):
 
     common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
-    language = parameters["LANGUAGE"].split(",")[0]
+    languages = parameters["LANGUAGE"].split(",")
 
     storage = Storage.Storage(google_key_path=args.google_key_path, mongo_connection_string=parameters["CONNECTION_STRING"])
     tagger = TU()
@@ -72,111 +72,109 @@ def get_tweets(args):
                                               sql_table_name="MASTER_CONSTITUENTS",
                                               sql_column_list=["CONSTITUENT_ID","CONSTITUENT_NAME"])
 
-    if language != "en":
-        parameters["TWEETS_PER_QUERY"] = 7
-
     fields_to_keep = ["text", "favorite_count", "source", "retweeted","entities", "id_str",
                       "retweet_count","favorited","user","lang","created_at","place", "constituent_name",
                       "constituent_id", "search_term", "id", "sentiment_score", "entity_tags","relevance",
                       "constituent"]
 
-    for constituent_id, constituent_name in all_constituents:
-        search_query = get_search_string(constituent_id, args.param_connection_string, "PARAM_TWITTER_KEYWORDS",
-                                         "PARAM_TWITTER_EXCLUSIONS")
+    for language in languages:
+        for constituent_id, constituent_name in all_constituents:
+            search_query = get_search_string(constituent_id, args.param_connection_string, "PARAM_TWITTER_KEYWORDS",
+                                             "PARAM_TWITTER_EXCLUSIONS")
 
-        #Get max id of all tweets to extract tweets with id highe than that
-        q = "SELECT MAX(id) as max_id FROM `{}.tweets` WHERE constituent_id = '{}';".format(common_parameters["BQ_DATASET"],
-                                                                                            constituent_id)
-        try:
-            sinceId =  int(storage.get_bigquery_data(q,iterator_flag=False)[0]["max_id"])
-        except Exception as e:
-            print(e)
-            sinceId = None
-
-        max_id = -1
-        tweetCount = 0
-
-        print("Downloading max {0} tweets for {1} in {2} on {3}".format(parameters["MAX_TWEETS"], constituent_name, language, str(datetime.now())))
-        while tweetCount < parameters["MAX_TWEETS"]:
-            tweets_unmodified = []
-            tweets_modified = []
-            tweets_mongo = []
-
+            #Get max id of all tweets to extract tweets with id highe than that
+            q = "SELECT MAX(id) as max_id FROM `{}.tweets` WHERE constituent_id = '{}';".format(common_parameters["BQ_DATASET"],
+                                                                                                constituent_id)
             try:
-                tweets, tmp_tweet_count, max_id = downloader.download(constituent_name, search_query,
-                                                                      language, parameters["TWEETS_PER_QUERY"], sinceId, max_id)
-            except Exception as e:
-                continue
-
-            if not tweets:
-                break
-            else:
-                print("Downloaded {} tweets".format(tmp_tweet_count))
-
-            tweetCount += tmp_tweet_count
-
-            #Add fields for both unmodified and modified tweets
-            for tweet in tweets:
-                tweet._json['source'] = "Twitter"
-                tweet._json['constituent_name'] = constituent_name
-                tweet._json['constituent_id'] = constituent_id
-                tweet._json['search_term'] = search_query
-                tweet._json["constituent"] = tap.get_old_constituent_name(constituent_id)
-
-                #Removing bad fields
-                clean_tweet = tap.scrub(tweet._json)
-
-                # Separate the tweets that go to one topic or the other
-
-                #unmodified
-                t_unmodified = deepcopy(clean_tweet)
-                t_unmodified["date"] = tap.convert_timestamp(t_unmodified["created_at"])
-                tweets_unmodified.append(t_unmodified)
-
-                #Add additional fields
-                clean_tweet["sentiment_score"] = tap.get_nltk_sentiment(str(clean_tweet["text"]))
-                tagged_text = tagger.get_spacy_entities(str(clean_tweet["text"]))
-                clean_tweet["entity_tags"] = tap.get_spacey_tags(tagged_text)
-                clean_tweet["relevance"] = -1
-
-                #mongo
-                t_mongo = deepcopy(clean_tweet)
-                t_mongo['date'] = datetime.strptime(t_mongo['created_at'], '%a %b %d %H:%M:%S %z %Y')
-                tweets_mongo.append(t_mongo)
-
-                #modified
-                tagged_tweet = dict((k,clean_tweet[k]) for k in fields_to_keep if k in clean_tweet)
-                tagged_tweet['date'] = tap.convert_timestamp(clean_tweet["created_at"])
-                tweets_modified.append(tagged_tweet)
-
-            #send to PubSub topic
-            #ps_utils.publish("igenie-project", "tweets-unmodified", tweets_unmodified)
-            #ps_utils.publish("igenie-project", "tweets", tweets_modified)
-            try:
-                storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'tweets_unmodified', tweets_unmodified)
+                sinceId =  int(storage.get_bigquery_data(q,iterator_flag=False)[0]["max_id"])
             except Exception as e:
                 print(e)
-            try:
-                storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'tweets', tweets_modified)
-            except Exception as e:
-                print(e)
-            try:
-                storage.save_to_mongodb(tweets_mongo, "dax_gcp", "tweets")
-                pass
-            except Exception as e:
-                print(e)
+                sinceId = None
 
-            time.sleep(1)
+            max_id = -1
+            tweetCount = 0
 
-        print("Saved {} tweets for".format(tweetCount, constituent_name))
+            print("Downloading max {0} tweets for {1} in {2} on {3}".format(parameters["MAX_TWEETS"], constituent_name, language, str(datetime.now())))
+            while tweetCount < parameters["MAX_TWEETS"]:
+                tweets_unmodified = []
+                tweets_modified = []
+                tweets_mongo = []
 
-        if parameters["LOGGING"]:
-            doc = [{"date": time.strftime('%Y-%m-%d %H:%M:%S', datetime.now().date().timetuple()),
-                    "constituent_name": constituent_name,
-                    "constituent_id": constituent_id,
-                    "downloaded_tweets": tweetCount,
-                    "language": language}]
-            logging(doc, common_parameters["BQ_DATASET"], 'tweet_logs', storage)
+                try:
+                    tweets, tmp_tweet_count, max_id = downloader.download(constituent_name, search_query,
+                                                                          language, parameters["TWEETS_PER_QUERY"], sinceId, max_id)
+                except Exception as e:
+                    continue
+
+                if not tweets:
+                    break
+                else:
+                    print("Downloaded {} tweets".format(tmp_tweet_count))
+
+                tweetCount += tmp_tweet_count
+
+                #Add fields for both unmodified and modified tweets
+                for tweet in tweets:
+                    tweet._json['source'] = "Twitter"
+                    tweet._json['constituent_name'] = constituent_name
+                    tweet._json['constituent_id'] = constituent_id
+                    tweet._json['search_term'] = search_query
+                    tweet._json["constituent"] = tap.get_old_constituent_name(constituent_id)
+
+                    #Removing bad fields
+                    clean_tweet = tap.scrub(tweet._json)
+
+                    # Separate the tweets that go to one topic or the other
+
+                    #unmodified
+                    t_unmodified = deepcopy(clean_tweet)
+                    t_unmodified["date"] = tap.convert_timestamp(t_unmodified["created_at"])
+                    tweets_unmodified.append(t_unmodified)
+
+                    #Add additional fields
+                    clean_tweet["sentiment_score"] = tap.get_nltk_sentiment(str(clean_tweet["text"]))
+                    tagged_text = tagger.get_spacy_entities(str(clean_tweet["text"]))
+                    clean_tweet["entity_tags"] = tap.get_spacey_tags(tagged_text)
+                    clean_tweet["relevance"] = -1
+
+                    #mongo
+                    t_mongo = deepcopy(clean_tweet)
+                    t_mongo['date'] = datetime.strptime(t_mongo['created_at'], '%a %b %d %H:%M:%S %z %Y')
+                    tweets_mongo.append(t_mongo)
+
+                    #modified
+                    tagged_tweet = dict((k,clean_tweet[k]) for k in fields_to_keep if k in clean_tweet)
+                    tagged_tweet['date'] = tap.convert_timestamp(clean_tweet["created_at"])
+                    tweets_modified.append(tagged_tweet)
+
+                #send to PubSub topic
+                #ps_utils.publish("igenie-project", "tweets-unmodified", tweets_unmodified)
+                #ps_utils.publish("igenie-project", "tweets", tweets_modified)
+                try:
+                    storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'tweets_unmodified', tweets_unmodified)
+                except Exception as e:
+                    print(e)
+                try:
+                    storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'tweets', tweets_modified)
+                except Exception as e:
+                    print(e)
+                try:
+                    storage.save_to_mongodb(tweets_mongo, "dax_gcp", "tweets")
+                    pass
+                except Exception as e:
+                    print(e)
+
+                time.sleep(1)
+
+            print("Saved {} tweets for in {}".format(tweetCount, constituent_name,language))
+
+            if parameters["LOGGING"]:
+                doc = [{"date": time.strftime('%Y-%m-%d %H:%M:%S', datetime.now().date().timetuple()),
+                        "constituent_name": constituent_name,
+                        "constituent_id": constituent_id,
+                        "downloaded_tweets": tweetCount,
+                        "language": language}]
+                logging(doc, common_parameters["BQ_DATASET"], 'tweet_logs', storage)
 
     return "Downloaded tweets"
 
