@@ -13,32 +13,32 @@ def main(args):
         print(e)
     try:
         print("Executing bloomberg_scraper")
-        bloomberg_scraper.main(args)
+        #bloomberg_scraper.main(args)
     except Exception as e:
         print(e)
     try:
         print("Executing news_collection_orbis")
-        news_collection_orbis.main(args)
+        #news_collection_orbis.main(args)
     except Exception as e:
         print(e)
     try:
         print("Executing news_collection_zephyr")
-        news_collection_zephyr.main(args)
+        #news_collection_zephyr.main(args)
     except Exception as e:
         print(e)
     try:
         print("Executing reuters_scraper")
-        #reuters_scraper.main(args)
+        reuters_scraper.main(args)
     except Exception as e:
         print(e)
     try:
         print("Executing yahoo_finance")
-        #yahoo_finance.main(args)
+        yahoo_finance.main(args)
     except Exception as e:
         print(e)
     try:
         print("Executing stocktwits")
-        #stocktwits.main(args)
+        stocktwits.main(args)
     except Exception as e:
         print(e)
     try:
