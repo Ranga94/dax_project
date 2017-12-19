@@ -91,7 +91,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 df.drop_duplicates(["news_title"], inplace=True)
 
                 # Get sentiment score
-                df["score"] = df.apply(lambda row: get_nltk_sentiment(str(row["news_article_txt"])), axis=1)
+                df["score"] = df.apply(lambda row: tah.get_nltk_sentiment(str(row["news_article_txt"])), axis=1)
                 #df["score"] = df.apply(lambda row: sia.polarity_scores(str(row["news_article_txt"]))['compound'] , axis=1)
 
                 # get sentiment word
@@ -297,14 +297,14 @@ def get_daily_orbis_news(args):
     parameters_list = ["LOGGING", "BVD_USERNAME","BVD_PASSWORD"]
     where = lambda x: x["SOURCE"] == 'Orbis'
 
-    parameters = get_parameters(args.param_connection_string, param_table, parameters_list, where)
+    parameters = tah.get_parameters(args.param_connection_string, param_table, parameters_list, where)
 
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
     common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
-    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
+    common_parameters = tah.get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
     for constituent_id, constituent_name, bvdid in constituents:
         #get last news date for the constituent
@@ -390,7 +390,7 @@ def get_daily_orbis_news(args):
             df.drop_duplicates(["news_title"], inplace=True)
 
             # Get sentiment score
-            df["score"] = df.apply(lambda row: get_nltk_sentiment(str(row["news_article_txt"])), axis=1)
+            df["score"] = df.apply(lambda row: tah.get_nltk_sentiment(str(row["news_article_txt"])), axis=1)
 
             # get sentiment word
             df["sentiment"] = df.apply(lambda row: get_sentiment_word(row["score"]), axis=1)
@@ -567,7 +567,7 @@ def main(args):
     common_list = ["BQ_DATASET"]
     common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
-    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
+    common_parameters = tah.get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
     #get_historical_orbis_news(args.user,args.pwd, "orbis", args.google_key_path, args.param_connection_string)
     get_daily_orbis_news(args)
@@ -611,7 +611,7 @@ if __name__ == "__main__":
     from utils.Storage import Storage
     from utils.Storage import MongoEncoder
     from utils.SOAPUtils import SOAPUtils
-    from utils.twitter_analytics_helpers import *
+    from utils import twitter_analytics_helpers as tah
     from utils.TaggingUtils import TaggingUtils as TU
     from utils.logging_utils import *
     from utils.email_tools import *

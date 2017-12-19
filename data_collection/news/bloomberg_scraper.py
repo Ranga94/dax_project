@@ -57,14 +57,14 @@ def get_bloomberg_news(args):
     parameters_list = ["LOGGING"]
     where = lambda x: x["SOURCE"] == 'Bloomberg'
 
-    parameters = get_parameters(args.param_connection_string, param_table, parameters_list, where)
+    parameters = tah.get_parameters(args.param_connection_string, param_table, parameters_list, where)
 
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
     common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
-    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
+    common_parameters = tah.get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
     #get constituents
     all_constituents = storage_client.get_sql_data(sql_connection_string =args.param_connection_string,
@@ -142,7 +142,7 @@ def get_bloomberg_news(args):
                     #set extra fields:
                     #score
                     if d["news_article_txt"]:
-                        d['score'] = get_nltk_sentiment(str(d["news_article_txt"]))
+                        d['score'] = tah.get_nltk_sentiment(str(d["news_article_txt"]))
 
                     # sentiment
                     d['sentiment'] = get_sentiment_word(d["score"])
@@ -185,7 +185,7 @@ def main(args):
     common_list = ["BQ_DATASET"]
     common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
-    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
+    common_parameters = tah.get_parameters(args.param_connection_string, common_table, common_list, common_where)
     get_bloomberg_news(args)
 
     q1 = """
@@ -225,7 +225,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     sys.path.insert(0, args.python_path)
     from utils.Storage import Storage
-    from utils.twitter_analytics_helpers import *
+    from utils import twitter_analytics_helpers as tah
     from utils.TaggingUtils import TaggingUtils as TU
     from utils.logging_utils import *
     from utils.email_tools import *
