@@ -8,22 +8,22 @@ def main(args):
         print("Executing historical_scraper")
         args_1 = deepcopy(args)
         args_1.all = True
-        historical_scraper.main(args_1)
+        #historical_scraper.main(args_1)
     except Exception as e:
         print(e)
     try:
         print("Executing bloomberg_scraper")
-        #bloomberg_scraper.main(args)
+        bloomberg_scraper.main(args)
     except Exception as e:
         print(e)
     try:
         print("Executing news_collection_orbis")
-        #news_collection_orbis.main(args)
+        news_collection_orbis.main(args)
     except Exception as e:
         print(e)
     try:
         print("Executing news_collection_zephyr")
-        #news_collection_zephyr.main(args)
+        news_collection_zephyr.main(args)
     except Exception as e:
         print(e)
     try:
