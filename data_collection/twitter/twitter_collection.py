@@ -52,6 +52,10 @@ def main(args):
 def get_tweets(args):
     if __name__ != "__main__":
         from utils import logging_utils as logging_utils
+        from utils.TwitterDownloader import TwitterDownloader
+        from utils.Storage import Storage
+        from utils import twitter_analytics_helpers as tap
+        from utils.TaggingUtils import TaggingUtils as TU
 
     param_table = "PARAM_TWITTER_COLLECTION"
     parameters_list = ["LANGUAGE", "TWEETS_PER_QUERY",
@@ -72,7 +76,7 @@ def get_tweets(args):
 
     languages = parameters["LANGUAGE"].split(",")
 
-    storage = Storage.Storage(google_key_path=args.google_key_path, mongo_connection_string=parameters["CONNECTION_STRING"])
+    storage = Storage(google_key_path=args.google_key_path, mongo_connection_string=parameters["CONNECTION_STRING"])
     tagger = TU()
 
     downloader = TwitterDownloader(parameters["TWITTER_API_KEY"], parameters["TWITTER_API_SECRET"])
@@ -189,7 +193,14 @@ def get_tweets(args):
     return "Downloaded tweets"
 
 def get_search_string(constituent_id, connection_string, table_keywords, table_exclusions):
-    storage = Storage.Storage()
+    if __name__ != "__main__":
+        from utils.TwitterDownloader import TwitterDownloader
+        from utils.Storage import Storage
+        from utils import twitter_analytics_helpers as tap
+        from utils.TaggingUtils import TaggingUtils as TU
+
+
+    storage = Storage()
 
     where = lambda x: and_((x["ACTIVE_STATE"] == 1),(x["CONSTITUENT_ID"] == constituent_id))
 

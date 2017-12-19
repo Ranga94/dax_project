@@ -9,7 +9,7 @@ import json
 def get_historical_orbis_news(user, pwd, database, google_key_path, param_connection_string):
     #get parameters
     soap = SOAPUtils()
-    storage = Storage.Storage(google_key_path)
+    storage = Storage(google_key_path)
     tagger = TU()
 
     columns = ["CONSTITUENT_ID", "CONSTITUENT_NAME", "BVDID"]
@@ -281,11 +281,19 @@ def get_number_of_news_items(constituent_name):
 
 def get_daily_orbis_news(args):
     if __name__ != "__main__":
+        from utils.Storage import Storage
+        from utils.Storage import MongoEncoder
+        from utils.SOAPUtils import SOAPUtils
+        from utils import twitter_analytics_helpers as tah
+        from utils.TaggingUtils import TaggingUtils as TU
+        from utils.Storage import Storage
+        from utils.Storage import MongoEncoder
+        from utils.SOAPUtils import SOAPUtils
         from utils import logging_utils as logging_utils
 
     # get constituents
     soap = SOAPUtils()
-    storage = Storage.Storage(args.google_key_path)
+    storage = Storage(args.google_key_path)
     tagger = TU()
 
     columns = ["CONSTITUENT_ID", "CONSTITUENT_NAME", "BVDID"]
