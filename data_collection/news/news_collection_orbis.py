@@ -95,7 +95,7 @@ def get_historical_orbis_news(user, pwd, database, google_key_path, param_connec
                 #df["score"] = df.apply(lambda row: sia.polarity_scores(str(row["news_article_txt"]))['compound'] , axis=1)
 
                 # get sentiment word
-                df["sentiment"] = df.apply(lambda row: get_sentiment_word(row["score"]), axis=1)
+                df["sentiment"] = df.apply(lambda row: tah.get_sentiment_word(row["score"]), axis=1)
 
                 # add constituent name, id and old name
                 df["constituent_id"] = constituent_id
@@ -404,7 +404,7 @@ def get_daily_orbis_news(args):
             df["score"] = df.apply(lambda row: tah.get_nltk_sentiment(str(row["news_article_txt"])), axis=1)
 
             # get sentiment word
-            df["sentiment"] = df.apply(lambda row: get_sentiment_word(row["score"]), axis=1)
+            df["sentiment"] = df.apply(lambda row: tah.get_sentiment_word(row["score"]), axis=1)
 
             # add constituent name, id and old name
             df["constituent_id"] = constituent_id

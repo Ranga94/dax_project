@@ -49,11 +49,10 @@ def get_article(link, ua):
     return doc
 
 def get_bloomberg_news(args):
-    if __name__ != "__main__":
-        from utils.Storage import Storage
-        from utils import twitter_analytics_helpers as tah
-        from utils.TaggingUtils import TaggingUtils as TU
-        from utils import logging_utils as logging_utils
+    from utils.Storage import Storage
+    from utils import twitter_analytics_helpers as tah
+    from utils.TaggingUtils import TaggingUtils as TU
+    from utils import logging_utils as logging_utils
 
     tagger = TU()
     storage_client = Storage(google_key_path=args.google_key_path)
@@ -81,7 +80,7 @@ def get_bloomberg_news(args):
                                                                     "PAGES"])[:2]
 
     # Define random user agent object
-    ua = UserAgent()
+    #ua = UserAgent()
 
     # Base url for search queries
     base = 'https://bloomberg.com/search?query={}&sort=time:desc&page={}'
@@ -125,7 +124,7 @@ def get_bloomberg_news(args):
             times = [datetime.strptime(x, '%b %d, %Y') for x in times]
             for time in times:
                 if last_date_bq:
-                    if time < last_date_bq:
+                    if time < datetime.strptime(last_date_bq.strftime("%Y-%m-%d"), "%Y-%m-%d"):
                         print('Target date reached')
                         in_target = False
 
@@ -136,13 +135,14 @@ def get_bloomberg_news(args):
                 # check if the result is an article
                 if 'type-article' in art_type:
                     url = art.find('h1').find('a')['href']
-                    d = get_article(url, ua)
+                    d = get_article(url, None)
 
                     if d is None:
                         continue
 
                     if last_date_bq:
-                        if datetime.strptime(d["news_date"], "%Y-%m-%d %H:%M:%S") < last_date_bq:
+                        if datetime.strptime(d["news_date"], "%Y-%m-%d %H:%M:%S") < \
+                                datetime.strptime(last_date_bq.strftime("%Y-%m-%d"), "%Y-%m-%d"):
                             continue
 
                     #set extra fields:
@@ -173,8 +173,8 @@ def get_bloomberg_news(args):
             if to_insert:
                 print("Inserting records to BQ")
                 try:
-                    #storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], 'all_news', to_insert)
-                    pass
+                    storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], 'all_news', to_insert)
+
                 except Exception as e:
                     print(e)
 
@@ -187,12 +187,11 @@ def get_bloomberg_news(args):
                     logging_utils.logging(doc,common_parameters["BQ_DATASET"],"news_logs",storage_client)
 
 def main(args):
-    if __name__ != "__main__":
-        sys.path.insert(0, args.python_path)
-        from utils.Storage import Storage
-        from utils import twitter_analytics_helpers as tah
-        from utils.TaggingUtils import TaggingUtils as TU
-        from utils import email_tools as email_tools
+    sys.path.insert(0, args.python_path)
+    from utils.Storage import Storage
+    from utils import twitter_analytics_helpers as tah
+    from utils.TaggingUtils import TaggingUtils as TU
+    from utils import email_tools as email_tools
 
     # Get dataset name
     common_table = "PARAM_READ_DATE"
@@ -226,10 +225,10 @@ def main(args):
                     GROUP BY constituent_name
     """.format(common_parameters["BQ_DATASET"])
 
-    '''
+
     email_tools.send_mail(args.param_connection_string,args.google_key_path,"Bloomberg",
               "PARAM_NEWS_COLLECTION",lambda x: x["SOURCE"] == "Bloomberg",q1,q2)
-    '''
+
 
 if __name__ == "__main__":
     import argparse
