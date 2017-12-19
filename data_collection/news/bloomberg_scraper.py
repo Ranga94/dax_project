@@ -49,6 +49,9 @@ def get_article(link, ua):
     return doc
 
 def get_bloomberg_news(args):
+    if __name__ != "__main__":
+        from utils import logging as logging_utils
+
     tagger = TU()
     storage_client = Storage.Storage(google_key_path=args.google_key_path)
 
@@ -177,7 +180,7 @@ def get_bloomberg_news(args):
                             "constituent_id": constituent_id,
                             "downloaded_news": len(to_insert),
                             "source": "Bloomberg"}]
-                    logging(doc,common_parameters["BQ_DATASET"],"news_logs",storage_client)
+                    logging_utils.logging(doc,common_parameters["BQ_DATASET"],"news_logs",storage_client)
 
 def main(args):
     if __name__ != "__main__":
@@ -185,8 +188,7 @@ def main(args):
         from utils.Storage import Storage
         from utils import twitter_analytics_helpers as tah
         from utils.TaggingUtils import TaggingUtils as TU
-        from utils.logging_utils import *
-        from utils.email_tools import *
+        from utils import email_tools as email_tools
 
     # Get dataset name
     common_table = "PARAM_READ_DATE"
@@ -220,7 +222,7 @@ def main(args):
                     GROUP BY constituent_name
     """.format(common_parameters["BQ_DATASET"])
 
-    send_mail(args.param_connection_string,args.google_key_path,"Bloomberg",
+    email_tools.send_mail(args.param_connection_string,args.google_key_path,"Bloomberg",
               "PARAM_NEWS_COLLECTION",lambda x: x["SOURCE"] == "Bloomberg",q1,q2)
 
 if __name__ == "__main__":

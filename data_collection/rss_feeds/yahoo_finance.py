@@ -6,6 +6,10 @@ from datetime import datetime
 
 
 def get_rss_feed(args):
+    if __name__ != "__main__":
+        from utils import logging_utils as logging_utils
+        from utils import twitter_analytics_helpers as tah
+
     storage_client = Storage.Storage(google_key_path=args.google_key_path)
 
     # Get parameters
@@ -13,14 +17,14 @@ def get_rss_feed(args):
     parameters_list = ["LOGGING"]
     where = lambda x: x["SOURCE"] == 'RSS'
 
-    parameters = get_parameters(args.param_connection_string, param_table, parameters_list, where)
+    parameters = tah.get_parameters(args.param_connection_string, param_table, parameters_list, where)
 
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
     common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
-    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
+    common_parameters = tah.get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
     # get constituents
     all_constituents = storage_client.get_sql_data(sql_connection_string=args.param_connection_string,
@@ -63,7 +67,7 @@ def get_rss_feed(args):
                        "show":True}
 
                 # Get sentiment score
-                doc["score"] = get_nltk_sentiment(str(doc["news_article_txt"]))
+                doc["score"] = tah.get_nltk_sentiment(str(doc["news_article_txt"]))
 
                 # get sentiment word
                 doc["sentiment"] = get_sentiment_word(doc["score"])
@@ -89,22 +93,22 @@ def get_rss_feed(args):
                 "source": "Yahoo Finance RSS"}]
 
         if parameters["LOGGING"] and to_insert:
-            logging(log, common_parameters["BQ_DATASET"], "news_logs", storage_client)
+            logging_utils.logging(log, common_parameters["BQ_DATASET"], "news_logs", storage_client)
 
 
 def main(args):
     if __name__ != "__main__":
         sys.path.insert(0, args.python_path)
         from utils.Storage import Storage
-        from utils.twitter_analytics_helpers import *
-        from utils.logging_utils import *
-        from utils.email_tools import *
+        from utils import twitter_analytics_helpers as tah
+        from utils import email_tools as email_tools
+
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
     common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
 
-    common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
+    common_parameters = tah.get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
     get_rss_feed(args)
 
@@ -133,7 +137,7 @@ def main(args):
     """.format(common_parameters["BQ_DATASET"])
 
     print("Sending email")
-    send_mail(args.param_connection_string, args.google_key_path, "RSS Feed",
+    email_tools.send_mail(args.param_connection_string, args.google_key_path, "RSS Feed",
               "PARAM_NEWS_COLLECTION", lambda x: x["SOURCE"] == "RSS", q1, q2)
 
 

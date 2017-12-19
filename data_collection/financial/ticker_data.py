@@ -5,6 +5,9 @@ from pprint import pprint
 from fake_useragent import UserAgent
 
 def extract_ticker_data(args):
+    if __name__ != "__main__":
+        from utils import logging_utils as logging_utils
+
     ua = UserAgent()
     base_url = "http://charts.finanzen.net/ChartData.ashx?request="
 
@@ -93,7 +96,7 @@ def extract_ticker_data(args):
                                 "constituent_name": constituent_name,
                                 "constituent_id": constituent_id,
                                 "downloaded_ticks": len(list_of_ticks)}]
-                        logging(doc, common_parameters["BQ_DATASET"], "ticker_logs_copy", storage)
+                        logging_utils.logging(doc, common_parameters["BQ_DATASET"], "ticker_logs_copy", storage)
 
                 i += 1
 
@@ -149,8 +152,7 @@ def main(args):
         sys.path.insert(0, args.python_path)
         from utils.Storage import Storage
         from utils import twitter_analytics_helpers as tah
-        from utils.logging_utils import *
-        from utils.email_tools import *
+        from utils import email_tools as email_tools
 
     # Get dataset name
     common_table = "PARAM_READ_DATE"
@@ -185,7 +187,7 @@ def main(args):
              GROUP BY constituent_name
     """.format(common_parameters["BQ_DATASET"])
 
-    send_mail(args.param_connection_string, args.google_key_path, "Ticker",
+    email_tools.send_mail(args.param_connection_string, args.google_key_path, "Ticker",
               "PARAM_TICKER_COLLECTION", None, q1, q2)
 
 

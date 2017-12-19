@@ -167,6 +167,9 @@ def get_historical_zephyr_ma_deals(args):
             soap.close_connection(token, 'zephyr')
 
 def get_daily_zephyr_ma_deals(args):
+    if __name__ != "__main__":
+        from utils import logging_utils as logging_utils
+
     zephyr_query = """
         DEFINE P1 AS [Parameters.Currency=SESSION;],
         P2 AS [Parameters.RepeatingDimension=NrOfTargets],
@@ -326,7 +329,7 @@ def get_daily_zephyr_ma_deals(args):
                             "constituent_id": constituent_id,
                             "downloaded_deals": len(data),
                             "source": "Zephyr"}]
-                    logging(doc,common_parameters["BQ_DATASET"],"news_logs",storage)
+                    logging_utils.logging(doc,common_parameters["BQ_DATASET"],"news_logs",storage)
 
         except Exception as e:
             print(e)
@@ -344,8 +347,7 @@ def main(args):
         from utils.Storage import MongoEncoder
         from utils.SOAPUtils import SOAPUtils
         from utils import twitter_analytics_helpers as tah
-        from utils.logging_utils import *
-        from utils.email_tools import *
+        from utils import email_tools as email_tools
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
@@ -378,7 +380,7 @@ def main(args):
          GROUP BY constituent_name
         """.format(common_parameters["BQ_DATASET"])
 
-    send_mail(args.param_connection_string, args.google_key_path, "Zephyr",
+    email_tools.send_mail(args.param_connection_string, args.google_key_path, "Zephyr",
               "PARAM_NEWS_COLLECTION", lambda x: x["SOURCE"] == "Zephyr", q1, q2)
 
 if __name__ == "__main__":
