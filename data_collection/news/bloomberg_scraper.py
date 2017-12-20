@@ -59,7 +59,7 @@ def get_bloomberg_news(args):
 
     #Get parameters
     param_table = "PARAM_NEWS_COLLECTION"
-    parameters_list = ["LOGGING"]
+    parameters_list = ["LOGGING","DESTINATION_TABLE","LOGGING_TABLE"]
     where = lambda x: x["SOURCE"] == 'Bloomberg'
 
     parameters = tah.get_parameters(args.param_connection_string, param_table, parameters_list, where)
@@ -89,9 +89,9 @@ def get_bloomberg_news(args):
     for constituent_id, constituent_name, url_key,pages in all_constituents:
         # Get date of latest news article for this constituent for Bloomberg
         query = """
-        SELECT max(news_date) as last_date FROM `{}.all_news`
+        SELECT max(news_date) as last_date FROM `{}.{}`
         WHERE constituent_id = '{}' AND news_origin = 'Bloomberg'
-        """.format(common_parameters["BQ_DATASET"],constituent_id)
+        """.format(common_parameters["BQ_DATASET"],parameters["DESTINATION_TABLE"],constituent_id)
 
         try:
             result = storage_client.get_bigquery_data(query=query, iterator_flag=False)
@@ -173,7 +173,7 @@ def get_bloomberg_news(args):
             if to_insert:
                 print("Inserting records to BQ")
                 try:
-                    storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], 'all_news', to_insert)
+                    storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], parameters["DESTINATION_TABLE"], to_insert)
 
                 except Exception as e:
                     print(e)
@@ -184,7 +184,7 @@ def get_bloomberg_news(args):
                             "constituent_id": constituent_id,
                             "downloaded_news": len(to_insert),
                             "source": "Bloomberg"}]
-                    logging_utils.logging(doc,common_parameters["BQ_DATASET"],"news_logs",storage_client)
+                    logging_utils.logging(doc,common_parameters["BQ_DATASET"],parameters["LOGGING_TABLE"],storage_client)
 
 def main(args):
     sys.path.insert(0, args.python_path)
@@ -192,6 +192,12 @@ def main(args):
     from utils import twitter_analytics_helpers as tah
     from utils.TaggingUtils import TaggingUtils as TU
     from utils import email_tools as email_tools
+
+    # Get parameters
+    param_table = "PARAM_NEWS_COLLECTION"
+    parameters_list = ["LOGGING", "DESTINATION_TABLE", "LOGGING_TABLE"]
+    where = lambda x: x["SOURCE"] == 'Bloomberg'
+    parameters = tah.get_parameters(args.param_connection_string, param_table, parameters_list, where)
 
     # Get dataset name
     common_table = "PARAM_READ_DATE"
@@ -205,25 +211,25 @@ def main(args):
                     SELECT a.constituent_name, a.downloaded_news, a.date, a.source
                     FROM
                     (SELECT constituent_name, SUM(downloaded_news) as downloaded_news, DATE(date) as date, source
-                    FROM `{0}.news_logs`
+                    FROM `{0}.{1}`
                     WHERE source = 'Bloomberg'
                     GROUP BY constituent_name, date, source
                     ) a,
                     (SELECT constituent_name, MAX(DATE(date)) as date
-                    FROM `{0}.news_logs`
+                    FROM `{0}.{1}`
                     WHERE source = 'Bloomberg'
                     GROUP BY constituent_name
                     ) b
                     WHERE a.constituent_name = b.constituent_name AND a.date = b.date
                     GROUP BY a.constituent_name, a.downloaded_news, a.date, a.source;
-            """.format(common_parameters["BQ_DATASET"])
+            """.format(common_parameters["BQ_DATASET"],parameters["LOGGING_TABLE"])
 
     q2 = """
                     SELECT constituent_name,count(*)
-                    FROM `{}.all_news`
+                    FROM `{}.{}`
                     WHERE news_origin = "Bloomberg"
                     GROUP BY constituent_name
-    """.format(common_parameters["BQ_DATASET"])
+    """.format(common_parameters["BQ_DATASET"],parameters["DESTINATION_TABLE"])
 
 
     email_tools.send_mail(args.param_connection_string,args.google_key_path,"Bloomberg",

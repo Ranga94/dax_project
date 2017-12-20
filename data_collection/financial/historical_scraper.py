@@ -15,6 +15,12 @@ def main(args):
 
     driver = webdriver.PhantomJS()
 
+    # Get parameters
+    param_table = "PARAM_HISTORICAL_COLLECTION"
+    parameters_list = ["LOGGING", "DESTINATION_TABLE"]
+
+    parameters = tah.get_parameters(args.param_connection_string, param_table, parameters_list)
+
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
@@ -35,8 +41,8 @@ def main(args):
 
     # Get dates
     query = """
-    SELECT max(date) as last_date FROM `{}.historical`
-    """.format(common_parameters["BQ_DATASET"])
+    SELECT max(date) as last_date FROM `{}.{}`
+    """.format(common_parameters["BQ_DATASET"],parameters["DESTINATION_TABLE"])
 
     try:
         result = storage.get_bigquery_data(query=query,iterator_flag=False)
@@ -71,28 +77,31 @@ def main(args):
     constituent_date_url = '-share/FSE/{}_{}#Price_History'.format(from_date,to_date)
 
     if args.all:
-        extract_historical_data(dax_url, driver, storage, common_parameters["BQ_DATASET"],constituent='DAX')
+        extract_historical_data(dax_url, driver, storage, common_parameters["BQ_DATASET"],
+                                parameters["DESTINATION_TABLE"],constituent='DAX')
         for constituent_id, constituent_name, url_key in all_constituents:
             print("Extracting data for {} from {} to {}".format(constituent_name, from_date, to_date))
             extract_historical_data(urljoin(constituent_base_url, url_key + constituent_date_url),
-                                    driver, storage, common_parameters["BQ_DATASET"],constituent=(constituent_id, constituent_name))
+                                    driver, storage, common_parameters["BQ_DATASET"],
+            parameters["DESTINATION_TABLE"],constituent=(constituent_id, constituent_name))
             time.sleep(10)
     else:
         if args.constituent == 'DAX':
-            extract_historical_data(dax_url, driver, storage, common_parameters["BQ_DATASET"],constituent='DAX')
+            extract_historical_data(dax_url, driver, storage, common_parameters["BQ_DATASET"],
+            parameters["DESTINATION_TABLE"],constituent='DAX')
         else:
             for constituent_id, constituent_name, url_key in all_constituents:
                 if constituent_id == args.constituent:
                     print("Extracting data for {} from {} to {}".format(constituent_name, from_date, to_date))
                     constituent_url = urljoin(constituent_base_url, url_key + constituent_date_url)
-                    extract_historical_data(constituent_url, driver, storage, common_parameters["BQ_DATASET"],constituent=(constituent_id, constituent_name))
+                    extract_historical_data(constituent_url, driver, storage, common_parameters["BQ_DATASET"],
+                    parameters["DESTINATION_TABLE"],constituent=(constituent_id, constituent_name))
 
     driver.quit()
 
-def extract_historical_data(url, driver, storage_client, dataset_name,constituent=None):
-    if __name__ != "__main__":
-        from utils.Storage import Storage
-        from utils import twitter_analytics_helpers as tah
+def extract_historical_data(url, driver, storage_client, dataset_name,table_name,constituent=None):
+    from utils.Storage import Storage
+    from utils import twitter_analytics_helpers as tah
 
     if isinstance(constituent, tuple):
         constituent_id = constituent[0]
@@ -196,7 +205,7 @@ def extract_historical_data(url, driver, storage_client, dataset_name,constituen
             print(e)
 
     try:
-        storage_client.insert_bigquery_data(dataset_name, 'historical', rows)
+        storage_client.insert_bigquery_data(dataset_name, table_name, rows)
     except Exception as e:
         print(e)
 

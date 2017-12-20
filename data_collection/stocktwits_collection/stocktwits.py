@@ -24,7 +24,7 @@ def get_stocktwits(args):
 
     # Get parameters
     param_table = "PARAM_STOCKTWITS_COLLECTION"
-    parameters_list = ["LOGGING"]
+    parameters_list = ["LOGGING","DESTINATION_TABLE","LOGGING_TABLE"]
 
     parameters = tah.get_parameters(args.param_connection_string, param_table, parameters_list)
 
@@ -38,9 +38,9 @@ def get_stocktwits(args):
     for constituent_id, constituent_name, url_key in all_constituents:
         #Get the last id
         query = """
-                SELECT max(id) as max_id FROM `{}.tweets`
+                SELECT max(id) as max_id FROM `{}.{}`
                 WHERE constituent_id = '{}' and source = 'StockTwits'
-        """.format(common_parameters["BQ_DATASET"],constituent_id)
+        """.format(common_parameters["BQ_DATASET"],parameters["DESTINATION_TABLE"],constituent_id)
 
         try:
             result = storage.get_bigquery_data(query=query, iterator_flag=False)
@@ -88,7 +88,7 @@ def get_stocktwits(args):
                 to_insert.append(doc)
 
             try:
-                storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'tweets', to_insert)
+                storage.insert_bigquery_data(common_parameters["BQ_DATASET"], parameters["DESTINATION_TABLE"], to_insert)
             except Exception as e:
                 print(e)
 
@@ -98,18 +98,22 @@ def get_stocktwits(args):
                         "constituent_id": constituent_id,
                         "downloaded_tweets": len(to_insert),
                         "language": 'StockTwits'}]
-                logging_utils.logging(doc, common_parameters["BQ_DATASET"], 'tweet_logs', storage)
+                logging_utils.logging(doc, common_parameters["BQ_DATASET"], parameters["LOGGING_TABLE"], storage)
 
         else:
             print(response.text)
 
 def main(args):
-    if __name__ != "__main__":
-        sys.path.insert(0, args.python_path)
-        from utils.Storage import Storage
-        from utils import twitter_analytics_helpers as tah
-        from utils.TaggingUtils import TaggingUtils as TU
-        from utils import email_tools as email_tools
+    sys.path.insert(0, args.python_path)
+    from utils.Storage import Storage
+    from utils import twitter_analytics_helpers as tah
+    from utils.TaggingUtils import TaggingUtils as TU
+    from utils import email_tools as email_tools
+
+    param_table = "PARAM_STOCKTWITS_COLLECTION"
+    parameters_list = ["LOGGING", "DESTINATION_TABLE", "LOGGING_TABLE"]
+
+    parameters = tah.get_parameters(args.param_connection_string, param_table, parameters_list)
 
     # Get dataset name
     common_table = "PARAM_READ_DATE"
@@ -127,25 +131,25 @@ def main(args):
                     SELECT a.constituent_name, a.downloaded_tweets, a.date, a.language
                     FROM
                     (SELECT constituent_name, SUM(downloaded_tweets) as downloaded_tweets, DATE(date) as date, language
-                    FROM `{0}.tweet_logs`
+                    FROM `{0}.{1}`
                     WHERE language = 'StockTwits'
                     GROUP BY constituent_name, date, language
                     ) a,
                     (SELECT constituent_name, MAX(DATE(date)) as date
-                    FROM `{0}.tweet_logs`
+                    FROM `{0}.{1}`
                     WHERE language = 'StockTwits'
                     GROUP BY constituent_name
                     ) b
                     WHERE a.constituent_name = b.constituent_name AND a.date = b.date
                     GROUP BY a.constituent_name, a.downloaded_tweets, a.date, a.language;
-                """.format(common_parameters["BQ_DATASET"])
+                """.format(common_parameters["BQ_DATASET"],parameters["LOGGING_TABLE"])
 
     q2 = """
         SELECT constituent_name,count(*)
-        FROM `{}.tweets`
+        FROM `{}.{}`
         WHERE source = 'StockTwits'
         GROUP BY constituent_name;
-        """.format(common_parameters["BQ_DATASET"])
+        """.format(common_parameters["BQ_DATASET"],parameters["LOGGING_TABLE"])
 
     email_tools.send_mail(args.param_connection_string, args.google_key_path, "StockTwits", "PARAM_STOCKTWITS_COLLECTION",
                   None,q1,q2)

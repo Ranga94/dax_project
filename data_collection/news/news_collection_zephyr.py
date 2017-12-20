@@ -37,7 +37,7 @@ def get_historical_zephyr_ma_deals(args):
 
     #Get parametesr
     param_table = "PARAM_NEWS_COLLECTION"
-    parameters_list = ['BVD_USERNAME', 'BVD_PASSWORD', "LOGGING"]
+    parameters_list = ['BVD_USERNAME', 'BVD_PASSWORD', "LOGGING","DESTINATION_TABLE","LOGGING_TABLE"]
     where = lambda x: x["SOURCE"] == 'Zephyr'
 
     parameters = tah.get_parameters(args.param_connection_string, param_table, parameters_list, where)
@@ -161,18 +161,17 @@ def get_historical_zephyr_ma_deals(args):
                         "constituent_id": constituent_id,
                         "downloaded_deals": len(data),
                         "source": "Zephyr"}]
-                logging(doc,common_parameters["BQ_DATASET"],"news_logs",storage)
+                logging(doc,common_parameters["BQ_DATASET"],parameters["LOGGIN_TABLE"],storage)
 
         if token:
             soap.close_connection(token, 'zephyr')
 
 def get_daily_zephyr_ma_deals(args):
-    if __name__ != "__main__":
-        from utils import logging_utils as logging_utils
-        from utils import twitter_analytics_helpers as tah
-        from utils.Storage import Storage
-        from utils.Storage import MongoEncoder
-        from utils.SOAPUtils import SOAPUtils
+    from utils import logging_utils as logging_utils
+    from utils import twitter_analytics_helpers as tah
+    from utils.Storage import Storage
+    from utils.Storage import MongoEncoder
+    from utils.SOAPUtils import SOAPUtils
 
     zephyr_query = """
         DEFINE P1 AS [Parameters.Currency=SESSION;],
@@ -199,7 +198,7 @@ def get_daily_zephyr_ma_deals(args):
 
     # Get parameters
     param_table = "PARAM_NEWS_COLLECTION"
-    parameters_list = ['BVD_USERNAME', 'BVD_PASSWORD', "LOGGING"]
+    parameters_list = ['BVD_USERNAME', 'BVD_PASSWORD', "LOGGING","DESTINATION_TABLE","LOGGING_TABLE"]
     where = lambda x: x["SOURCE"] == 'Zephyr'
 
     parameters = tah.get_parameters(args.param_connection_string, param_table, parameters_list, where)
@@ -230,9 +229,9 @@ def get_daily_zephyr_ma_deals(args):
     for constituent_id, constituent_name, strategy in constituents:
         # get last deal
         query = """
-                SELECT max(record_id) as max_id FROM `{}.ma_deals`
+                SELECT max(record_id) as max_id FROM `{}.{}`
                 WHERE constituent_id = '{}';
-        """.format(common_parameters["BQ_DATASET"],constituent_id)
+        """.format(common_parameters["BQ_DATASET"],parameters["DESTINATION_TABLE"],constituent_id)
 
         try:
             result = storage.get_bigquery_data(query=query, iterator_flag=False)
@@ -322,7 +321,7 @@ def get_daily_zephyr_ma_deals(args):
                 print("Inserting records to BQ")
                 try:
                     #open("ma_deals.json", 'w').write("\n".join(json.dumps(e, cls=MongoEncoder) for e in data))
-                    storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'ma_deals', data)
+                    storage.insert_bigquery_data(common_parameters["BQ_DATASET"], parameters["DESTINATION_TABLE"], data)
                 except Exception as e:
                     print(e)
                     soap.close_connection(token, 'zephyr')
@@ -333,7 +332,7 @@ def get_daily_zephyr_ma_deals(args):
                             "constituent_id": constituent_id,
                             "downloaded_deals": len(data),
                             "source": "Zephyr"}]
-                    logging_utils.logging(doc,common_parameters["BQ_DATASET"],"news_logs",storage)
+                    logging_utils.logging(doc,common_parameters["BQ_DATASET"],parameters["LOGGING_TABLE"],storage)
 
         except Exception as e:
             print(e)
@@ -345,13 +344,20 @@ def get_daily_zephyr_ma_deals(args):
             soap.close_connection(token, 'zephyr')
 
 def main(args):
-    if __name__ != "__main__":
-        sys.path.insert(0, args.python_path)
-        from utils.Storage import Storage
-        from utils.Storage import MongoEncoder
-        from utils.SOAPUtils import SOAPUtils
-        from utils import twitter_analytics_helpers as tah
-        from utils import email_tools as email_tools
+    sys.path.insert(0, args.python_path)
+    from utils.Storage import Storage
+    from utils.Storage import MongoEncoder
+    from utils.SOAPUtils import SOAPUtils
+    from utils import twitter_analytics_helpers as tah
+    from utils import email_tools as email_tools
+
+    # Get parameters
+    param_table = "PARAM_NEWS_COLLECTION"
+    parameters_list = ['BVD_USERNAME', 'BVD_PASSWORD', "LOGGING", "DESTINATION_TABLE", "LOGGING_TABLE"]
+    where = lambda x: x["SOURCE"] == 'Zephyr'
+
+    parameters = tah.get_parameters(args.param_connection_string, param_table, parameters_list, where)
+
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
@@ -365,24 +371,24 @@ def main(args):
         SELECT a.constituent_name, a.downloaded_news, a.date, a.source
         FROM
         (SELECT constituent_name, SUM(downloaded_news) as downloaded_news, DATE(date) as date, source
-        FROM `{0}.news_logs`
+        FROM `{0}.{1}`
         WHERE source = 'Zephyr'
         GROUP BY constituent_name, date, source
         ) a,
         (SELECT constituent_name, MAX(DATE(date)) as date
-         FROM `{0}.news_logs`
+         FROM `{0}.{1}`
          WHERE source = 'Zephyr'
          GROUP BY constituent_name
          ) b
          WHERE a.constituent_name = b.constituent_name AND a.date = b.date
          GROUP BY a.constituent_name, a.downloaded_news, a.date, a.source;
-    """.format(common_parameters["BQ_DATASET"])
+    """.format(common_parameters["BQ_DATASET"],parameters["LOGGING_TABLE"])
 
     q2 = """
          SELECT constituent_name,count(*) as count
-         FROM `{}.ma_deals`
+         FROM `{}.{}`
          GROUP BY constituent_name
-        """.format(common_parameters["BQ_DATASET"])
+        """.format(common_parameters["BQ_DATASET"],parameters["DESTINATION_TABLE"])
 
     email_tools.send_mail(args.param_connection_string, args.google_key_path, "Zephyr",
               "PARAM_NEWS_COLLECTION", lambda x: x["SOURCE"] == "Zephyr", q1, q2)

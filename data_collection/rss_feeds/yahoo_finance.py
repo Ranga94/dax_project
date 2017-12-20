@@ -10,12 +10,11 @@ def get_rss_feed(args):
     from utils import twitter_analytics_helpers as tah
     from utils.Storage import Storage
 
-
     storage_client = Storage(google_key_path=args.google_key_path)
 
     # Get parameters
     param_table = "PARAM_NEWS_COLLECTION"
-    parameters_list = ["LOGGING"]
+    parameters_list = ["LOGGING","DESTINATION_TABLE","LOGGING_TABLE"]
     where = lambda x: x["SOURCE"] == 'RSS'
 
     parameters = tah.get_parameters(args.param_connection_string, param_table, parameters_list, where)
@@ -37,9 +36,9 @@ def get_rss_feed(args):
     for constituent_id, constituent_name, symbol in all_constituents:
         # get last news date for the constituent
         query = """
-                    SELECT max(news_date) as max_date FROM `{}.all_news`
+                    SELECT max(news_date) as max_date FROM `{}.{}`
                     WHERE constituent_id = '{}' and news_origin = "Yahoo Finance RSS"
-                    """.format(common_parameters["BQ_DATASET"],constituent_id)
+                    """.format(common_parameters["BQ_DATASET"],parameters["DESTINATION_TABLE"],constituent_id)
 
         try:
             result = storage_client.get_bigquery_data(query=query, iterator_flag=False)
@@ -84,7 +83,7 @@ def get_rss_feed(args):
 
         try:
             print("Inserting into BQ")
-            storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], "all_news", to_insert)
+            storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], parameters["DESTINATION_TABLE"], to_insert)
         except Exception as e:
             print(e)
 
@@ -95,7 +94,7 @@ def get_rss_feed(args):
                 "source": "Yahoo Finance RSS"}]
 
         if parameters["LOGGING"] and to_insert:
-            logging_utils.logging(log, common_parameters["BQ_DATASET"], "news_logs", storage_client)
+            logging_utils.logging(log, common_parameters["BQ_DATASET"], parameters["LOGGING_TABLE"], storage_client)
 
 
 def main(args):
@@ -103,6 +102,13 @@ def main(args):
     from utils.Storage import Storage
     from utils import twitter_analytics_helpers as tah
     from utils import email_tools as email_tools
+
+    # Get parameters
+    param_table = "PARAM_NEWS_COLLECTION"
+    parameters_list = ["LOGGING","DESTINATION_TABLE","LOGGING_TABLE"]
+    where = lambda x: x["SOURCE"] == 'RSS'
+
+    parameters = tah.get_parameters(args.param_connection_string, param_table, parameters_list, where)
 
     # Get dataset name
     common_table = "PARAM_READ_DATE"
@@ -117,25 +123,25 @@ def main(args):
                         SELECT a.constituent_name, a.downloaded_news, a.date, a.source
                         FROM
                         (SELECT constituent_name, SUM(downloaded_news) as downloaded_news, DATE(date) as date, source
-                        FROM `{0}.news_logs`
+                        FROM `{0}.{1}`
                         WHERE source = 'Yahoo Finance RSS'
                         GROUP BY constituent_name, date, source
                         ) a,
                         (SELECT constituent_name, MAX(DATE(date)) as date
-                        FROM `{0}.news_logs`
+                        FROM `{0}.{1}`
                         WHERE source = 'Yahoo Finance RSS'
                         GROUP BY constituent_name
                         ) b
                         WHERE a.constituent_name = b.constituent_name AND a.date = b.date
                         GROUP BY a.constituent_name, a.downloaded_news, a.date, a.source;
-                """.format(common_parameters["BQ_DATASET"])
+                """.format(common_parameters["BQ_DATASET"],parameters["LOGGING_TABLE"])
 
     q2 = """
                             SELECT constituent_name,count(*)
-                            FROM `{}.all_news`
+                            FROM `{}.{}`
                             WHERE news_origin = "Yahoo Finance RSS"
                             GROUP BY constituent_name
-    """.format(common_parameters["BQ_DATASET"])
+    """.format(common_parameters["BQ_DATASET"],parameters["DESTINATION_TABLE"])
 
     print("Sending email")
     email_tools.send_mail(args.param_connection_string, args.google_key_path, "RSS Feed",
