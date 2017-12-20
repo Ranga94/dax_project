@@ -17,13 +17,19 @@ def get_twitter_analytics_latest_price_tweets(args):
     columns = ["tweet_date", "constituent_name", "from_date", "date", "text", "MONEY", "sentiment_score", "constituent", "constituent_id", "to_date"]
 
     query = """
-    SELECT date as tweet_date, constituent_name, text, entity_tags.MONEY, sentiment_score, constituent, constituent_id, TIMESTAMP('{1}') as from_date, TIMESTAMP('{2}') as to_date,  
+    SELECT date as tweet_date,
+    constituent_name, text,
+    entity_tags.MONEY,
+    sentiment_score,
+    constituent,
+    constituent_id,
+    TIMESTAMP('{1}') as from_date,
+    TIMESTAMP('{2}') as to_date,
 CASE
         WHEN date > '2017-12-01 00:00:00' THEN '2017-12-13 00:00:00 UTC'
     END AS date
 FROM `{0}.tweets`
 WHERE text LIKE '%rating%'and text LIKE '%€%' and date between TIMESTAMP ('{1}') and TIMESTAMP ('{2}')
-
     """.format(common_parameters["BQ_DATASET"],common_parameters["FROM_DATE"].strftime("%Y-%m-%d %H:%M:%S"),
                common_parameters["TO_DATE"].strftime("%Y-%m-%d %H:%M:%S"))
 
@@ -34,19 +40,23 @@ WHERE text LIKE '%rating%'and text LIKE '%€%' and date between TIMESTAMP ('{1}
     to_remove_indexes = set()
 
     for item in result:
-        to_insert.append(dict((k,item[k].strftime('%Y-%m-%d %H:%M:%S')) if isinstance(item[k],datetime) else
-                   (k,item[k]) for k in columns))
+        tweet = dict((k, item[k].strftime('%Y-%m-%d %H:%M:%S')) if isinstance(item[k], datetime) else
+                         (k, item[k]) for k in columns)
+        tweet["text"] = " ".join([word for word in tweet["text"].split(" ") if "http" not in word])
+        to_insert.append(tweet)
 
     for i in range(0,len(to_insert)):
         if i+1 < len(to_insert):
             for j in range(i+1,len(to_insert)):
-                if fuzz.ratio(to_insert[i]["text"], to_insert[j]["text"]) >= 90:
+                if to_insert[i]["text"] == to_insert[j]["text"]:
                     to_remove_indexes.add(j)
 
     to_insert_clean = [to_insert[i] for i in range(0,len(to_insert)) if i not in to_remove_indexes]
+    #print(to_insert_clean)
 
     try:
         print("Inserting into BQ")
+        print(len(to_insert_clean))
         storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"],
                                           'twitter_analytics_latest_price_tweets', to_insert_clean)
     except Exception as e:
@@ -63,5 +73,13 @@ if __name__ == "__main__":
     sys.path.insert(0, args.python_path)
     from utils.Storage import Storage
     from utils.twitter_analytics_helpers import *
-    get_twitter_analytics_latest_price_tweets(args)
+    #get_twitter_analytics_latest_price_tweets(args)
+
+    #s1 = "Siemens AG given €125.00 PT by Barclays PLC. neutral rating. $SIE #SIE"
+    s2 = "Siemens given €125.00 PT by Barclays PLC. neutral rating. $SIE #SIE"
+    s1 = "Siemens given €132.00 PT by Barclays PLC. neutral rating. $SIE #SIE"
+    print(fuzz.ratio(s1,s2))
+    print(fuzz.partial_ratio(s1,s2))
+
+    #98,96
     
