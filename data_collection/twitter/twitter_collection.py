@@ -5,13 +5,23 @@ from copy import deepcopy
 import time
 
 def main(args):
-    if __name__ != "__main__":
-        sys.path.insert(0, args.python_path)
-        from utils.TwitterDownloader import TwitterDownloader
-        from utils.Storage import Storage
-        from utils import twitter_analytics_helpers as tap
-        from utils.TaggingUtils import TaggingUtils as TU
-        from utils import email_tools as email_tools
+    sys.path.insert(0, args.python_path)
+    from utils.TwitterDownloader import TwitterDownloader
+    from utils.Storage import Storage
+    from utils import twitter_analytics_helpers as tap
+    from utils.TaggingUtils import TaggingUtils as TU
+    from utils import email_tools as email_tools
+
+    param_table = "PARAM_TWITTER_COLLECTION"
+    parameters_list = ["LANGUAGE", "TWEETS_PER_QUERY",
+                       "MAX_TWEETS", "CONNECTION_STRING",
+                       "DATABASE_NAME", "COLLECTION_NAME",
+                       "LOGGING", "EMAIL_USERNAME",
+                       "EMAIL_PASSWORD", "TWITTER_API_KEY",
+                       "TWITTER_API_SECRET", "BUCKET_NAME","DESTINATION_TABLE","LOGGING_TABLE"]
+
+    parameters = tap.get_parameters(args.param_connection_string, param_table, parameters_list)
+
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
@@ -28,35 +38,34 @@ def main(args):
                     SELECT a.constituent_name, a.downloaded_tweets, a.date, a.language
                     FROM
                     (SELECT constituent_name, SUM(downloaded_tweets) as downloaded_tweets, DATE(date) as date, language
-                    FROM `{0}.tweet_logs`
+                    FROM `{0}.{1}`
                     where language != 'StockTwits'
                     GROUP BY constituent_name, date, language
                     ) a,
                     (SELECT constituent_name, MAX(DATE(date)) as date
-                    FROM `{0}.tweet_logs`
+                    FROM `{0}.{1}`
                     WHERE language != 'StockTwits'
                     GROUP BY constituent_name
                     ) b
                     WHERE a.constituent_name = b.constituent_name AND a.date = b.date AND a.language = "en"
                     GROUP BY a.constituent_name, a.downloaded_tweets, a.date, a.language;
-                """.format(common_parameters["BQ_DATASET"])
+                """.format(common_parameters["BQ_DATASET"],parameters["LOGGING_TABLE"])
 
     q2 = """
         SELECT constituent_name,count(*)
-        FROM `{}.tweets`
+        FROM `{}.{}`
         GROUP BY constituent_name;
-    """.format(common_parameters["BQ_DATASET"])
+    """.format(common_parameters["BQ_DATASET"],parameters["LOGGING_TABLE"])
 
     email_tools.send_mail(args.param_connection_string, args.google_key_path, "Twitter", "PARAM_TWITTER_COLLECTION",
                   None,q1,q2)
 
 def get_tweets(args):
-    if __name__ != "__main__":
-        from utils import logging_utils as logging_utils
-        from utils.TwitterDownloader import TwitterDownloader
-        from utils.Storage import Storage
-        from utils import twitter_analytics_helpers as tap
-        from utils.TaggingUtils import TaggingUtils as TU
+    from utils import logging_utils as logging_utils
+    from utils.TwitterDownloader import TwitterDownloader
+    from utils.Storage import Storage
+    from utils import twitter_analytics_helpers as tap
+    from utils.TaggingUtils import TaggingUtils as TU
 
     param_table = "PARAM_TWITTER_COLLECTION"
     parameters_list = ["LANGUAGE", "TWEETS_PER_QUERY",
@@ -64,7 +73,7 @@ def get_tweets(args):
                        "DATABASE_NAME", "COLLECTION_NAME",
                        "LOGGING", "EMAIL_USERNAME",
                        "EMAIL_PASSWORD", "TWITTER_API_KEY",
-                       "TWITTER_API_SECRET", "BUCKET_NAME"]
+                       "TWITTER_API_SECRET", "BUCKET_NAME","DESTINATION_TABLE","LOGGING_TABLE"]
 
     parameters = tap.get_parameters(args.param_connection_string, param_table, parameters_list)
 
@@ -98,8 +107,9 @@ def get_tweets(args):
                                              "PARAM_TWITTER_EXCLUSIONS")
 
             #Get max id of all tweets to extract tweets with id highe than that
-            q = "SELECT MAX(id) as max_id FROM `{}.tweets` WHERE constituent_id = '{}' " \
-                "AND lang = {};".format(common_parameters["BQ_DATASET"],constituent_id,language)
+            q = "SELECT MAX(id) as max_id FROM `{}.{}` WHERE constituent_id = '{}' " \
+                "AND lang = {};".format(common_parameters["BQ_DATASET"],parameters["DESTINATION_TABLE"],
+                                        constituent_id,language)
             try:
                 sinceId =  int(storage.get_bigquery_data(q,iterator_flag=False)[0]["max_id"])
             except Exception as e:
@@ -166,15 +176,16 @@ def get_tweets(args):
                 #ps_utils.publish("igenie-project", "tweets-unmodified", tweets_unmodified)
                 #ps_utils.publish("igenie-project", "tweets", tweets_modified)
                 try:
-                    storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'tweets_unmodified', tweets_unmodified)
+                    storage.insert_bigquery_data(common_parameters["BQ_DATASET"],
+                                                 '{}_unmodified'.format(parameters["DESTINATION_TABLE"]), tweets_unmodified)
                 except Exception as e:
                     print(e)
                 try:
-                    storage.insert_bigquery_data(common_parameters["BQ_DATASET"], 'tweets', tweets_modified)
+                    storage.insert_bigquery_data(common_parameters["BQ_DATASET"], parameters["DESTINATION_TABLE"], tweets_modified)
                 except Exception as e:
                     print(e)
                 try:
-                    storage.save_to_mongodb(tweets_mongo, "dax_gcp", "tweets")
+                    storage.save_to_mongodb(tweets_mongo, "dax_gcp", parameters["DESTINATION_TABLE"])
                     pass
                 except Exception as e:
                     print(e)
@@ -189,7 +200,7 @@ def get_tweets(args):
                         "constituent_id": constituent_id,
                         "downloaded_tweets": tweetCount,
                         "language": language}]
-                logging_utils.logging(doc, common_parameters["BQ_DATASET"], 'tweet_logs', storage)
+                logging_utils.logging(doc, common_parameters["BQ_DATASET"], parameters["LOGGING_TABLE"], storage)
 
     return "Downloaded tweets"
 

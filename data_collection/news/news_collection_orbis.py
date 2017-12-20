@@ -305,7 +305,7 @@ def get_daily_orbis_news(args):
 
     # Get parameters
     param_table = "PARAM_NEWS_COLLECTION"
-    parameters_list = ["LOGGING", "BVD_USERNAME","BVD_PASSWORD"]
+    parameters_list = ["LOGGING", "BVD_USERNAME","BVD_PASSWORD","DESTINATION_TABLE","LOGGING_TABLE"]
     where = lambda x: x["SOURCE"] == 'Orbis'
 
     parameters = tah.get_parameters(args.param_connection_string, param_table, parameters_list, where)
@@ -320,9 +320,9 @@ def get_daily_orbis_news(args):
     for constituent_id, constituent_name, bvdid in constituents:
         #get last news date for the constituent
         query = """
-            SELECT max(news_id) as max_id FROM `{}.all_news`
+            SELECT max(news_id) as max_id FROM `{}.{}`
             WHERE constituent_id = '{}' and news_origin = "Orbis"
-            """.format(common_parameters["BQ_DATASET"],constituent_id)
+            """.format(common_parameters["BQ_DATASET"],parameters["DESTINATION_TABLE"],constituent_id)
 
         try:
             result = storage.get_bigquery_data(query=query, iterator_flag=False)
@@ -522,7 +522,8 @@ def get_daily_orbis_news(args):
                     bigquery_data[i]["constituent"] = str(bigquery_data[i]["constituent"])
 
             try:
-                storage.insert_bigquery_data(common_parameters["BQ_DATASET"], "all_news", bigquery_data)
+                storage.insert_bigquery_data(common_parameters["BQ_DATASET"],
+                                             parameters["DESTINATION_TABLE"], bigquery_data)
             except Exception as e:
                 print(e)
 
@@ -537,7 +538,7 @@ def get_daily_orbis_news(args):
                     "source": "Orbis"}]
 
             if parameters["LOGGING"] and bigquery_data:
-                logging_utils.logging(log, common_parameters["BQ_DATASET"], "news_logs", storage)
+                logging_utils.logging(log, common_parameters["BQ_DATASET"], parameters["LOGGING_TABLE"], storage)
 
         if token:
             soap.close_connection(token, 'orbis')
@@ -566,21 +567,29 @@ def main_rest(api_key):
             return None
 
         result = response.text
-        file_name = "{}_{}.xml".format(name, "all_news")
+        file_name = "{}_{}.xml".format(name, )
         directory = os.path.join(".", "data", file_name)
         with open(str(directory), 'w') as f:
             f.write(result)
         return True
 
 def main(args):
-    if __name__ != "__main__":
-        sys.path.insert(0, args.python_path)
-        from utils.Storage import Storage
-        from utils.Storage import MongoEncoder
-        from utils.SOAPUtils import SOAPUtils
-        from utils import twitter_analytics_helpers as tah
-        from utils.TaggingUtils import TaggingUtils as TU
-        from utils import email_tools as email_tools
+    sys.path.insert(0, args.python_path)
+    from utils.Storage import Storage
+    from utils.Storage import MongoEncoder
+    from utils.SOAPUtils import SOAPUtils
+    from utils import twitter_analytics_helpers as tah
+    from utils.TaggingUtils import TaggingUtils as TU
+    from utils import email_tools as email_tools
+
+    # Get parameters
+    param_table = "PARAM_NEWS_COLLECTION"
+    parameters_list = ["LOGGING", "BVD_USERNAME", "BVD_PASSWORD","DESTINATION_TABLE","LOGGING_TABLE"]
+    where = lambda x: x["SOURCE"] == 'Orbis'
+
+    parameters = tah.get_parameters(args.param_connection_string, param_table, parameters_list, where)
+
+
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET"]
@@ -595,25 +604,25 @@ def main(args):
                     SELECT a.constituent_name, a.downloaded_news, a.date, a.source
                     FROM
                     (SELECT constituent_name, SUM(downloaded_news) as downloaded_news, DATE(date) as date, source
-                    FROM `{0}.news_logs`
+                    FROM `{0}.{1}`
                     WHERE source = 'Orbis'
                     GROUP BY constituent_name, date, source
                     ) a,
                     (SELECT constituent_name, MAX(DATE(date)) as date
-                    FROM `{0}.news_logs`
+                    FROM `{0}.{1}`
                     WHERE source = 'Orbis'
                     GROUP BY constituent_name
                     ) b
                     WHERE a.constituent_name = b.constituent_name AND a.date = b.date
                     GROUP BY a.constituent_name, a.downloaded_news, a.date, a.source;
-            """.format(common_parameters["BQ_DATASET"])
+            """.format(common_parameters["BQ_DATASET"],parameters["LOGGING_TABLE"])
 
     q2 = """
                         SELECT constituent_name,count(*)
-                        FROM `{}.all_news`
+                        FROM `{}.{}`
                         WHERE news_origin = "Orbis"
                         GROUP BY constituent_name
-    """.format(common_parameters["BQ_DATASET"])
+    """.format(common_parameters["BQ_DATASET"],parameters["DSETINATION_TABLE"])
 
     email_tools.send_mail(args.param_connection_string, args.google_key_path, "Orbis",
               "PARAM_NEWS_COLLECTION", lambda x: x["SOURCE"] == "Orbis", q1, q2)
