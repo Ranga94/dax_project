@@ -4,6 +4,7 @@ import pandas as pd
 sys.path.insert(0, '')
 from utils.Storage import Storage
 from datetime import datetime
+from fuzzywuzzy import fuzz
 
 def get_twitter_analytics_latest_price_tweets(args):
     common_table = "PARAM_READ_DATE"
@@ -30,15 +31,24 @@ WHERE text LIKE '%rating%'and text LIKE '%€%' and date between TIMESTAMP ('{1}
 
     result = storage_client.get_bigquery_data(query, iterator_flag=True)
     to_insert = []
+    to_remove_indexes = set()
 
     for item in result:
         to_insert.append(dict((k,item[k].strftime('%Y-%m-%d %H:%M:%S')) if isinstance(item[k],datetime) else
                    (k,item[k]) for k in columns))
 
+    for i in range(0,len(to_insert)):
+        if i+1 < len(to_insert):
+            for j in range(i+1,len(to_insert)):
+                if fuzz.ratio(to_insert[i]["text"], to_insert[j]["text"]) >= 90:
+                    to_remove_indexes.add(j)
+
+    to_insert_clean = [to_insert[i] for i in range(0,len(to_insert)) if i not in to_remove_indexes]
+
     try:
         print("Inserting into BQ")
         storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"],
-                                            'twitter_analytics_latest_price_tweets', to_insert)
+                                          'twitter_analytics_latest_price_tweets', to_insert_clean)
     except Exception as e:
         print(e)
 
