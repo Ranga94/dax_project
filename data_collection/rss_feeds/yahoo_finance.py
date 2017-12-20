@@ -72,12 +72,12 @@ def get_rss_feed(args):
             doc["score"] = tah.get_nltk_sentiment(str(doc["news_article_txt"]))
 
             # get sentiment word
-            doc["sentiment"] = get_sentiment_word(doc["score"])
+            doc["sentiment"] = tah.get_sentiment_word(doc["score"])
 
             # add constituent name, id and old name
             doc["constituent_id"] = constituent_id
             doc["constituent_name"] = constituent_name
-            old_constituent_name = get_old_constituent_name(constituent_id)
+            old_constituent_name = tah.get_old_constituent_name(constituent_id)
             doc["constituent"] = old_constituent_name
 
             to_insert.append(doc)
