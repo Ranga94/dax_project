@@ -2,6 +2,7 @@ import requests
 from pprint import pprint
 import sys
 from datetime import datetime
+import time
 
 def get_stocktwits(args):
     from utils import logging_utils as logging_utils

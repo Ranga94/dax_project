@@ -33,7 +33,7 @@ def main(args):
         print(e)
     try:
         print("Executing yahoo_finance")
-        yahoo_finance.main(args)
+        #yahoo_finance.main(args)
     except Exception as e:
         print(e)
     try:
