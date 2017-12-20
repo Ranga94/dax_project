@@ -101,7 +101,7 @@ def get_profitability_color():
         WHEN Total_profitability_score < 20  THEN '-1'
         ELSE '0'
     END) AS Profitability_color
-    FROM pecten_dataset_test.Profitability_score_ranking_t 
+    FROM pecten_dataset_test.Profitability_score_ranking 
     WHERE Status="active"
     GROUP BY Constituent_name, Constituent, Constituent_id, Total_profitability_score, Profitability_color
     ORDER BY Constituent"""
