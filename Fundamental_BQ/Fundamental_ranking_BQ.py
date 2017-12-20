@@ -24,23 +24,23 @@ import os
 from google.cloud import datastore
 from google.cloud import bigquery
 
-#python Fundamental_ranking_BQ.py 'mysql+pymysql://igenie_readwrite:igenie@127.0.0.1/dax_project' 'PARAM_SCORING' 'igenie-project-key.json' 
+#python Fundamental_ranking_BQ.py 'mysql+pymysql://igenie_readwrite:igenie@127.0.0.1/dax_project' 'PARAM_SCORING' 'igenie-project-key.json' 'test'
 
 def fundamental_ranking_main(args):
     ##Collect all the parameters
     project_name,table_store,table_collect=get_parameters(args)
     
     ##Collect all the fundamental analysis results
-    sales_table,profit_margin_table,PER_table,EPS_table,EBITDA_table=fundamental_analysis_collection(project_name)
+    sales_table,profit_margin_table,PER_table,EPS_table,EBITDA_table,dividend_table=fundamental_analysis_collection(project_name)
     
     #Obtain constituent_list
     constituent_list=profit_margin_table['Constituent'].unique()
     
     #table_list = [ROCE_table,sales_table,profit_margin_table,PER_table,EPS_table,EBITDA_table]
-    table_list = [sales_table,profit_margin_table,PER_table,EPS_table,EBITDA_table]
+    table_list = [sales_table,profit_margin_table,PER_table,EPS_table,EBITDA_table,dividend_table,dividend_table]
     #current_values_list = ['Current_ROCE','Current_sales_in_Mio','Current_profit_margin','Current_PER','Current_EPS','Current_EBITDA_in_Mio']
-    growth_scores_list = ['Sales_score','Profit_margin_score','PER_score','EPS_score','EBITDA_score']
-    current_values_list = ['Current_sales_in_Mio','Current_profit_margin','Current_PER','Current_EPS','Current_EBITDA_in_Mio']
+    growth_scores_list = ['Sales_score','Profit_margin_score','PER_score','EPS_score','EBITDA_score','Dividend_consistency_score']
+    current_values_list = ['Current_sales_in_Mio','Current_profit_margin','Current_PER','Current_EPS','Current_EBITDA_in_Mio','Gordon_growth_estimated_return','Current_dividend_yield']
     print "collection done"
     
     #Make a score board for fundamental growth. 
@@ -72,9 +72,9 @@ def fundamental_analysis_collection(project_name):
     profit_margin_table = pd.read_gbq('SELECT * FROM pecten_dataset_test.profit_margin_t WHERE Status = "active";', project_id=project_name)
     PER_table = pd.read_gbq('SELECT * FROM pecten_dataset_test.PER_t WHERE Status = "active";', project_id=project_name)
     EPS_table = pd.read_gbq('SELECT * FROM pecten_dataset_test.EPS_t WHERE Status = "active";', project_id=project_name)
-    EBITDA_table = pd.read_gbq('SELECT * FROM pecten_dataset.EBITDA_t WHERE Status = "active";', project_id=project_name)
-    #dividend_table = pd.DataFrame(list(collection.find({'Table':'dividend analysis','Status':'active'})))
-    return sales_table,profit_margin_table,PER_table,EPS_table,EBITDA_table
+    EBITDA_table = pd.read_gbq('SELECT * FROM pecten_dataset_test.EBITDA_t WHERE Status = "active";', project_id=project_name)
+    dividend_table = pd.read_gbq('SELECT * FROM pecten_dataset_test.dividend_analysis_t WHERE Status = "active";', project_id=project_name)
+    return sales_table,profit_margin_table,PER_table,EPS_table,EBITDA_table,dividend_table
 
 
 
@@ -84,7 +84,7 @@ def fundamental_growth_scoring(args,table_list,value_list,constituent_list):
     fundamental_score_board = pd.DataFrame()
     ## Note that pandas could not locate special German alphabets, hence use unicode notations
    
-    n=len(table_list)
+    n=len(value_list) 
     date = datetime.strftime(datetime.now().date(),'%Y-%m-%d %H:%M:%S') 
  
     for constituent in constituent_list:
@@ -100,7 +100,7 @@ def fundamental_growth_scoring(args,table_list,value_list,constituent_list):
         constituent_id=get_constituent_id_name(constituent)[0]
         
         
-        for i in range(n):
+        for i in range(n): 
             table = table_list[i]
             if table[value_list[i]].loc[table['Constituent']==constituent].empty == False:
                 score = int(table[value_list[i]].loc[table['Constituent']==constituent].values[0])
@@ -111,7 +111,7 @@ def fundamental_growth_scoring(args,table_list,value_list,constituent_list):
                 print str(value_list[i]) + ' for '+ str(constituent) + ' is not avaliable'
             total_score = sum(fundamental_score_array)
             
-        fundamental_score_board = fundamental_score_board.append(pd.DataFrame({'Constituent':constituent, 'Constituent_name':constituent_name,'Constituent_id':constituent_id,'Fundamental_growth_score':total_score,'Sales_score':fundamental_score_array[0],'Profit_margin_score':fundamental_score_array[1],'PER_score':fundamental_score_array[2],'EPS_score':fundamental_score_array[3],'EBITDA_score':fundamental_score_array[4],'Table':'Fundamental growth ranking','Status':'active','Date_of_analysis':date},index=[0]),ignore_index=True)
+        fundamental_score_board = fundamental_score_board.append(pd.DataFrame({'Constituent':constituent, 'Constituent_name':constituent_name,'Constituent_id':constituent_id,'Fundamental_growth_score':total_score,'Sales_score':fundamental_score_array[0],'Profit_margin_score':fundamental_score_array[1],'PER_score':fundamental_score_array[2],'EPS_score':fundamental_score_array[3],'EBITDA_score':fundamental_score_array[4],'Dividend_score':fundamental_score_array[5],'Table':'Fundamental growth ranking','Status':'active','Date_of_analysis':date},index=[0]),ignore_index=True)
         #fundamental_score_board= fundamental_score_board.sort_values('Fundamental_growth_score',axis=0, ascending=False).reset_index(drop=True)
     return fundamental_score_board
     
@@ -214,7 +214,7 @@ def current_fundamental_scoring(stats_table,current_values_list,table_list,const
 
 def get_parameters(args):
     script = 'Fundamental_ranking'
-    query = 'SELECT * FROM'+' '+ args.parameter_table + ';'
+    query = 'SELECT * FROM'+' '+ args.parameter_table + ' WHERE ENVIRONMENT ="'+args.environment + '";'
     print query
     parameter_table = pd.read_sql(query, con=args.sql_connection_string)
     project_name = parameter_table["PROJECT_NAME_BQ"].loc[parameter_table['SCRIPT_NAME']==script].values[0]
@@ -228,9 +228,9 @@ def get_parameters(args):
 
 def update_result(table_store,choice):
     if choice == 1:
-        table_store = 'pecten_dataset_test.Fundamental_current_ranking'
+        table_store = 'pecten_dataset_test.Fundamental_current_ranking2'
     else:
-        table_store = 'pecten_dataset_test.Fundamental_growth_ranking'
+        table_store = 'pecten_dataset_test.Fundamental_growth_ranking2'
     
     storage = Storage(google_key_path='/Users/kefei/Documents/Igenie_Consulting/keys/igenie-project-key.json')
     storage = Storage(google_key_path='igenie-project-key.json' )
@@ -244,9 +244,9 @@ def update_result(table_store,choice):
 
 def store_result(args,project_name,table_store,result_df,choice):
     if choice == 1:
-        table_store = 'pecten_dataset_test.Fundamental_current_ranking'
+        table_store = 'pecten_dataset_test.Fundamental_current_ranking2'
     else:
-        table_store = 'pecten_dataset_test.Fundamental_growth_ranking'
+        table_store = 'pecten_dataset_test.Fundamental_growth_ranking2'
         
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.service_key_path
     client = bigquery.Client()
@@ -330,6 +330,7 @@ if __name__ == "__main__":
     parser.add_argument('sql_connection_string', help='The connection string to mysql for parameter table') 
     parser.add_argument('parameter_table',help="The name of the parameter table in MySQL")
     parser.add_argument('service_key_path',help='google service key path')
+    parser.add_argument('environment',help = 'test or production')
     
     args = parser.parse_args()
     
