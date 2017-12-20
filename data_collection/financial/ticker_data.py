@@ -35,7 +35,7 @@ def extract_ticker_data(args):
 
     all_constituents = storage.get_sql_data(sql_connection_string=args.param_connection_string,
                                         sql_table_name=table,
-                                        sql_column_list=columns)[:2]
+                                        sql_column_list=columns)
 
     i = 0
     for constituent_id, constituent_name, url_key in all_constituents:
