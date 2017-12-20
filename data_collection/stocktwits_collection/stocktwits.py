@@ -4,11 +4,11 @@ import sys
 from datetime import datetime
 
 def get_stocktwits(args):
-    if __name__ != "__main__":
-        from utils import logging_utils as logging_utils
-        from utils.Storage import Storage
-        from utils import twitter_analytics_helpers as tah
-        from utils.TaggingUtils import TaggingUtils as TU
+    from utils import logging_utils as logging_utils
+    from utils.Storage import Storage
+    from utils import twitter_analytics_helpers as tah
+    from utils.TaggingUtils import TaggingUtils as TU
+
 
     # get constituents
     storage = Storage(args.google_key_path)
@@ -78,11 +78,11 @@ def get_stocktwits(args):
                 doc['constituent_name'] = constituent_name
                 doc['constituent_id'] = constituent_id
                 doc['search_term'] = ''
-                doc["constituent"] = get_old_constituent_name(constituent_id)
+                doc["constituent"] = tah.get_old_constituent_name(constituent_id)
                 doc['relevance'] = 1
                 doc["sentiment_score"] = tah.get_nltk_sentiment(str(doc["text"]))
                 tagged_text = tagger.get_spacy_entities(str(doc["text"]))
-                doc["entity_tags"] = get_spacey_tags(tagged_text)
+                doc["entity_tags"] = tah.get_spacey_tags(tagged_text)
 
                 to_insert.append(doc)
 
