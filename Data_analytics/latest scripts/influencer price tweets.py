@@ -3,7 +3,7 @@ import itertools
 import pandas as pd
 sys.path.insert(0, '')
 from utils.Storage import Storage
-from datetime import datetime
+from datetime import datetime,timedelta
 
 def get_influencer_price_tweets(args):
     common_table = "PARAM_READ_DATE"
@@ -53,5 +53,5 @@ if __name__ == "__main__":
     sys.path.insert(0, args.python_path)
     from utils.Storage import Storage
     from utils.twitter_analytics_helpers import *
-    get_influencer_price_tweets(args)
+    #get_influencer_price_tweets(args)
     
