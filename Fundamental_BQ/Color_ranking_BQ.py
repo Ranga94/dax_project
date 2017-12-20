@@ -116,7 +116,7 @@ def get_risk_color():
         WHEN Risk_score < 2  THEN '1'
         ELSE '0'
     END) AS Risk_color
-    FROM pecten_dataset_test.Risk_ranking_t 
+    FROM pecten_dataset_test.Risk_ranking 
     WHERE Status="active"
     GROUP BY Constituent_name, Constituent, Constituent_id, Risk_score, Risk_color
     ORDER BY Constituent"""
