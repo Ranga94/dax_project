@@ -80,9 +80,9 @@ def RSI_calculate(his,n):
     
     #Indicating the bullish signal
     if RSI[-1] > 70:
-        RSI_score = 1
+        RSI_score = 2
     elif RSI[-1] < 30:
-        RSI_score = -1
+        RSI_score = 1
     else: 
         RSI_score =0
         
