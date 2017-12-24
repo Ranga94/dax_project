@@ -25,7 +25,7 @@ import os
 from google.cloud import datastore
 from google.cloud import bigquery
 
-#python webscraping_analyst_BQ.py 'mysql+pymysql://igenie_readwrite:igenie@127.0.0.1/dax_project' 'igenie-project-key.json' 0 'pecten_dataset.analyst_opinions_t'
+#python webscraping_analyst_BQ.py 'mysql+pymysql://igenie_readwrite:igenie@127.0.0.1/dax_project' 'igenie-project-key.json' 0 'pecten_dataset_test.analyst_opinions_t'
 
 #Write a function that reads from the parameter table, and extract analyst data for all stocks
 
@@ -136,7 +136,7 @@ def get_constituent_id_name(old_constituent_name):
     mapping["BMW"] = ("BMWDE8170003036" , "BAYERISCHE MOTOREN WERKE AG")
     mapping["Allianz"] = ("ALVDEFEI1007380" , "ALLIANZ SE")
     mapping["Commerzbank"] = ("CBKDEFEB13190" , "COMMERZBANK AKTIENGESELLSCHAFT")
-    mapping["Adidas"] = ("ADSDE8190216927", "ADIDAS AG")
+    mapping["adidas"] = ("ADSDE8190216927", "ADIDAS AG")
     mapping["Deutsche Bank"] = ("DBKDEFEB13216" , "DEUTSCHE BANK AG")
     mapping["EON"] = ("EOANDE5050056484" , "E.ON SE")
     mapping["Lufthansa"] = ("LHADE5190000974" ,"DEUTSCHE LUFTHANSA AG")
@@ -158,11 +158,11 @@ def get_constituent_id_name(old_constituent_name):
     mapping["ProSiebenSat1 Media"] = ("PSMDE8330261794" , "PROSIEBENSAT.1 MEDIA SE")
     mapping["RWE"] = ("RWEDE5110206610" , "RWE AG")
     mapping["SAP"] = ("SAPDE7050001788" , "SAP SE")
-    mapping["Thyssenkrupp"] = ("TKADE5110216866" , "THYSSENKRUPP AG")
+    mapping["thyssenkrupp"] = ("TKADE5110216866" , "THYSSENKRUPP AG")
     mapping["Vonovia"] = ("VNADE5050438829" , "VONOVIA SE")
     mapping["DAX"] = ("DAX", "DAX")
     mapping["Fresenius Medical Care"] = ("FMEDE8110066557" , "FRESENIUS MEDICAL CARE AG & CO.KGAA")
-    mapping["Volkswagen"] = ("VOW3DE2070000543" , "VOLKSWAGEN AG")
+    mapping["Volkswagen (VW) vz"] = ("VOW3DE2070000543" , "VOLKSWAGEN AG")
     mapping["Münchener Rückversicherungs-Gesellschaft"] = ("MUV2DEFEI1007130" , "MUNCHENER RUCKVERSICHERUNGS - GESELLSCHAFT AKTIENGESELLSCHAFT IN MUNCHEN")
 
     if old_constituent_name in mapping:
