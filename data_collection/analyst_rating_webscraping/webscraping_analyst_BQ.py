@@ -41,7 +41,6 @@ def main(args):
     bi_analyst_table.to_gbq(args.table_storage, project_id = 'igenie-project', chunksize=10000, verbose=True, reauth=False, if_exists='append',private_key=None)
     
 
-
 def analyst_businessinsider(parameter): 
     analyst_opinion_table = pd.DataFrame()
         
@@ -59,7 +58,7 @@ def analyst_businessinsider(parameter):
         constituent_id = get_constituent_id_name(constituent)[0]
         #url = 'http://markets.businessinsider.com/analyst/'+constituents_dict[constituent]
         
-        print constituent
+        print(constituent)
         r = urllib.urlopen(url).read()
         soup = BeautifulSoup(r,'lxml')
         rating_extract = soup.find_all("div",class_="rating")
@@ -103,14 +102,12 @@ def analyst_businessinsider(parameter):
     analyst_opinion_table =analyst_opinion_table.reindex(columns=columnsTitles)
     return analyst_opinion_table
 
-
 def display_parameter(args):
     if args.display_parameter ==0: #Then the new data is not displayed on dashboard
         status = 'inactive'
     else: #Want the new data to be displayed on dashboard, hence set status 'active' and make sure older data is inactive
         status = 'active'
     return status
-    
 
 def get_parameter_table(args):
     #parameter =  get_sql_data_text_query(sql_string, 'SELECT * FROM PARAM_ANALYST_COLLECTION WHERE SOURCE_NAME="Business Insider";')
@@ -198,8 +195,6 @@ class Storage:
             return iterator
         else:
             return list(iterator)
-
-    
 
 if __name__ == "__main__":
     #Hard-codings to be removed: constituents, mongdbconnection, table to store the results for. 
