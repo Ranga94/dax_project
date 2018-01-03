@@ -128,8 +128,8 @@ def get_bloomberg_news(args):
                         print('Target date reached')
                         in_target = False
 
+            to_insert = []
             for art in results:
-                to_insert = []
 
                 art_type = art.find('article')['class']
                 # check if the result is an article
