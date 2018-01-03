@@ -122,6 +122,7 @@ def get_bloomberg_news(args):
             results = main_soup.findAll('div', {'class': 'search-result'})
             times = [x.find('time', {'class': 'published-at'}).text.strip() for x in results]
             times = [datetime.strptime(x, '%b %d, %Y') for x in times]
+            print("Looping times")
             for time in times:
                 if last_date_bq:
                     if time < datetime.strptime(last_date_bq.strftime("%Y-%m-%d"), "%Y-%m-%d"):
@@ -129,8 +130,8 @@ def get_bloomberg_news(args):
                         in_target = False
 
             to_insert = []
+            print("Looping articles...")
             for art in results:
-
                 art_type = art.find('article')['class']
                 # check if the result is an article
                 if 'type-article' in art_type:
