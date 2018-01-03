@@ -5,20 +5,15 @@ from copy import deepcopy
 def main(args):
     print("Collection logs: {}".format(str(datetime.now())))
     try:
+        print("Executing news_collection_orbis")
+        news_collection_orbis.main(args)
+    except Exception as e:
+        print(e)
+    try:
         print("Executing historical_scraper")
         args_1 = deepcopy(args)
         args_1.all = True
-        #historical_scraper.main(args_1)
-    except Exception as e:
-        print(e)
-    try:
-        print("Executing bloomberg_scraper")
-        bloomberg_scraper.main(args)
-    except Exception as e:
-        print(e)
-    try:
-        print("Executing news_collection_orbis")
-        news_collection_orbis.main(args)
+        historical_scraper.main(args_1)
     except Exception as e:
         print(e)
     try:
@@ -27,13 +22,13 @@ def main(args):
     except Exception as e:
         print(e)
     try:
-        print("Executing reuters_scraper")
-        reuters_scraper.main(args)
+        print("Executing yahoo_finance")
+        yahoo_finance.main(args)
     except Exception as e:
         print(e)
     try:
-        print("Executing yahoo_finance")
-        yahoo_finance.main(args)
+        print("Executing reuters_scraper")
+        reuters_scraper.main(args)
     except Exception as e:
         print(e)
     try:
@@ -43,7 +38,12 @@ def main(args):
         print(e)
     try:
         print("Executing ticker_data")
-        #ticker_data.main(args)
+        ticker_data.main(args)
+    except Exception as e:
+        print(e)
+    try:
+        print("Executing bloomberg_scraper")
+        bloomberg_scraper.main(args)
     except Exception as e:
         print(e)
     try:
