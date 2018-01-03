@@ -15,7 +15,16 @@ def get_news_all(args):
     print("news_all")
 
     #columns = ["NEWS_DATE_NewsDim", "score", "NEWS_PUBLICATION_NewsDim", "categorised_tag", "constituent_id", "NEWS_ARTICLE_TXT_NewsDim", "sentiment", "NEWS_TITLE_NewsDim", "entity_tags", "entity_tags.FACILITY", "entity_tags.QUANTITY", "entity_tags.EVENT", "entity_tags.PERSON", "entity_tags.DATE", "entity_tags.TIME", "entity_tags.CARDINAL", "entity_tags.PRODUCT", "count"]
-    columns = ["NEWS_DATE_NewsDim", "score", "NEWS_PUBLICATION_NewsDim", "constituent_id", "NEWS_ARTICLE_TXT_NewsDim", "sentiment", "NEWS_TITLE_NewsDim", "entity_tags", "count", "To_date", "From_date"]
+    '''
+    columns = ["NEWS_DATE_NewsDim", "score", "NEWS_PUBLICATION_NewsDim",
+               "constituent_id", "NEWS_ARTICLE_TXT_NewsDim", "sentiment",
+               "NEWS_TITLE_NewsDim", "entity_tags", "count", "To_date", "From_date","constituent_name",
+               "constituent"]
+    '''
+    columns = ["NEWS_DATE_NewsDim", "score", "NEWS_PUBLICATION_NewsDim",
+               "constituent_id", "NEWS_ARTICLE_TXT_NewsDim", "sentiment",
+               "NEWS_TITLE_NewsDim", "To_date", "From_date", "constituent_name",
+               "constituent"]
 
     query = """
     SELECT * EXCEPT(row_num)
@@ -65,6 +74,9 @@ def get_news_all(args):
 
     try:
         print("Inserting to BQ")
+        print(len(to_insert))
+        storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], 'news_all',to_insert)
+        '''
         storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], 'news_all',
                                             to_insert[:int(len(to_insert) * 0.25)])
         storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], 'news_all',
@@ -73,10 +85,9 @@ def get_news_all(args):
                                             to_insert[int(len(to_insert) * 0.5):int(len(to_insert) * 0.75)])
         storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], 'news_all',
                                             to_insert[int(len(to_insert) * 0.75):])
+        '''
     except Exception as e:
         print(e)
-
-
 
 if __name__ == "__main__":
     import argparse

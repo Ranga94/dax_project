@@ -4,6 +4,7 @@ import pandas as pd
 sys.path.insert(0, 'dax_project-master')
 from utils.Storage import Storage
 from datetime import datetime
+from langdetect import detect
 
 def get_news_analytics_topic_articles(args):
     # Get dataset name
@@ -34,7 +35,7 @@ def get_news_analytics_topic_articles(args):
                             UNNEST(news_topics) AS news_topics) b
     WHERE a.news_id = b.news_id AND a.news_date between TIMESTAMP ('{1}') and TIMESTAMP ('{2}')
 )
-WHERE row_num = 1;   
+WHERE row_num between 0 and 20;
     """.format(common_parameters["BQ_DATASET"],common_parameters["FROM_DATE"].strftime("%Y-%m-%d"),
                common_parameters["TO_DATE"].strftime("%Y-%m-%d"))
 
@@ -42,10 +43,16 @@ WHERE row_num = 1;
 
     result = storage_client.get_bigquery_data(query, iterator_flag=True)
     to_insert = []
-
+    print(len(result))
     for item in result:
-        to_insert.append(dict((k,item[k].strftime('%Y-%m-%d %H:%M:%S')) if isinstance(item[k],datetime) else
-                   (k,item[k]) for k in columns))
+        article = dict((k,item[k].strftime('%Y-%m-%d %H:%M:%S')) if isinstance(item[k],datetime) else
+                   (k,item[k]) for k in columns)
+        print(detect(article["News_Title_NewsDim"]))
+        if detect(article["News_Title_NewsDim"]) == 'en':
+            to_insert.append(article)
+
+    print(len(to_insert))
+    return
 
     try:
         print("Inserting into BQ")
