@@ -56,7 +56,7 @@ def main(args):
             args_2.table_storage = 'pecten_dataset_{}.{}'.format(args.environment, args.analyst_opinions_table)
         else:
             args_2.table_storage = 'pecten_dataset.{}'.format(args.analyst_opinions_table)
-        webscraping_analyst_BQ.main(args)
+        webscraping_analyst_BQ.main(args_2)
     except Exception as e:
         print(e)
     try:
