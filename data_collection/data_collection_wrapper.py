@@ -8,7 +8,7 @@ def main(args):
         print("Executing historical_scraper")
         args_1 = deepcopy(args)
         args_1.all = True
-        historical_scraper.main(args_1)
+        #historical_scraper.main(args_1)
     except Exception as e:
         print(e)
     try:
