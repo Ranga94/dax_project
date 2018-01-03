@@ -108,7 +108,7 @@ def get_tweets(args):
 
             #Get max id of all tweets to extract tweets with id highe than that
             q = "SELECT MAX(id) as max_id FROM `{}.{}` WHERE constituent_id = '{}' " \
-                "AND lang = {};".format(common_parameters["BQ_DATASET"],parameters["DESTINATION_TABLE"],
+                "AND lang = '{}';".format(common_parameters["BQ_DATASET"],parameters["DESTINATION_TABLE"],
                                         constituent_id,language)
             try:
                 sinceId =  int(storage.get_bigquery_data(q,iterator_flag=False)[0]["max_id"])

@@ -174,7 +174,6 @@ def get_bloomberg_news(args):
                 print("Inserting records to BQ")
                 try:
                     storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], parameters["DESTINATION_TABLE"], to_insert)
-
                 except Exception as e:
                     print(e)
 

@@ -622,7 +622,7 @@ def main(args):
                         FROM `{}.{}`
                         WHERE news_origin = "Orbis"
                         GROUP BY constituent_name
-    """.format(common_parameters["BQ_DATASET"],parameters["DSETINATION_TABLE"])
+    """.format(common_parameters["BQ_DATASET"],parameters["DESTINATION_TABLE"])
 
     email_tools.send_mail(args.param_connection_string, args.google_key_path, "Orbis",
               "PARAM_NEWS_COLLECTION", lambda x: x["SOURCE"] == "Orbis", q1, q2)
