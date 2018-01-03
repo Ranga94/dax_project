@@ -5,6 +5,7 @@ from io import StringIO
 import pandas as pd
 import sys
 import json
+import time
 
 def get_historical_orbis_news(user, pwd, database, google_key_path, param_connection_string):
     #get parameters
