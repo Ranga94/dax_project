@@ -77,7 +77,7 @@ def get_bloomberg_news(args):
                                                    sql_column_list=["CONSTITUENT_ID",
                                                                     "CONSTITUENT_NAME",
                                                                     "URL_KEY",
-                                                                    "PAGES"])[:2]
+                                                                    "PAGES"])
 
     # Define random user agent object
     #ua = UserAgent()
