@@ -43,12 +43,12 @@ def main(args):
         print(e)
     try:
         print("Executing ticker_data")
-        ticker_data.main(args)
+        #ticker_data.main(args)
     except Exception as e:
         print(e)
     try:
         print("Executing twitter_collection")
-        twitter_collection.main(args)
+        #twitter_collection.main(args)
     except Exception as e:
         print(e)
 
