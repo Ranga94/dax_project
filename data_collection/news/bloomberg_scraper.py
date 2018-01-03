@@ -185,6 +185,8 @@ def get_bloomberg_news(args):
                             "downloaded_news": len(to_insert),
                             "source": "Bloomberg"}]
                     logging_utils.logging(doc,common_parameters["BQ_DATASET"],parameters["LOGGING_TABLE"],storage_client)
+            else:
+                break
 
 def main(args):
     sys.path.insert(0, args.python_path)
