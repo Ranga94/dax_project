@@ -268,7 +268,7 @@ def get_daily_zephyr_ma_deals(args):
             # add constituent name, id and old name
             df["constituent_id"] = constituent_id
             df["constituent_name"] = constituent_name
-            old_constituent_name = get_old_constituent_name(constituent_id)
+            old_constituent_name = tah.get_old_constituent_name(constituent_id)
             df["constituent"] = old_constituent_name
 
             data = json.loads(df.to_json(orient="records", date_format="iso"))
