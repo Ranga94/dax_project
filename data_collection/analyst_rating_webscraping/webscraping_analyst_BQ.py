@@ -24,6 +24,15 @@ from google.cloud.exceptions import GoogleCloudError, NotFound
 import os
 from google.cloud import datastore
 from google.cloud import bigquery
+import sys
+
+if sys.version_info[0] == 3:
+    from urllib.request import urlopen
+else:
+    # Not Python 3 - today, it is most likely to be Python 2
+    # But note that this might need an update when Python 4
+    # might be around one day
+    from urllib import urlopen
 
 #python webscraping_analyst_BQ.py 'mysql+pymysql://igenie_readwrite:igenie@127.0.0.1/dax_project' 'igenie-project-key.json' 0 'pecten_dataset_test.analyst_opinions_t'
 
@@ -59,7 +68,7 @@ def analyst_businessinsider(parameter):
         #url = 'http://markets.businessinsider.com/analyst/'+constituents_dict[constituent]
         
         print(constituent)
-        r = urllib.urlopen(url).read()
+        r = urlopen(url).read()
         soup = BeautifulSoup(r,'lxml')
         rating_extract = soup.find_all("div",class_="rating")
         rating = float(rating_extract[0].text)
