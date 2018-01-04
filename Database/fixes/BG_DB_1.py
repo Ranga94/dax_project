@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from google.cloud import bigquery
 import sys
 import os
