@@ -1,0 +1,25 @@
+all_correlations
+
+bq mk -t pecten_dataset_test.all_correlations Date:TIMESTAMP,Open:FLOAT,High:FLOAT,Low:FLOAT,Close:FLOAT,Adj_Close:FLOAT,Volume:INTEGER,Twitter_sent:FLOAT,Constituent:STRING,News_sent:FLOAT,constituent_id:STRING,From_date:TIMESTAMP,To_date:TIMESTAMP
+
+all_news
+
+bq mk -t pecten_dataset_test.all_news news_date:TIMESTAMP,news_title:STRING,news_article_txt:STRING,news_source:STRING,news_publication:STRING,news_topics:STRING,score:FLOAT,sentiment:STRING,constituent_id:STRING,constituent_name:STRING,constituent:STRING,url:STRING,show:BOOLEAN,entity_tags:RECORD,entity_tags.PERSON:STRING,entity_tags.NORP:STRING,entity_tags.FACILITY:STRING,entity_tags.ORG:STRING,entity_tags.GPE:STRING,entity_tags.LOC:STRING,entity_tags.PRODUCT:STRING,entity_tags.EVENT:STRING,entity_tags.WORK_OF_ART:STRING,entity_tags.LAW:STRING,entity_tags.LANGUAGE:STRING,entity_tags.DATE:STRING,entity_tags.TIME:STRING,entity_tags.PERCENT:STRING,entity_tags.MONEY:STRING,entity_tags.QUANTITY:STRING,entity_tags.ORDINAL:STRING,entity_tags.CARDINAL:STRING,entity_tags.FAC:STRING,news_companies:STRING,news_country:STRING,news_region:STRING,news_language:STRING,news_id:INTEGER,news_origin:STRING
+
+analysts_opinions_t
+
+bq mk -t pecten_dataset_test.analysts_opinions_t Constituent:STRING,Constituent_name:STRING,Constituent_id:STRING,Analyst_rating:FLOAT,Analyst_recommendation:STRING,Buy:INTEGER,Hold:INTEGER,Sell:INTEGER,Buy_percentage:FLOAT,Hold_percentage:FLOAT,Sell_percentage:INTEGER,Median_target_price:FLOAT,Highest_target_price:FLOAT,Lowest_target_price:FLOAT,Table:STRING,Status:STRING,Date:STRING
+
+analytics_twitter
+
+bq mk -t pecten_dataset_test.analytics_twitter created_at:DATETIME,from_date:DATETIME,to_date:DATETIME,state:STRING,category:STRING,constituent:STRING,group_by_type:STRING,group_by_value:DATETIME,key:STRING,value:FLOAT
+
+ATR
+
+bq mk -t pecten_dataset_test.ATR Average_ATR_in_the_last_12_months:FLOAT,Average_ATR_in_the_last_3_years:FLOAT,Constituent:STRING,Constituent_id:STRING,Constituent_name:STRING,Current_14_day_ATR:FLOAT,Date_of_analysis:STRING,From_date:STRING,Status:STRING,Table:STRING,To_date:STRING
+
+business_ratio
+
+bq mk -t pecten_dataset_test.business_ratio constituent_name:STRING,constituent_id:STRING,date_of_collection:TIMESTAMP,Dividend_yield:FLOAT,P_E_Ratio:FLOAT,Win_per_share:FLOAT,Number_of_Shares:FLOAT,Market_Capitalizations:STRING,Dividend_2016:FLOAT
+
+
