@@ -60,5 +60,37 @@ Fundamental_growth_ranking_t
 
 bq mk -t pecten_dataset_test.Fundamental_growth_ranking_t Constituent:STRING,Constituent_id:STRING,Constituent_name:STRING,Date_of_analysis:STRING,Dividend_score:FLOAT,EBITDA_score:FLOAT,EPS_score:FLOAT,Fundamental_growth_score:FLOAT,PER_score:FLOAT,Profit_margin_score:FLOAT,Sales_score:FLOAT,Status:STRING,Table:STRING
 
+historical
+
+bq mk -t pecten_dataset_test.historical daily_low:FLOAT,closing_price:FLOAT,daily_high:FLOAT,turnover:FLOAT,date:TIMESTAMP,volume:FLOAT,constituent:STRING,opening_price:FLOAT,constituent_name:STRING,constituent_id:STRING
+
+historical_key_data
+
+bq mk -t pecten_dataset_test.historical_key_data 
+
+influencer_prices
+
+bq mk -t pecten_dataset_test.influencer_prices constituent_name:STRING,constituent:STRING,to_date:TIMESTAMP,from_date:TIMESTAMP,sentiment_score:FLOAT,tweet_date:TIMESTAMP,price:FLOAT,entity_tags:STRING,constituent_id:STRING,date:TIMESTAMP
+
+influencer_price_tweets
+
+bq mk -t pecten_dataset_test.influencer_price_tweets tweet_date:TIMESTAMP,constituent_name:STRING,from_date:TIMESTAMP,date:TIMESTAMP,text:STRING,entity_tags:RECORD,entity_tags.MONEY:STRING,sentiment_score:FLOAT,constituent:STRING,constituent_id:STRING,to_date:TIMESTAMP
+
+instrument_information
+
+bq mk -t pecten_dataset_test.instrument_information constituent_name:STRING,constituent_id:STRING,date_of_collection:TIMESTAMP,ISIN:STRING,Reuters_Instrument_Code:STRING,Market_Capitalizations:STRING,Number_of_Shares:FLOAT
+
+liquidity
+
+bq mk -t pecten_dataset_test.liquidity constituent_name:STRING,constituent_id:STRING,date_of_collection:TIMESTAMP,Xetra_Liqudity_Measure_XLM:STRING,Liquidity_Class:STRING,Liqudity_Category:STRING,Designated_Sponsor_s:STRING
+
+ma_deals
+
+bq mk -t pecten_dataset_test.ma_deals record_id:INTEGER,deal_headline:STRING,target:STRING,acquiror:STRING,vendor:STRING,deal_type:STRING,deal_status:STRING,completion_date:TIMESTAMP,deal_value:STRING,completion_date:TIMESTAMP,deal_value:STRING,deal_status:STRING,completion_date:TIMESTAMP,deal_value:STRING,constituent:STRING,constituent_name:STRING,constituent_id:STRING,rumour_date:TIMESTAMP,announced_date:TIMESTAMP,expected_completion_date:TIMESTAMP,assumed_completion_date:TIMESTAMP,postponed_date:TIMESTAMP,withdarwn_date:TIMESTAMP
+
+master_data
+
+bq mk -t pecten_dataset_test.master_data constituent_name:STRING,constituent_id:STRING,date_of_collection:TIMESTAMP,Transparency_Level_on_First_Quotation:STRING,Market_segment:STRING,Trading_Model:STRING,Country:STRING,Branch:STRING,Share_Type:STRING,Sector:STRING,Subsector:STRING
+
 
 
