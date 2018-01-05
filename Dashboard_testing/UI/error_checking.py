@@ -11,9 +11,16 @@ driver = webdriver.PhantomJS()
 url = "https://sparklingocean.shinyapps.io/Dashboard_test/"
 driver.get(url)
 time.sleep(20)
-driver.find_element_by_xpath('//*[@id="constituent"]').click()
-time.sleep(10)
+element = driver.find_element_by_xpath('//*[@id="constituent"]')
+
+time.sleep(1)
+#driver.execute_script("arguments[0].click();", element)
+driver.execute_script("$(arguments[0]).click();", element)
+time.sleep(5)
 print(driver.page_source)
+
+
+
 
 
 
