@@ -22,4 +22,43 @@ business_ratio
 
 bq mk -t pecten_dataset_test.business_ratio constituent_name:STRING,constituent_id:STRING,date_of_collection:TIMESTAMP,Dividend_yield:FLOAT,P_E_Ratio:FLOAT,Win_per_share:FLOAT,Number_of_Shares:FLOAT,Market_Capitalizations:STRING,Dividend_2016:FLOAT
 
+company_data
+
+country_data
+
+bq mk -t pecten_dataset_test.country_data count:INTEGER,status:STRING,avg_sentiment:FLOAT,constituent_name:STRING,country_name:STRING,constituent:STRING,date_of_analysis:TIMESTAMP,constituent_id:STRING,from_date:TIMESTAMP,to_date:TIMESTAMP
+
+cumulative_returns
+
+bq mk -t pecten_dataset_test.cumulative_returns Constituent:STRING,Constituent_id:STRING,Constituent_name:STRING,Cumulative_return_consistency_score:INTEGER,Date_of_analysis:STRING,From_date:STRING,Status:STRING,Table:STRING,To_date:STRING,one_year_return:FLOAT,six_months_return:FLOAT,three_years_return:FLOAT
+
+Daily_Data
+
+bq mk -t pecten_dataset_test.Daily_Data Date:TIMESTAMP,Close:FLOAT,Low:FLOAT,Volume:FLOAT,Open:FLOAT,High:FLOAT,Constituent:STRING,Adj_Close:FLOAT
+
+dividend
+
+bq mk -t pecten_dataset_test.dividend constituent_name:STRING,constituent_id:STRING,date_of_collection:TIMESTAMP,Dividend_Cycle:STRING,ISIN:STRING,Last_Dividend_Payment:TIMESTAMP,Value:FLOAT
+
+EBITDA_t
+
+bq mk -t pecten_dataset_test.EBITDA_t Constituent:STRING,Constituent_id:STRING,Constituent_name:STRING,Current_EBITDA_in_Mio:FLOAT,Date:STRING,EBITDA_4_years_ago_in_Mio:FLOAT,EBITDA_last_year_in_Mio:FLOAT,EBITDA_score:INTEGER,Status:STRING,Table:STRING,percentage_change_in_EBITDA_from_4_years_ago:FLOAT,percentage_change_in_EBITDA_from_last_year:FLOAT
+
+EPS_t
+
+bq mk -t pecten_dataset_test.EPS_t Constituent:STRING,Constituent_id:STRING,Constituent_name:STRING,Current_EPS:FLOAT,Date:STRING,EPS_4_years_ago:FLOAT,EPS_last_year:FLOAT,EPS_score:INTEGER,Status:STRING,Table:STRING,percentage_change_in_EPS_from_4_years_ago:FLOAT,percentage_change_in_EPS_from_last_year:FLOAT
+
+frankfurt_trading_parameters
+
+bq mk -t pecten_dataset_test.frankfurt_trading_parameters constituent_name:STRING,constituent_id:STRING,date_of_collection:TIMESTAMP,Specialist:STRING,Minimum_tradable_Unit:FLOAT,Pre_trading:STRING,Post_trading:STRING
+
+Fundamental_current_ranking_t
+
+bq mk -t pecten_dataset_test.Fundamental_current_ranking_t Constituent:STRING,Constituent_id:STRING,Constituent_name:STRING,Current_EBITDA_in_Mio:INTEGER,Current_EPS:INTEGER,Current_PER:INTEGER,Current_dividend_yield:INTEGER,Current_fundamental_total_score:FLOAT,Current_profit_margin:INTEGER,Current_sales_in_Mio:INTEGER,Date_of_analysis:STRING,Gordon_growth_estimated_return:INTEGER,Status:STRING,Table:STRING
+
+Fundamental_growth_ranking_t
+
+bq mk -t pecten_dataset_test.Fundamental_growth_ranking_t Constituent:STRING,Constituent_id:STRING,Constituent_name:STRING,Date_of_analysis:STRING,Dividend_score:FLOAT,EBITDA_score:FLOAT,EPS_score:FLOAT,Fundamental_growth_score:FLOAT,PER_score:FLOAT,Profit_margin_score:FLOAT,Sales_score:FLOAT,Status:STRING,Table:STRING
+
+
 
