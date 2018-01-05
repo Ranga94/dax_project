@@ -25,6 +25,7 @@ import os
 from google.cloud import datastore
 from google.cloud import bigquery
 import sys
+from pprint import pprint
 
 if sys.version_info[0] == 3:
     from urllib.request import urlopen
@@ -47,10 +48,28 @@ def main(args):
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.service_key_path
     client = bigquery.Client()
     update_result(args)
-    bi_analyst_table.to_gbq(args.table_storage, project_id = 'igenie-project', chunksize=10000, verbose=True, reauth=False, if_exists='append',private_key=None)
+    #print(bi_analyst_table)
+    #bi_analyst_table.to_gbq(args.table_storage, project_id = 'igenie-project', chunksize=10000, verbose=True, reauth=False, if_exists='append',private_key=None)
+    data = bi_analyst_table.to_dict(orient='records')
+    #pprint(data)
+    storage = StorageUtil.Storage(google_key_path=args.service_key_path)
+    if args.environment == 'test':
+        dataset = 'pecten_dataset_test'
+    else:
+        dataset = 'pecten_dataset'
+    storage.insert_bigquery_data(dataset, args.table_storage, data)
     
 
-def analyst_businessinsider(parameter): 
+def analyst_businessinsider(parameter):
+    # Get dataset name
+    common_table = "PARAM_READ_DATE"
+    common_list = ["FROM_DATE"]
+    common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
+
+    common_parameters = tah.get_parameters(args.sql_connection_string, common_table, common_list, common_where)
+
+
+
     analyst_opinion_table = pd.DataFrame()
         
     for i in range(len(parameter)):
@@ -105,9 +124,10 @@ def analyst_businessinsider(parameter):
             rating_result = 'Strong sell'
         
         #If any data extracted is empty, label it NaN
-        date = datetime.strftime(datetime.now().date(),'%Y-%m-%d %H:%M:%S') 
-        analyst_opinion_table = analyst_opinion_table.append(pd.DataFrame({'Constituent':constituent,'Constituent_name':constituent_name, 'Constituent_id':constituent_id,'Analyst_rating': rating, 'Analyst_recommendation': rating_result,'Buy':buy_count,'Hold':hold_count,'Sell':sell_count,'Buy_percentage':round(buy_count*1.0/total,3),'Hold_percentage':round(hold_count*1.0/total,3),'Sell_percentage':round(sell_count*1.0/total,3),'Median_target_price':median_target, 'Highest_target_price':highest_target,'Lowest_target_price':lowest_target,'Date':date,'Table':'Analyst opinions','Status':'active'},index=[0],),ignore_index=True)
-    columnsTitles = ['Constituent','Constituent_name','Constituent_id','Analyst_rating','Analyst_recommendation', 'Buy','Hold','Sell','Buy_percentage','Hold_percentage','Sell_percentage','Median_target_price','Highest_target_price','Lowest_target_price','Table','Status','Date']
+        #date = datetime.strftime(datetime.now().date(),'%Y-%m-%d %H:%M:%S')
+        date = datetime.strftime(common_parameters["FROM_DATE"],'%Y-%m-%d %H:%M:%S')
+        analyst_opinion_table = analyst_opinion_table.append(pd.DataFrame({'Constituent':constituent,'constituent_name':constituent_name, 'constituent_id':constituent_id,'Analyst_rating': rating, 'Analyst_recommendation': rating_result,'Buy':buy_count,'Hold':hold_count,'Sell':sell_count,'Buy_percentage':round(buy_count*1.0/total,3),'Hold_percentage':round(hold_count*1.0/total,3),'Sell_percentage':round(sell_count*1.0/total,3),'Median_target_price':median_target, 'Highest_target_price':highest_target,'Lowest_target_price':lowest_target,'Date':date,'Table':'Analyst opinions','Status':'active'},index=[0],),ignore_index=True)
+    columnsTitles = ['Constituent','constituent_name','constituent_id','Analyst_rating','Analyst_recommendation', 'Buy','Hold','Sell','Buy_percentage','Hold_percentage','Sell_percentage','Median_target_price','Highest_target_price','Lowest_target_price','Table','Status','Date']
     analyst_opinion_table =analyst_opinion_table.reindex(columns=columnsTitles)
     return analyst_opinion_table
 
@@ -208,10 +228,14 @@ class Storage:
 if __name__ == "__main__":
     #Hard-codings to be removed: constituents, mongdbconnection, table to store the results for. 
     parser = argparse.ArgumentParser()
-    #parser.add_argument('python_path', help='The connection string') #directory of script
+    parser.add_argument('python_path') #directory of script
+    parser.add_argument('environment')  # directory of script
     parser.add_argument('sql_connection_string', help='The connection string to mysql') #mongodb connection string
     parser.add_argument('service_key_path',help='google service key path')
     parser.add_argument('display_parameter',help='The parameter that decides if the new analyst data will be displayed on dashboard, 1 for yes, 0 for no')
     parser.add_argument('table_storage',help='BigQuery table where the new data is stored')
     args = parser.parse_args()
+    sys.path.insert(0, args.python_path)
+    from utils import twitter_analytics_helpers as tah
+    from utils import Storage as StorageUtil
     main(args)
