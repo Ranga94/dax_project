@@ -57,6 +57,8 @@ def main(args):
         dataset = 'pecten_dataset_test'
     else:
         dataset = 'pecten_dataset'
+    print(dataset)
+    print(args.table_storage)
     storage.insert_bigquery_data(dataset, args.table_storage, data)
     
 
@@ -146,10 +148,15 @@ def get_parameter_table(args):
 
 def update_result(args):
     table_store = args.table_storage
+
+    if args.environment == 'test':
+        dataset = 'pecten_dataset_test'
+    else:
+        dataset = 'pecten_dataset'
     
     #storage = Storage(google_key_path='/Users/kefei/Documents/Igenie_Consulting/keys/igenie-project-key.json')
     storage = Storage(google_key_path=args.service_key_path )
-    query = 'UPDATE `' + table_store +'` SET Status = "inactive" WHERE Status = "active"'
+    query = 'UPDATE `' + dataset + '.' + table_store +'` SET Status = "inactive" WHERE Status = "active"'
 
     try:
         result = storage.get_bigquery_data(query)
