@@ -22,4 +22,75 @@ business_ratio
 
 bq mk -t pecten_dataset_test.business_ratio constituent_name:STRING,constituent_id:STRING,date_of_collection:TIMESTAMP,Dividend_yield:FLOAT,P_E_Ratio:FLOAT,Win_per_share:FLOAT,Number_of_Shares:FLOAT,Market_Capitalizations:STRING,Dividend_2016:FLOAT
 
+company_data
+
+country_data
+
+bq mk -t pecten_dataset_test.country_data count:INTEGER,status:STRING,avg_sentiment:FLOAT,constituent_name:STRING,country_name:STRING,constituent:STRING,date_of_analysis:TIMESTAMP,constituent_id:STRING,from_date:TIMESTAMP,to_date:TIMESTAMP
+
+cumulative_returns
+
+bq mk -t pecten_dataset_test.cumulative_returns Constituent:STRING,Constituent_id:STRING,Constituent_name:STRING,Cumulative_return_consistency_score:INTEGER,Date_of_analysis:STRING,From_date:STRING,Status:STRING,Table:STRING,To_date:STRING,one_year_return:FLOAT,six_months_return:FLOAT,three_years_return:FLOAT
+
+Daily_Data
+
+bq mk -t pecten_dataset_test.Daily_Data Date:TIMESTAMP,Close:FLOAT,Low:FLOAT,Volume:FLOAT,Open:FLOAT,High:FLOAT,Constituent:STRING,Adj_Close:FLOAT
+
+dividend
+
+bq mk -t pecten_dataset_test.dividend constituent_name:STRING,constituent_id:STRING,date_of_collection:TIMESTAMP,Dividend_Cycle:STRING,ISIN:STRING,Last_Dividend_Payment:TIMESTAMP,Value:FLOAT
+
+EBITDA_t
+
+bq mk -t pecten_dataset_test.EBITDA_t Constituent:STRING,Constituent_id:STRING,Constituent_name:STRING,Current_EBITDA_in_Mio:FLOAT,Date:STRING,EBITDA_4_years_ago_in_Mio:FLOAT,EBITDA_last_year_in_Mio:FLOAT,EBITDA_score:INTEGER,Status:STRING,Table:STRING,percentage_change_in_EBITDA_from_4_years_ago:FLOAT,percentage_change_in_EBITDA_from_last_year:FLOAT
+
+EPS_t
+
+bq mk -t pecten_dataset_test.EPS_t Constituent:STRING,Constituent_id:STRING,Constituent_name:STRING,Current_EPS:FLOAT,Date:STRING,EPS_4_years_ago:FLOAT,EPS_last_year:FLOAT,EPS_score:INTEGER,Status:STRING,Table:STRING,percentage_change_in_EPS_from_4_years_ago:FLOAT,percentage_change_in_EPS_from_last_year:FLOAT
+
+frankfurt_trading_parameters
+
+bq mk -t pecten_dataset_test.frankfurt_trading_parameters constituent_name:STRING,constituent_id:STRING,date_of_collection:TIMESTAMP,Specialist:STRING,Minimum_tradable_Unit:FLOAT,Pre_trading:STRING,Post_trading:STRING
+
+Fundamental_current_ranking_t
+
+bq mk -t pecten_dataset_test.Fundamental_current_ranking_t Constituent:STRING,Constituent_id:STRING,Constituent_name:STRING,Current_EBITDA_in_Mio:INTEGER,Current_EPS:INTEGER,Current_PER:INTEGER,Current_dividend_yield:INTEGER,Current_fundamental_total_score:FLOAT,Current_profit_margin:INTEGER,Current_sales_in_Mio:INTEGER,Date_of_analysis:STRING,Gordon_growth_estimated_return:INTEGER,Status:STRING,Table:STRING
+
+Fundamental_growth_ranking_t
+
+bq mk -t pecten_dataset_test.Fundamental_growth_ranking_t Constituent:STRING,Constituent_id:STRING,Constituent_name:STRING,Date_of_analysis:STRING,Dividend_score:FLOAT,EBITDA_score:FLOAT,EPS_score:FLOAT,Fundamental_growth_score:FLOAT,PER_score:FLOAT,Profit_margin_score:FLOAT,Sales_score:FLOAT,Status:STRING,Table:STRING
+
+historical
+
+bq mk -t pecten_dataset_test.historical daily_low:FLOAT,closing_price:FLOAT,daily_high:FLOAT,turnover:FLOAT,date:TIMESTAMP,volume:FLOAT,constituent:STRING,opening_price:FLOAT,constituent_name:STRING,constituent_id:STRING
+
+historical_key_data
+
+bq mk -t pecten_dataset_test.historical_key_data 
+
+influencer_prices
+
+bq mk -t pecten_dataset_test.influencer_prices constituent_name:STRING,constituent:STRING,to_date:TIMESTAMP,from_date:TIMESTAMP,sentiment_score:FLOAT,tweet_date:TIMESTAMP,price:FLOAT,entity_tags:STRING,constituent_id:STRING,date:TIMESTAMP
+
+influencer_price_tweets
+
+bq mk -t pecten_dataset_test.influencer_price_tweets tweet_date:TIMESTAMP,constituent_name:STRING,from_date:TIMESTAMP,date:TIMESTAMP,text:STRING,entity_tags:RECORD,entity_tags.MONEY:STRING,sentiment_score:FLOAT,constituent:STRING,constituent_id:STRING,to_date:TIMESTAMP
+
+instrument_information
+
+bq mk -t pecten_dataset_test.instrument_information constituent_name:STRING,constituent_id:STRING,date_of_collection:TIMESTAMP,ISIN:STRING,Reuters_Instrument_Code:STRING,Market_Capitalizations:STRING,Number_of_Shares:FLOAT
+
+liquidity
+
+bq mk -t pecten_dataset_test.liquidity constituent_name:STRING,constituent_id:STRING,date_of_collection:TIMESTAMP,Xetra_Liqudity_Measure_XLM:STRING,Liquidity_Class:STRING,Liqudity_Category:STRING,Designated_Sponsor_s:STRING
+
+ma_deals
+
+bq mk -t pecten_dataset_test.ma_deals record_id:INTEGER,deal_headline:STRING,target:STRING,acquiror:STRING,vendor:STRING,deal_type:STRING,deal_status:STRING,completion_date:TIMESTAMP,deal_value:STRING,completion_date:TIMESTAMP,deal_value:STRING,deal_status:STRING,completion_date:TIMESTAMP,deal_value:STRING,constituent:STRING,constituent_name:STRING,constituent_id:STRING,rumour_date:TIMESTAMP,announced_date:TIMESTAMP,expected_completion_date:TIMESTAMP,assumed_completion_date:TIMESTAMP,postponed_date:TIMESTAMP,withdarwn_date:TIMESTAMP
+
+master_data
+
+bq mk -t pecten_dataset_test.master_data constituent_name:STRING,constituent_id:STRING,date_of_collection:TIMESTAMP,Transparency_Level_on_First_Quotation:STRING,Market_segment:STRING,Trading_Model:STRING,Country:STRING,Branch:STRING,Share_Type:STRING,Sector:STRING,Subsector:STRING
+
+
 
