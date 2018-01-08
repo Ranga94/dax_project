@@ -26,7 +26,7 @@ if len(results) < 1000:
     iterator = query_job.result()
 else:
     print("Getting table {}".format(sys.argv[5]))
-    dataset_ref = client.dataset('pecten_dataset_test')
+    dataset_ref = client.dataset('pecten_dataset')
     dataset = client.get_dataset(dataset_ref)
     table_ref = dataset.table(sys.argv[5])
     table = client.get_table(table_ref)
