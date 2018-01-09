@@ -4,5 +4,5 @@ TABLE=(all_correlations all_news analyst_opinions analyst_opinions_t analytics_t
 
 for i in "${TABLE[@]}"  
 do
-	 bq extract --destination_format=NEWLINE_DELIMITED_JSON 'pecten_dataset_test.$i' gs://pecten_dataset_test/$i.json
+	 bq extract --destination_format=NEWLINE_DELIMITED_JSON pecten_dataset_test.$i gs://pecten_dataset_test/$i.json
 done
