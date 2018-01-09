@@ -1,0 +1,1 @@
+INSERT INTO `dax_project`.`PARAM_READ_DATE` (`ROW_NUMBER`, `FROM_DATE`, `TO_DATE`, `STATUS`, `ENVIRONMENT`, `BQ_DATASET`) VALUES ('7', '2017-11-17 00:00:00.0000', '2017-12-01 00:00:00.0000', 'active', 'dev', 'pecten_dataset_dev');
