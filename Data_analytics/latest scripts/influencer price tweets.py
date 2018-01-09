@@ -85,5 +85,5 @@ if __name__ == "__main__":
     from utils.twitter_analytics_helpers import *
     from Database.BigQuery.backup_table import backup_table, drop_backup_table  # Feature PECTEN-9
     from Database.BigQuery.data_validation import validate_data, before_insert, after_insert  # Feature PECTEN-9
-    #get_influencer_price_tweets(args)
+    get_influencer_price_tweets(args)
     
