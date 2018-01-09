@@ -28,6 +28,8 @@ def validate_data(google_key_path, data, dataset_name, table_name):
 
     for row in data:
         for column in row.keys():
+            print(column)
+            print(list_of_fields.keys())
             assert column in list_of_fields
             assert row[column] is not None
             assert field_mappings(list_of_fields[column].field_type, type(row[column]))
