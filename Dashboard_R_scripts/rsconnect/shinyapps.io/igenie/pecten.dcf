@@ -1,0 +1,12 @@
+name: pecten
+title: pecten
+username:
+account: igenie
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 245789
+bundleId: 1161653
+url: https://igenie.shinyapps.io/pecten/
+when: 1515076619.50068
+asMultiple: FALSE
+asStatic: FALSE

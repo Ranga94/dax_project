@@ -1,6 +1,7 @@
 ##This plots stock prices against Twitter Sentiment
+##This plots stock prices against Twitter Sentiment
 correlation_twitter<-function(mydata,constituent){
-  title_str = paste('Behavior of ',constituent, ' Prices Relative to Twitter Sentiments',sep='' )
+  title_str = paste('Prices of ',constituent, ' vs. Twitter Sentiments',sep='' )
   
   Close = mydata$Close
   High = mydata$High
@@ -13,42 +14,56 @@ correlation_twitter<-function(mydata,constituent){
   L <- cor(Twitter_sent, Low)
   H <- cor(Twitter_sent, High)
   
+  ## Avoids constant data affecting the plot.
+  if (length(unique(Twitter_sent))==1){
+     O=0
+     C=0
+     L=0
+    H=0}
+  
+  if (length(unique(Close))<2){C=0}
+  if (length(unique(Open))<2){O=0}
+  if (length(unique(Low))<2){L=0}
+  if (length(unique(High))<2){H=0}
+  
   mydata$Date <- as.Date(x = mydata$Date, format = '%d/%m/%Y')
   p <- ggplot(data = mydata, aes(x = Date, group=1))
   p<-p + labs(title = title_str)
   
-  p <- p + {if (C > 0.5) geom_line(aes(y = Close), linetype = "dashed", colour = "black")}
-  p <- p + {if (O > 0.5) geom_line(aes(y = Open), linetype = "dashed", colour = "red")}
-  p <- p + {if (H > 0.5) geom_line(aes(y = High), linetype = "dashed", colour = "blue")}
-  p <- p + {if (L > 0.5) geom_line(aes(y = Low), linetype = "dashed", colour = "orange")}
+  p <- p + {if (C > 0.5) geom_line(aes(y = Close, colour = "Close"), linetype = "dashed")}
+  p <- p + {if (O > 0.5) geom_line(aes(y = Open, colour = "Open"), linetype = "dashed")}
+  p <- p + {if (H > 0.5) geom_line(aes(y = High, colour = "High"), linetype = "dashed")}
+  p <- p + {if (L > 0.5) geom_line(aes(y = Low, colour = 'Low'), linetype = "dashed")}
+  
+  
   
   
   ##add annotations and scaling
   if(constituent=='Adidas'){
-    p <- p + geom_line(aes(y = Twitter_sent*170, colour = "Twitter Sentiment"))
+    p <- p + geom_line(aes(y = Twitter_sent*105, colour = "Twitter Sentiment"))
     p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) 
   }
   
   if(constituent=='Allianz'){
-    p <- p + geom_line(aes(y = Twitter_sent*190, colour = "Twitter Sentiment"))
+    p <- p + geom_line(aes(y = Twitter_sent*550, colour = "Twitter Sentiment"))
     p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) 
     #p <- p + geom_text(x=2, y=192.2, label="Only Open and High Prices follow the trend of Twitter sentiment ", size=3)
     #p <- p + geom_text(x=2, y=191.7, label="from 14/09/2017 to 21/09/2017", size=2.5) }
   }
   
   if(constituent=='Bayer'){
-    p <- p + geom_line(aes(y = Twitter_sent*175, colour = "Twitter Sentiment"))
+    p <- p + geom_line(aes(y = Twitter_sent*245, colour = "Twitter Sentiment"))
     p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) 
     #p <- p + geom_text(x=2, y=192.2, label="Only Open and High Prices follow the trend of Twitter sentiment ", size=3)
     #p <- p + geom_text(x=2, y=191.7, label="from 14/09/2017 to 21/09/2017", size=2.5)
-    }
+  }
   
   if(constituent=='BASF'){
-    p <- p + geom_line(aes(y = Twitter_sent*96, colour = "Twitter Sentiment"))
+    p <- p + geom_line(aes(y = Twitter_sent*109, colour = "Twitter Sentiment"))
     p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) 
     #p <- p + geom_text(x=2, y=192.2, label="Only Open and High Prices follow the trend of Twitter sentiment ", size=3)
     #p <- p + geom_text(x=2, y=191.7, label="from 14/09/2017 to 21/09/2017", size=2.5)  
-    }
+  }
   
   if(constituent=='Beiersdorf'){
     p <- p + geom_line(aes(y = Twitter_sent*75, colour = "Twitter Sentiment"))
@@ -58,37 +73,37 @@ correlation_twitter<-function(mydata,constituent){
   }
   
   
-  if(constituent =='BMW'){p <- p + geom_line(aes(y = Twitter_sent*85, colour = "Twitter Sentiment"))
+  if(constituent =='BMW'){p <- p + geom_line(aes(y = Twitter_sent*69, colour = "Twitter Sentiment"))
   p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850))  
   #p <- p + geom_text(x=2, y=192.2, label="Only Open and High Prices follow the trend of Twitter sentiment ", size=3)
   #p <- p + geom_text(x=2, y=191.7, label="from 14/09/2017 to 21/09/2017", size=2.5)
   }
   
   if(constituent=='Commerzbank'){
-    p <- p + geom_line(aes(y = Twitter_sent*11, colour = "Twitter Sentiment"))
-  p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) 
-  #p <- p + geom_text(x=2, y=192.2, label="Only Open and High Prices follow the trend of Twitter sentiment ", size=3)
-  #p <- p + geom_text(x=2, y=191.7, label="from 14/09/2017 to 21/09/2017", size=2.5)
+    p <- p + geom_line(aes(y = Twitter_sent*9, colour = "Twitter Sentiment"))
+    p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) 
+    #p <- p + geom_text(x=2, y=192.2, label="Only Open and High Prices follow the trend of Twitter sentiment ", size=3)
+    #p <- p + geom_text(x=2, y=191.7, label="from 14/09/2017 to 21/09/2017", size=2.5)
   }
   
   if(constituent=='Continental'){
-    p <- p + geom_line(aes(y = Twitter_sent*200, colour = "Twitter Sentiment"))
+    p <- p + geom_line(aes(y = Twitter_sent*189, colour = "Twitter Sentiment"))
     p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850))
   }
   
   if(constituent=='Daimler'){
-  p <- p + geom_line(aes(y = Twitter_sent*178, colour = "Twitter Sentiment"))
-  p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) 
-  #p <- p + geom_text(x=2, y=192.2, label="Only Open and High Prices follow the trend of Twitter sentiment ", size=3)
-  #p <- p + geom_text(x=2, y=191.7, label="from 14/09/2017 to 21/09/2017", size=2.5)
+    p <- p + geom_line(aes(y = Twitter_sent*56, colour = "Twitter Sentiment"))
+    p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) 
+    #p <- p + geom_text(x=2, y=192.2, label="Only Open and High Prices follow the trend of Twitter sentiment ", size=3)
+    #p <- p + geom_text(x=2, y=191.7, label="from 14/09/2017 to 21/09/2017", size=2.5)
   }
   
   
   if(constituent=='Deutsche Börse'){
-  p <- p + geom_line(aes(y = Twitter_sent*87, colour = "Twitter Sentiment"))
-  p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) 
-  #p <- p + geom_text(x=2, y=192.2, label="Only Open and High Prices follow the trend of Twitter sentiment ", size=3)
-  #p <- p + geom_text(x=2, y=191.7, label="from 14/09/2017 to 21/09/2017", size=2.5)
+    p <- p + geom_line(aes(y = Twitter_sent*290, colour = "Twitter Sentiment"))
+    p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) 
+    #p <- p + geom_text(x=2, y=192.2, label="Only Open and High Prices follow the trend of Twitter sentiment ", size=3)
+    #p <- p + geom_text(x=2, y=191.7, label="from 14/09/2017 to 21/09/2017", size=2.5)
   }
   
   if(constituent=='Deutsche Bank'){p <- p + geom_line(aes(y = Twitter_sent*14, colour = "Twitter Sentiment"))
@@ -99,14 +114,14 @@ correlation_twitter<-function(mydata,constituent){
   
   
   if(constituent=='Deutsche Post'){
-    p <- p + geom_line(aes(y = Twitter_sent*38, colour = "Twitter Sentiment"))
+    p <- p + geom_line(aes(y = Twitter_sent*108, colour = "Twitter Sentiment"))
     p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) 
     #p <- p + geom_text(x=2, y=192.2, label="Only Open and High Prices follow the trend of Twitter sentiment ", size=3)
     #p <- p + geom_text(x=2, y=191.7, label="from 14/09/2017 to 21/09/2017", size=2.5)
   }
   
   if(constituent=='Deutsche Telekom'){
-    p <- p + geom_line(aes(y = Twitter_sent*15, colour = "Twitter Sentiment"))
+    p <- p + geom_line(aes(y = Twitter_sent*25, colour = "Twitter Sentiment"))
     p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) 
     #p <- p + geom_text(x=2, y=192.2, label="Only Open and High Prices follow the trend of Twitter sentiment ", size=3)
     #p <- p + geom_text(x=2, y=191.7, label="from 14/09/2017 to 21/09/2017", size=2.5)
@@ -190,14 +205,14 @@ correlation_twitter<-function(mydata,constituent){
   }
   
   if(constituent=='RWE'){
-    p <- p + geom_line(aes(y = Twitter_sent*21, colour = "Twitter Sentiment"))
+    p <- p + geom_line(aes(y = Twitter_sent*28.3, colour = "Twitter Sentiment"))
     p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) 
     #p <- p + geom_text(x=2, y=192.2, label="Only Open and High Prices follow the trend of Twitter sentiment ", size=3)
     #p <- p + geom_text(x=2, y=191.7, label="from 14/09/2017 to 21/09/2017", size=2.5)
   }
   
   if(constituent=='SAP'){
-    p <- p + geom_line(aes(y = Twitter_sent*96, colour = "Twitter Sentiment"))
+    p <- p + geom_line(aes(y = Twitter_sent*80.5, colour = "Twitter Sentiment"))
     p <- p + theme(axis.title.y=element_blank(), legend.position = c(0.15, 0.850)) 
     #p <- p + geom_text(x=2, y=192.2, label="Only Open and High Prices follow the trend of Twitter sentiment ", size=3)
     #p <- p + geom_text(x=2, y=191.7, label="from 14/09/2017 to 21/09/2017", size=2.5)
@@ -238,8 +253,10 @@ correlation_twitter<-function(mydata,constituent){
   ggplotly(p)
   p_changed <- ggplotly(p)
   pp_changed=plotly_build(p_changed)   
-  style( pp_changed ) %>% 
-    layout( legend = list(x = 0.01, y = 0.95) )}
+  style(pp_changed) %>% 
+    layout(legend = list(x = 0.999, y = 0.98))
+  
+}
 
 
 
@@ -249,49 +266,49 @@ correlation_twitter<-function(mydata,constituent){
 #This selects the annotation for Twitter correlation graph
 twitter_annotation_selection<-function(constituent){
   if(constituent=='Adidas'){
-    str = 'Close Highs, Open and Lows have greater than 50% correlations to Twitter sentiment for the time period shown'
+    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown.'
   }
   if(constituent=='Allianz'){
-    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown'
+    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown.'
   }
   if(constituent=='Bayer'){
-    str = 'Only Close, High and Lows have greater than 50% correlations to Twitter sentiment for the time period shown'
+    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown.'
   }
   if(constituent=='BASF'){
-    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown'
+    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown.'
   }
   if(constituent=='Beiersdorf'){
-    str = 'Close Highs, Open and Lows have greater than 50% correlations to Twitter sentiment for the time period shown'
+    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown.'
   }
   if(constituent=='BMW'){
-    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown'
+    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown.'
   }
   if(constituent=='Commerzbank'){
-    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown'
+    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown.'
   }
   if(constituent=='Daimler'){
-    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown'
+    str = 'Only Open prices have greater than 50% correlation to Twitter sentiment for the total time period shown.'
   }
-  if(constituent=='Deutsche_Boerse'){
-    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown'
+  if(constituent=='Deutsche Börse'){
+    str = 'Only Close prices have greater than 50% correlation to Twitter sentiment for the total time period shown.'
   }
-  if(constituent=='Deutsche_Bank'){
-    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown'
+  if(constituent=='Deutsche Bank'){
+    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown.'
   }
-  if(constituent=='Deutsche_Telekom'){
-    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown'
+  if(constituent=='Deutsche Telekom'){
+    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown.'
   }
   if(constituent=='EON'){
-    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown'
+    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown.'
   }
-  if(constituent=='Fresenius_Medical_Care'){
-    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown'
+  if(constituent=='Fresenius Medical Care'){
+    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown.'
   }
   if(constituent=='Fresenius'){
-    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown'
+    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown.'
   }
-  if(constituent=='Heidelberg_Cement'){
-    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown'
+  if(constituent=='Heidelberg Cement'){
+    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown.'
   }
   if(constituent=='Henkel'){
     str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown'
@@ -308,34 +325,33 @@ twitter_annotation_selection<-function(constituent){
   if(constituent=='Merck'){
     str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown'
   }
-  if(constituent=='Prosiebensat1_Media'){
+  if(constituent=='Prosiebensat1 Media'){
     str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown'
   }
   if(constituent=='RWE'){
-    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown'
+    str = 'Low, Open, Highs and Close all have greater than 50% correlations to Twitter sentiment for the time period shown'
   }
   if(constituent=='SAP'){
-    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown'
+    str = 'Only Low, Highs and Close have greater than 50% correlations to Twitter sentiment for the time period shown.'
   }
   if(constituent=='Siemens'){
-    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown'
+    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown.'
   }
   if(constituent=='Thyssenkrupp'){
-    str = 'Only Open and Highs have greater than 50% correlations to Twitter sentiment for the time period shown'
+    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown.'
   }
   if(constituent=='Vonovia'){
-    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown'
+    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown.'
   }
   if(constituent=='Volkswagen'){
-    str = 'Only Close, High and Lows have greater than 50% correlations to Twitter sentiment for the time period shown'
+    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown.'
   }
   if(constituent=='Continental'){
-    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown'
+    str = 'Only Open, Highs and Close have greater than 50% correlations to Twitter sentiment for the time period shown.'
   }
-  if(constituent=='Deutsche_Post'){
-    str = 'Open, Low, Highs and Close have greater than 50% correlation to Twitter sentiment for the total time period shown'
+  if(constituent=='Deutsche Post'){
+    str = 'All stock prices have less than 50% correlation to Twitter sentiment for the total time period shown'
   }
   str
 }
-
 

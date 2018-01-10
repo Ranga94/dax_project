@@ -1,0 +1,12 @@
+name: development
+title: development
+username:
+account: igenie
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 255219
+bundleId: 1169018
+url: https://igenie.shinyapps.io/development/
+when: 1515521314.7943
+asMultiple: FALSE
+asStatic: FALSE
