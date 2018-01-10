@@ -1,0 +1,8 @@
+source('Homepage_subfunctions.R')
+source('Fundamental_subfunctions.R')
+source('Analyst_subfunctions.R')
+source('Twitter_subfunctions.R')
+source('News_subfunctions.R')
+source('Correlations_Twitter_subfunctions.R')
+source('Correlations_News_subfunctions.R')
+source('Risk_analysis_subfunctions.R')
