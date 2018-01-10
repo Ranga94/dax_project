@@ -58,14 +58,6 @@ def ATR_main(args):
                                                    'From_date':from_date,'To_date':to_date,
                                                    'Status':'active'}, index=[0]), ignore_index=True)
 
-    # Feature PECTEN-9
-    try:
-        validate_data_pd(args.service_key_path,ATR_table,table_store.split('.')[0], table_store.split('.')[1])
-    except AssertionError as e:
-        drop_backup_table(args.service_key_path, args.table_storage.split('.')[0], backup_table_name)
-        e.args += ("Schema of results does not match table schema.",)
-        raise
-
     print("table done")
     update_result(table_store,args)
     print("update done")
