@@ -1,0 +1,13 @@
+name: VaR_Computation
+title: VaR_Computation
+username:
+account: sparklingocean
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 242801
+bundleId: 1109616
+url: https://sparklingocean.shinyapps.io/VaR_Computation/
+when: 1512162695.53411
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: VaR.R|Kefei/server.R|Kefei/ui.R

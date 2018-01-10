@@ -1,0 +1,13 @@
+name: Portfolio_VaR
+title: Portfolio_VaR
+username:
+account: sparklingocean
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 245466
+bundleId: 1120173
+url: https://sparklingocean.shinyapps.io/Portfolio_VaR/
+when: 1512615864.70822
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .Rapp.history|.RData|VaR_Portfolio.R
