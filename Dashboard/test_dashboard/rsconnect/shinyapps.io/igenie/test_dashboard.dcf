@@ -1,0 +1,12 @@
+name: test_dashboard
+title: test_dashboard
+username:
+account: igenie
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 255506
+bundleId: 1170331
+url: https://igenie.shinyapps.io/test_dashboard/
+when: 1515587418.45234
+asMultiple: FALSE
+asStatic: FALSE
