@@ -5,7 +5,7 @@ library(readr)
 library(plotly)
 library(shinythemes)
 library(bigrquery)
-
+#test for development branch
 constituent_list = c('Adidas', 'Allianz', 'BASF', 'BMW', 'Bayer', 'Beiersdorf',
                      'Commerzbank', 'Continental', 'Daimler',
                      'Deutsche Bank', 'Deutsche Post',
