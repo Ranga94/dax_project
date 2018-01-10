@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 import pymongo
 from re import sub
 from decimal import Decimal
@@ -22,13 +23,18 @@ import os
 from google.cloud import datastore
 from google.cloud import bigquery
 
+
 #python ATR_analysis_BQ.py 'mysql+pymysql://igenie_readwrite:igenie@127.0.0.1/dax_project' 'PARAM_FINANCIAL_KEY_COLLECTION' 'igenie-project-key.json' 'pecten_dataset_test.ATR'
 
 ##Record the current ATR, the average ATR of this year, the average ATR in the last 5 years
 def ATR_main(args):
+    # Feature PECTEN-9
+    backup_table_name = backup_table(args.service_key_path, args.table_storage.split('.')[0],
+                                     args.table_storage.split('.')[1])
+
     ATR_table = pd.DataFrame()
     project_name, constituent_list,table_store,table_historical = get_parameters(args)
-    table_historical = 'pecten_dataset_test.historical'
+    table_historical = '{}.historical'.format(args.table_storage.split('.')[0])
     from_date, to_date = get_timerange(args)
     table_store = args.table_storage
     from_date = datetime.strftime(from_date,'%Y-%m-%d %H:%M:%S') #Convert to the standard time format
@@ -47,13 +53,45 @@ def ATR_main(args):
         
         his = get_historical_price(project_name,table_historical,constituent,to_date)
         ATR_array = ATR_calculate(his)
-        ATR_table = ATR_table.append(pd.DataFrame({'Constituent': constituent,'Constituent_name':constituent_name, 'Constituent_id':constituent_id, 'Current_14_day_ATR': round(ATR_array[-1],2), 'Average_ATR_in_the_last_12_months': round(ATR_array[-252:].mean(),2), 'Average_ATR_in_the_last_3_years':round(ATR_array[-756:].mean(),2),'Table':'ATR analysis','Date_of_analysis':date,'From_date':from_date,'To_date':to_date,'Status':'active'}, index=[0]), ignore_index=True)
-    
-    print "table done"
-    update_result(table_store)
-    print "update done"
+        ATR_table = ATR_table.append(pd.DataFrame({'Constituent': constituent,'Constituent_name':constituent_name, 'Constituent_id':constituent_id, 'Current_14_day_ATR': round(ATR_array[-1],2), 'Average_ATR_in_the_last_12_months': round(ATR_array[-252:].mean(),2), 'Average_ATR_in_the_last_3_years':round(ATR_array[-756:].mean(),2),
+                                                   'Table':'ATR analysis','Date_of_analysis':date,
+                                                   'From_date':from_date,'To_date':to_date,
+                                                   'Status':'active'}, index=[0]), ignore_index=True)
+
+    # Feature PECTEN-9
+    try:
+        validate_data_pd(args.service_key_path,ATR_table,table_store.split('.')[0], table_store.split('.')[1])
+    except AssertionError as e:
+        drop_backup_table(args.service_key_path, args.table_storage.split('.')[0], backup_table_name)
+        e.args += ("Schema of results does not match table schema.",)
+        raise
+
+    print("table done")
+    update_result(table_store,args)
+    print("update done")
+
+    #Feature PECTEN-9
+    try:
+        before_insert(args.service_key_path,args.table_storage.split('.')[0],table_store.split('.')[1],
+                      from_date,to_date,Storage(args.service_key_path))
+    except AssertionError as e:
+        drop_backup_table(args.service_key_path, args.table_storage.split('.')[0], backup_table_name)
+        e.args += ("Data already exists",)
+        raise
+
     store_result(args,project_name, table_store,ATR_table)
-    print "all done"
+
+    #Feature PECTEN-9
+    try:
+        after_insert(args.service_key_path, args.table_storage.split('.')[0], table_store.split('.')[1],
+                     from_date, to_date)
+    except AssertionError as e:
+        e.args += ("No data was inserted.",)
+        raise
+    finally:
+        drop_backup_table(args.service_key_path, args.table_storage.split('.')[0], backup_table_name)
+
+    print("all done")
     
     return ATR_table
 
@@ -78,10 +116,9 @@ def get_timerange(args):
     to_date = timetable['TO_DATE'].loc[timetable['ENVIRONMENT']=='test']
     return from_date[0], to_date[0]
 
-
 def get_parameters(args):
     query = 'SELECT * FROM'+' '+ args.parameter_table + ';'
-    print query
+    print(query)
     parameter_table = pd.read_sql(query, con=args.sql_connection_string)
     project_name = parameter_table["PROJECT_NAME_BQ"].loc[parameter_table['SCRIPT_NAME']=='ATR_analysis'].values[0]
     
@@ -92,16 +129,16 @@ def get_parameters(args):
     
     #Obtain the table storing historical price
     table_historical = parameter_table["TABLE_COLLECT_HISTORICAL_BQ"].loc[parameter_table['SCRIPT_NAME']=='ATR_analysis'].values[0]
-    print table_historical
+    print(table_historical)
     table_store = parameter_table['TABLE_STORE_ANALYSIS_BQ'].loc[parameter_table['SCRIPT_NAME']=='ATR_analysis'].values[0]
     return project_name, constituent_list,table_store,table_historical
 
 
 #this makes all the out-dated data in the collection 'inactive'
 ##alter the status of collection
-def update_result(table_store):
-    storage = Storage(google_key_path='/Users/kefei/Documents/Igenie_Consulting/keys/igenie-project-key.json')
-    storage = Storage(google_key_path='igenie-project-key.json')
+def update_result(table_store,args):
+    storage = Storage(google_key_path=args.service_key_path)
+    storage = Storage(google_key_path=args.service_key_path)
     query = 'UPDATE `' + table_store +'` SET Status = "inactive" WHERE Status = "active"'
 
     try:
@@ -113,8 +150,7 @@ def store_result(args,project_name,table_store,result_df):
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.service_key_path
     client = bigquery.Client()
     #Store result to bigquery
-    result_df.to_gbq(table_store, project_id = project_name, chunksize=10000, verbose=True, reauth=False, if_exists='append',private_key=None)
-    
+    result_df.to_gbq(table_store, project_id = project_name, chunksize=10000, verbose=False, reauth=False, if_exists='append',private_key=None)
 
 #this obtains the historical price data as a pandas dataframe from source for one constituent. 
 def get_historical_price(project_name,table_historical,constituent,to_date):
@@ -122,12 +158,10 @@ def get_historical_price(project_name,table_historical,constituent,to_date):
     #QUERY ='SELECT closing_price, date FROM '+ table_historical + ' WHERE Constituent= "'+constituent+'"'+ " AND date between TIMESTAMP ('2008-01-01 00:00:00 UTC') and TIMESTAMP ('2017-12-11 00:00:00 UTC') ;"
     QUERY ='SELECT * FROM '+ table_historical + ' WHERE Constituent= "'+constituent+'"'+ " AND date between TIMESTAMP ('2009-01-01 00:00:00 UTC') and TIMESTAMP ('" + to_date + " UTC') ;"
    
-    his=pd.read_gbq(QUERY, project_id=project_name)
+    his=pd.read_gbq(QUERY, project_id=project_name,verbose=False)
     his['date'] = pd.to_datetime(his['date'],format="%Y-%m-%dT%H:%M:%S") #read the date format
     his = his.sort_values('date',ascending=1).reset_index(drop=True) #sort by date (from oldest to newest) and reset the index
     return his
-
-
 
 def get_constituent_id_name(old_constituent_name):
     mapping = {}
@@ -197,9 +231,6 @@ class Storage:
         else:
             return list(iterator)
 
-
-
-
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
@@ -208,6 +239,7 @@ if __name__ == "__main__":
     parser.add_argument('service_key_path',help='google service key path')
     parser.add_argument('table_storage',help='BigQuery table where the new data is stored')
     args = parser.parse_args()
-    
-    
+    from Database.BigQuery.backup_table import backup_table, drop_backup_table  # Feature PECTEN-9
+    from Database.BigQuery.data_validation import validate_data_pd, before_insert, after_insert  # Feature PECTEN-9
+    from utils.Storage import Storage #Feature PECTEN-9
     ATR_main(args)
