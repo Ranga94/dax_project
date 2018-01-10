@@ -35,14 +35,6 @@ def get_country_data(args):
         to_insert.append(dict((k,item[k].strftime('%Y-%m-%d %H:%M:%S')) if isinstance(item[k],datetime) else
                    (k,item[k]) for k in columns))
 
-    # Feature PECTEN-9
-    try:
-        validate_data(args.google_key_path,to_insert,common_parameters["BQ_DATASET"],'country_data')
-    except AssertionError as e:
-        drop_backup_table(args.google_key_path, common_parameters["BQ_DATASET"], backup_table_name)
-        e.args += ("Schema of results does not match table schema.",)
-        raise
-
     #Feature PECTEN-9
     from_date = common_parameters["FROM_DATE"].strftime("%Y-%m-%d %H:%M:%S")
     to_date = common_parameters["TO_DATE"].strftime("%Y-%m-%d %H:%M:%S")
@@ -55,10 +47,16 @@ def get_country_data(args):
 
     try:
         print("Inserting into BQ")
-        storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"],
-                                           'country_data', to_insert)
+        #Feature PECTEN-9
+        if storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"],
+                                           'country_data', to_insert):
+            print("Data inserted to BQ")
+        else:
+            drop_backup_table(args.google_key_path, common_parameters["BQ_DATASET"], backup_table_name)
+            return
     except Exception as e:
         print(e)
+        drop_backup_table(args.google_key_path, common_parameters["BQ_DATASET"], backup_table_name)
         raise
 
     #Feature PECTEN-9

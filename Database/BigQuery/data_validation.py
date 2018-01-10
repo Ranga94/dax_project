@@ -43,8 +43,6 @@ def validate_data_pd(google_key_path, df, dataset_name, table_name):
     for c in df.columns:
         assert field_mapping_pd(df[c].dtype, list_of_fields[c].field_type)
 
-
-
 def field_mappings(type_string, type):
     if type_string == 'INTEGER':
         if type == int:
