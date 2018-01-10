@@ -8,10 +8,6 @@ def main(arguments):
 
     print(result)
 
-#Hello world
-#Boo!
-#Test 3
-
 
 
 if __name__=="__main__":
