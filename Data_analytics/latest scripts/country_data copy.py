@@ -65,8 +65,7 @@ def get_country_data(args):
         e.args += ("No data was inserted.",)
         raise
     finally:
-        rollback_object(args.google_key_path, 'table', common_parameters["BQ_DATASET"], None,
-                        'country_data', backup_table_name)
+        drop_backup_table(args.google_key_path, common_parameters["BQ_DATASET"], backup_table_name)
 
 if __name__ == "__main__":
     import argparse
