@@ -5,6 +5,13 @@ from datetime import datetime
 from langdetect import detect
 
 def get_news_analytics_topic_articles(args):
+    sys.path.insert(0, args.python_path)
+    from utils.Storage import Storage
+    from utils.twitter_analytics_helpers import get_parameters
+    from Database.BigQuery.backup_table import backup_table, drop_backup_table  # Feature PECTEN-9
+    from Database.BigQuery.data_validation import before_insert, after_insert  # Feature PECTEN-9
+    from Database.BigQuery.rollback_object import rollback_object  # Feature PECTEN-9
+
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET", "FROM_DATE", "TO_DATE"]
@@ -40,7 +47,7 @@ WHERE row_num between 0 and 20;
     """.format(common_parameters["BQ_DATASET"],common_parameters["FROM_DATE"].strftime("%Y-%m-%d"),
                common_parameters["TO_DATE"].strftime("%Y-%m-%d"))
 
-    storage_client = Storage.Storage(args.google_key_path)
+    storage_client = Storage(args.google_key_path)
 
     try:
         result = storage_client.get_bigquery_data(query, iterator_flag=True)
@@ -114,10 +121,4 @@ if __name__ == "__main__":
     parser.add_argument('param_connection_string', help='The MySQL connection string')
     parser.add_argument('environment', help='production or test')
     args = parser.parse_args()
-    sys.path.insert(0, args.python_path)
-    from utils.Storage import Storage
-    from utils.twitter_analytics_helpers import *
-    from Database.BigQuery.backup_table import backup_table, drop_backup_table  # Feature PECTEN-9
-    from Database.BigQuery.data_validation import before_insert, after_insert  # Feature PECTEN-9
-    from Database.BigQuery.rollback_object import rollback_object  # Feature PECTEN-9
     get_news_analytics_topic_articles(args)

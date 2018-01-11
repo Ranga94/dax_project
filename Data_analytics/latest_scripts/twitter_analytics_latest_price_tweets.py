@@ -7,7 +7,7 @@ from fuzzywuzzy import fuzz
 def get_twitter_analytics_latest_price_tweets(args):
     sys.path.insert(0, args.python_path)
     from utils.Storage import Storage
-    from utils.twitter_analytics_helpers import *
+    from utils.twitter_analytics_helpers import get_parameters
     from Database.BigQuery.backup_table import backup_table, drop_backup_table  # Feature PECTEN-9
     from Database.BigQuery.data_validation import before_insert, after_insert  # Feature PECTEN-9
     from Database.BigQuery.rollback_object import rollback_object  # Feature PECTEN-9
