@@ -54,17 +54,19 @@ def get_country_data(args):
             return
     except Exception as e:
         print(e)
-        drop_backup_table(args.google_key_path, common_parameters["BQ_DATASET"], backup_table_name)
+        rollback_object(args.google_key_path,'table',common_parameters["BQ_DATASET"],None,
+                        'country_data',backup_table_name)
         raise
 
     #Feature PECTEN-9
     try:
-        after_insert(args.google_key_path,common_parameters["BQ_DATASET"],"country_data",from_date,to_date)
+        after_insert(args.google_key_path,common_parameters["BQ_DATASET"],"country_data",from_date,to_date,storage_client)
     except AssertionError as e:
         e.args += ("No data was inserted.",)
         raise
     finally:
-        drop_backup_table(args.google_key_path,common_parameters["BQ_DATASET"],backup_table_name)
+        rollback_object(args.google_key_path, 'table', common_parameters["BQ_DATASET"], None,
+                        'country_data', backup_table_name)
 
 if __name__ == "__main__":
     import argparse
@@ -79,4 +81,5 @@ if __name__ == "__main__":
     from utils.twitter_analytics_helpers import *
     from Database.BigQuery.backup_table import backup_table,drop_backup_table #Feature PECTEN-9
     from Database.BigQuery.data_validation import before_insert, after_insert #Feature PECTEN-9
+    from Database.BigQuery.rollback_object import rollback_object #Feature PECTEN-9
     get_country_data(args)
