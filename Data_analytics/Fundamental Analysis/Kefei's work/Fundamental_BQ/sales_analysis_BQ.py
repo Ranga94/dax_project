@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from __future__ import print_function
 import pymongo
 from re import sub
 from decimal import Decimal
@@ -32,7 +32,7 @@ def sales_main(args):
     table_store = args.table_storage
     for constituent in constituent_list:
     #'Commerzbank', all debt NaN,Deutsche Bank',no data avaliable for 'Volkswagen (VW) vz'ranked last
-        print constituent
+        print (constituent)
         master = get_master_data(project_name,table_master,constituent)
         
         if constituent=='M\xc3\xbcnchener R\xc3\xbcckversicherungs-Gesellschaft':
@@ -48,11 +48,11 @@ def sales_main(args):
         sales_coll_table = sales_coll_table.append(pd.DataFrame({'Constituent': constituent,'Constituent_name':constituent_name, 'Constituent_id':constituent_id, 'Current_sales_in_Mio':round(sales_table.iloc[-1],2), 'percentage_change_in_Sales_from_previous_year':round(pct_sales_last_year,2),'percentage_change_in_Sales_from_4_years_ago':round(pct_sales_four_years,2),'Sales_score':score,'Table':'Sales analysis','Date':date,'Status':"active"},index=[0]),ignore_index=True)
         
     #store the analysis
-    print "table done"
+    print ("table done")
     update_result(table_store)
-    print "update done"
+    print ("update done")
     store_result(args,project_name, table_store,sales_coll_table)
-    print "all done"
+    print ("all done")
     
     
 def sales_calculate(master):
@@ -85,7 +85,7 @@ def sales_calculate(master):
 def get_parameters(args):
     script = 'sales_analysis'
     query = 'SELECT * FROM'+' '+ args.parameter_table + ';'
-    print query
+    print (query)
     parameter_table = pd.read_sql(query, con=args.sql_connection_string)
     project_name = parameter_table["PROJECT_NAME_BQ"].loc[parameter_table['SCRIPT_NAME']==script].values[0]
     
@@ -115,7 +115,7 @@ def update_result(table_store):
 #this obtains the master data as a pandas dataframe from source for one constituent. 
 def get_master_data(project_name,table_master,constituent):
     QUERY ='SELECT * FROM '+ table_master + ' WHERE Constituent= "'+constituent+'";'
-    print QUERY
+    print (QUERY)
     master=pd.read_gbq(QUERY, project_id=project_name)
     master['year'] = pd.to_datetime(master['year'],format="%Y-%m-%dT%H:%M:%S") #read the date format
     master = master.sort_values('year',ascending=1).reset_index(drop=True) 
@@ -129,35 +129,7 @@ def store_result(args,project_name,table_store,result_df):
     client = bigquery.Client()
     #Store result to bigquery
     result_df.to_gbq(table_store, project_id = project_name, chunksize=10000, verbose=True, reauth=False, if_exists='append',private_key=None)
-    
-    
-class Storage:
-    def __init__(self, google_key_path=None, mongo_connection_string=None):
-        if google_key_path:
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_key_path
-            self.bigquery_client = bigquery.Client()
-        else:
-            self.bigquery_client = None
 
-        if mongo_connection_string:
-            self.mongo_client = MongoClient(mongo_connection_string)
-        else:
-            self.mongo_client = None
-            
-    def get_bigquery_data(self, query, timeout=None, iterator_flag=True): 
-        if self.bigquery_client:
-            client = self.bigquery_client
-        else:
-            client = bigquery.Client()
-
-        print("Running query...")
-        query_job = client.query(query)
-        iterator = query_job.result(timeout=timeout)
-
-        if iterator_flag:
-            return iterator
-        else:
-            return list(iterator)
 
 
 
@@ -211,4 +183,8 @@ if __name__ == "__main__":
     parser.add_argument('table_storage',help='BigQuery table where the new data is stored')
 
     args = parser.parse_args()
+    from Database.BigQuery.backup_table import backup_table, drop_backup_table  # Feature PECTEN-9
+    from Database.BigQuery.data_validation import before_insert, after_insert  # Feature PECTEN-9
+    from Database.BigQuery.rollback_object import rollback_object # Feature PECTEN-9
+    from utils.Storage import Storage #Feature PECTEN-9
     sales_main(args)

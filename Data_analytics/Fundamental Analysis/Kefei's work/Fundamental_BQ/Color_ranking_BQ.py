@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 ##This script allocates Profitability and Risk colors to each DAX constituent, based on the profitability scores and risk scores from previous analysis. 
+from __future__ import print_function #Feature PECTEN-9
 import pandas as pd
 import pymongo
 from re import sub
@@ -33,17 +34,41 @@ def colors_main(args):
     project_name = 'igenie-project'
     table_store =args.table_storage
     from_date, to_date = get_timerange(args)
-    
+
+    # Feature PECTEN-9
+    backup_table_name = backup_table(args.service_key_path, args.table_storage.split('.')[0],
+                                     args.table_storage.split('.')[1])
+
     twitter_colors = get_twitter_color(from_date, to_date)
     news_colors = get_news_color(from_date, to_date)
     profitability_colors = get_profitability_color()
     risk_colors= get_risk_color()
    
-    print "colors_computed"
+    print("colors_computed")
     summary_box = summary_table(profitability_colors,risk_colors,news_colors,twitter_colors)
+
+    #Feature PECTEN-9
+    try:
+        before_insert(args.service_key_path,args.table_storage.split('.')[0],table_store.split('.')[1],
+                      from_date,to_date,Storage(args.service_key_path))
+    except AssertionError as e:
+        drop_backup_table(args.service_key_path, args.table_storage.split('.')[0], backup_table_name)
+        e.args += ("Data already exists",)
+        raise
+
     store_summary(project_name,table_store, summary_box)
+
+    #Feature PECTEN-9
+    try:
+        after_insert(args.service_key_path, args.table_storage.split('.')[0], table_store.split('.')[1],
+                     from_date, to_date)
+    except AssertionError as e:
+        e.args += ("No data was inserted.",)
+        raise
+    finally:
+        drop_backup_table(args.service_key_path, args.table_storage.split('.')[0], backup_table_name)
     
-    print 'all done'
+    print('all done')
     
 def get_twitter_color(from_date,to_date):
     query = "SELECT constituent_name, DATE(date) as date, count(date) as count, constituent_id, constituent, sentiment_score FROM pecten_dataset_test.tweets WHERE date between TIMESTAMP ('"+ str(from_date)+ " UTC') and TIMESTAMP ('"+ str(to_date)+ " UTC') GROUP BY constituent_name, constituent, constituent_id, date, sentiment_score ORDER BY date"
@@ -157,39 +182,6 @@ def store_summary(project_name,table_store,summary_box):
     client = bigquery.Client()
     #Store result to bigquery
     summary_box.to_gbq(table_store, project_id = project_name, chunksize=10000, verbose=True, reauth=False, if_exists='replace',private_key=None)
-    
-    
-class Storage:
-    def __init__(self, google_key_path=None, mongo_connection_string=None):
-        if google_key_path:
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_key_path
-            self.bigquery_client = bigquery.Client()
-        else:
-            self.bigquery_client = None
-
-        if mongo_connection_string:
-            self.mongo_client = MongoClient(mongo_connection_string)
-        else:
-            self.mongo_client = None
-            
-    def get_bigquery_data(self, query, timeout=None, iterator_flag=True): 
-        if self.bigquery_client:
-            client = self.bigquery_client
-        else:
-            client = bigquery.Client()
-
-        print("Running query...")
-        query_job = client.query(query)
-        iterator = query_job.result(timeout=timeout)
-
-        if iterator_flag:
-            return iterator
-        else:
-            return list(iterator)
-
-
-
-
 
 if __name__ == "__main__":
     import argparse
@@ -199,6 +191,7 @@ if __name__ == "__main__":
     parser.add_argument('service_key_path',help='google service key path')
     parser.add_argument('table_storage',help='BigQuery table where the new data is stored')
     args = parser.parse_args()
-    
-    
+    from Database.BigQuery.backup_table import backup_table, drop_backup_table  # Feature PECTEN-9
+    from Database.BigQuery.data_validation import validate_data_pd, before_insert, after_insert  # Feature PECTEN-9
+    from utils.Storage import Storage  # Feature PECTEN-9
     colors_main(args)

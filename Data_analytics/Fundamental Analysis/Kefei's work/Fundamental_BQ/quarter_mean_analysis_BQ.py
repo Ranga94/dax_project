@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 import pymongo
 from re import sub
 from decimal import Decimal
@@ -24,7 +25,11 @@ from google.cloud import bigquery
 
 #python quarter_mean_analysis_BQ.py 'mysql+pymysql://igenie_readwrite:igenie@127.0.0.1/dax_project' 'PARAM_FINANCIAL_KEY_COLLECTION' 'igenie-project-key.json' 'pecten_dataset_test.quarter_mean_growth' 
 
-def quarter_mean_main(args): 
+def quarter_mean_main(args):
+    # Feature PECTEN-9
+    backup_table_name = backup_table(args.service_key_path, args.table_storage.split('.')[0],
+                                     args.table_storage.split('.')[1])
+
     project_name, constituent_list,table_store,table_historical = get_parameters(args)
     table_historical = 'pecten_dataset_test.historical'
     from_date, to_date = get_timerange(args)
@@ -51,11 +56,34 @@ def quarter_mean_main(args):
         
         quarter_mean_table = quarter_mean_table.append(pd.DataFrame({'Constituent': constituent, 'Constituent_name':constituent_name, 'Constituent_id':constituent_id,'Current_Quarter_mean_price':round(quarter_mean[-1],2),'Rate_of_change_in_price_from_2010_per_quarter': round(a,2), 'Rate_of_change_in_price_in_the_last_3_years_per_quarter':round(a_3yrs,2),'Rate_of_change_in_price_in_the_last_365_days_per_quarter': round(a_1yr,2),'Quarterly_growth_consistency_score':score,'Table':'quarterly_growth_analysis','Date_of_analysis':date,'From_date':from_date,'To_date':to_date,'Status':'active'}, index=[0]), ignore_index=True)
     
-    print "table done"
+    print ("table done")
     update_result(table_store)
-    print "update done"
+    print ("update done")
+
+    #Feature PECTEN-9
+    try:
+        before_insert(args.service_key_path,args.table_storage.split('.')[0],table_store.split('.')[1],
+                      from_date,to_date,Storage(args.service_key_path))
+    except AssertionError as e:
+        drop_backup_table(args.service_key_path, args.table_storage.split('.')[0], backup_table_name)
+        e.args += ("Data already exists",)
+        raise
+
     store_result(args,project_name,table_store,quarter_mean_table)
-    print "all done"
+
+    #Feature PECTEN-9
+    try:
+        after_insert(args.service_key_path, args.table_storage.split('.')[0], table_store.split('.')[1],
+                     from_date, to_date)
+    except AssertionError as e:
+        e.args += ("No data was inserted.",)
+        rollback_object(args.service_key_path,'table',args.table_storage.split('.')[0],None,
+                        table_store.split('.')[1],backup_table_name)
+        raise
+
+    drop_backup_table(args.service_key_path, args.table_storage.split('.')[0], backup_table_name)
+
+    print ("all done")
     
     
     #update the source before storing new data
@@ -65,7 +93,7 @@ def quarter_mean_main(args):
 def quarter_mean_analysis(his):
  
     #Analyse the cumulative return of the stock price after the recession in 2009. Quarterly. 
-    his_2010 = his[['closing_price','date']].loc[his['date']>=datetime(2010,01,01)]
+    his_2010 = his[['closing_price','date']].loc[his['date']>=datetime(2010,1,1)]
     ##Calulate the mean stock price for every quarter
     n=his_2010.shape[0]
     num_quarters = int(n/63.0)
@@ -123,7 +151,7 @@ def get_timerange(args):
 
 def get_parameters(args):
     query = 'SELECT * FROM'+' '+ args.parameter_table + ';'
-    print query
+    print (query)
     parameter_table = pd.read_sql(query, con=args.sql_connection_string)
     project_name = parameter_table["PROJECT_NAME_BQ"].loc[parameter_table['SCRIPT_NAME']=='quarter_mean_analysis'].values[0]
     
@@ -134,7 +162,7 @@ def get_parameters(args):
     
     #Obtain the table storing historical price
     table_historical = parameter_table["TABLE_COLLECT_HISTORICAL_BQ"].loc[parameter_table['SCRIPT_NAME']=='quarter_mean_analysis'].values[0]
-    print table_historical
+    print (table_historical)
     table_store = parameter_table['TABLE_STORE_ANALYSIS_BQ'].loc[parameter_table['SCRIPT_NAME']=='quarter_mean_analysis'].values[0]
     return project_name, constituent_list,table_store,table_historical
 
@@ -162,7 +190,7 @@ def get_historical_price(project_name,table_historical,constituent,to_date):
     #QUERY ='SELECT closing_price, date FROM '+ table_historical + ' WHERE Constituent= "'+constituent+'"'+ " AND date between TIMESTAMP ('2008-01-01 00:00:00 UTC') and TIMESTAMP ('2017-12-11 00:00:00 UTC') ;"
     QUERY ='SELECT closing_price, date FROM '+ table_historical + ' WHERE Constituent= "'+constituent+'"'+ " AND date between TIMESTAMP ('2009-01-01 00:00:00 UTC') and TIMESTAMP ('" + to_date + " UTC') ;"
    
-    print QUERY
+    print (QUERY)
     his=pd.read_gbq(QUERY, project_id=project_name)
     his['date'] = pd.to_datetime(his['date'],format="%Y-%m-%dT%H:%M:%S") #read the date format
     his = his.sort_values('date',ascending=1).reset_index(drop=True) #sort by date (from oldest to newest) and reset the index
@@ -208,35 +236,6 @@ def get_constituent_id_name(old_constituent_name):
         return old_constituent_name
 
 
-class Storage:
-    def __init__(self, google_key_path=None, mongo_connection_string=None):
-        if google_key_path:
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_key_path
-            self.bigquery_client = bigquery.Client()
-        else:
-            self.bigquery_client = None
-
-        if mongo_connection_string:
-            self.mongo_client = MongoClient(mongo_connection_string)
-        else:
-            self.mongo_client = None
-            
-    def get_bigquery_data(self, query, timeout=None, iterator_flag=True): 
-        if self.bigquery_client:
-            client = self.bigquery_client
-        else:
-            client = bigquery.Client()
-
-        print("Running query...")
-        query_job = client.query(query)
-        iterator = query_job.result(timeout=timeout)
-
-        if iterator_flag:
-            return iterator
-        else:
-            return list(iterator)
-
-
 
 if __name__ == "__main__":
     import argparse
@@ -247,4 +246,8 @@ if __name__ == "__main__":
     parser.add_argument('table_storage',help='BigQuery table where the new data is stored')
     
     args = parser.parse_args()
+    from Database.BigQuery.backup_table import backup_table, drop_backup_table  # Feature PECTEN-9
+    from Database.BigQuery.data_validation import before_insert, after_insert  # Feature PECTEN-9
+    from Database.BigQuery.rollback_object import rollback_object  # Feature PECTEN-9
+    from utils.Storage import Storage  # Feature PECTEN-9
     quarter_mean_main(args)

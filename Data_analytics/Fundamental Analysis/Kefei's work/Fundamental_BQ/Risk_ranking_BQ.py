@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 ##This script ranks the risk of stocks based on result from VaR Analysis. 
+from __future__ import print_function
 import pandas as pd
 import pymongo
 from re import sub
@@ -34,6 +35,10 @@ from google.cloud import bigquery
 #python Risk_ranking_BQ.py 'mysql+pymysql://igenie_readwrite:igenie@127.0.0.1/dax_project' 'PARAM_SCORING' 'igenie-project-key.json' 'pecten_dataset_test.Risk_ranking'
 
 def risk_main(args):
+    # Feature PECTEN-9
+    backup_table_name = backup_table(args.service_key_path, args.table_storage.split('.')[0],
+                                     args.table_storage.split('.')[1])
+
     project_name,table_store,table_collect=get_parameters(args)
     from_date, to_date = get_timerange(args)
     table_store = args.table_storage
@@ -43,12 +48,35 @@ def risk_main(args):
     VaR_risk_board = VaR_ranking(args,VaR_stats_table,VaR_table,constituent_list)
     VaR_risk_board['From_date'] = datetime.strftime(from_date,'%Y-%m-%d %H:%M:%S') 
     VaR_risk_board['To_date'] = datetime.strftime(to_date,'%Y-%m-%d %H:%M:%S') 
-    print 'board done'
+    print ('board done')
     
     update_result(table_store)
-    print "update done"
+    print ("update done")
+
+    #Feature PECTEN-9
+    try:
+        before_insert(args.service_key_path,args.table_storage.split('.')[0],table_store.split('.')[1],
+                      from_date,to_date,Storage(args.service_key_path))
+    except AssertionError as e:
+        drop_backup_table(args.service_key_path, args.table_storage.split('.')[0], backup_table_name)
+        e.args += ("Data already exists",)
+        raise
+
     store_result(args,project_name, table_store,VaR_risk_board)
-    print "all done"
+
+    #Feature PECTEN-9
+    try:
+        after_insert(args.service_key_path, args.table_storage.split('.')[0], table_store.split('.')[1],
+                     from_date, to_date)
+    except AssertionError as e:
+        e.args += ("No data was inserted.",)
+        rollback_object(args.service_key_path,'table',args.table_storage.split('.')[0],None,
+                        table_store.split('.')[1],backup_table_name)
+        raise
+
+    drop_backup_table(args.service_key_path, args.table_storage.split('.')[0], backup_table_name)
+
+    print ("all done")
 
 
 def get_timerange(args):
@@ -84,7 +112,7 @@ def VaR_stats(VaR_table):
 def get_parameters(args):
     script = 'Risk_ranking'
     query = 'SELECT * FROM'+' '+ args.parameter_table + ';'
-    print query
+    print (query)
     parameter_table = pd.read_sql(query, con=args.sql_connection_string)
     project_name = parameter_table["PROJECT_NAME_BQ"].loc[parameter_table['SCRIPT_NAME']==script].values[0]
     
@@ -134,7 +162,7 @@ def VaR_ranking(args,VaR_stats_table,VaR_table,constituent_list):
                     score = 1 #low risk
                 var_score_array[i,j]=score
             else: 
-                print VaR_list[j]+'=N/A for '+constituent
+                print (VaR_list[j]+'=N/A for '+constituent)
                 score=0
                 var_score_array[i,j]=score
         
@@ -169,37 +197,6 @@ def store_result(args,project_name,table_store,result_df):
     client = bigquery.Client()
     #Store result to bigquery
     result_df.to_gbq(table_store, project_id = project_name, chunksize=10000, verbose=True, reauth=False, if_exists='append',private_key=None)
-    
-    
-class Storage:
-    def __init__(self, google_key_path=None, mongo_connection_string=None):
-        if google_key_path:
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_key_path
-            self.bigquery_client = bigquery.Client()
-        else:
-            self.bigquery_client = None
-
-        if mongo_connection_string:
-            self.mongo_client = MongoClient(mongo_connection_string)
-        else:
-            self.mongo_client = None
-            
-    def get_bigquery_data(self, query, timeout=None, iterator_flag=True): 
-        if self.bigquery_client:
-            client = self.bigquery_client
-        else:
-            client = bigquery.Client()
-
-        print("Running query...")
-        query_job = client.query(query)
-        iterator = query_job.result(timeout=timeout)
-
-        if iterator_flag:
-            return iterator
-        else:
-            return list(iterator)
-
-
 
 def get_constituent_id_name(old_constituent_name):
     mapping = {}
@@ -250,6 +247,10 @@ if __name__ == "__main__":
     parser.add_argument('table_storage',help='BigQuery table where the new data is stored')
     
     args = parser.parse_args()
+    from Database.BigQuery.backup_table import backup_table, drop_backup_table  # Feature PECTEN-9
+    from Database.BigQuery.data_validation import before_insert, after_insert  # Feature PECTEN-9
+    from Database.BigQuery.rollback_object import rollback_object # Feature PECTEN-9
+    from utils.Storage import Storage #Feature PECTEN-9
     
     risk_main(args)
         

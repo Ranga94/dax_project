@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 import pymongo
 from re import sub
 from decimal import Decimal
@@ -36,6 +37,11 @@ def dividend_main(args):
     date = datetime.strftime(datetime.now().date(),'%Y-%m-%d %H:%M:%S') 
     #table_store = args.table_storage
     #constituent_list = ['ProSiebenSat1 Media']
+
+    # Feature PECTEN-9
+    backup_table_name = backup_table(args.service_key_path, args.table_storage.split('.')[0],
+                                     args.table_storage.split('.')[1])
+
     for constituent in constituent_list:
         
         #master = get_master_data(project_name,table_master,constituent)
@@ -57,8 +63,8 @@ def dividend_main(args):
         if constituent == 'BMW' or 'Volkswagen (VW) vz' or 'RWE':
             a = a*2.0 #Calculate the annual dividend growth for stocks that release dividend every 6 months
         #if constituent != 'ProSiebenSat1 Media':
-        print current_div
-        print future_div
+        print (current_div)
+        print (future_div)
         if future_div == 'n/a':
             estimated_return = 0
         else:
@@ -68,7 +74,31 @@ def dividend_main(args):
         dividend_table = dividend_table.append(pd.DataFrame({'Constituent': constituent, 'Constituent_name':constituent_name,'Constituent_id':constituent_id,'Current_dividend': current_div,'Current_dividend_yield':div_yield, 'Average_rate_of_dividend_growth_per_year':round(a,2),'Mean_square_error_of_fitting': round(mse,2),'Estimated_dividend_next_year':future_div,'Current_share_price':current_price,'Gordon_growth_estimated_return':estimated_return,'Dividend_consistency_score':score,'Table':'dividend analysis','Status':"active",'Date_of_analysis':date,'From_date':from_date,"To_date":to_date}, index=[0]), ignore_index=True)
     
     update_result(table_store)
+
+    #Feature PECTEN-9
+    try:
+        before_insert(args.service_key_path,args.table_storage.split('.')[0],table_store.split('.')[1],
+                      from_date,to_date,Storage(args.service_key_path))
+    except AssertionError as e:
+        drop_backup_table(args.service_key_path, args.table_storage.split('.')[0], backup_table_name)
+        e.args += ("Data already exists",)
+        raise
+
     store_result(args,project_name,table_store,dividend_table)
+
+    #Feature PECTEN-9
+    try:
+        after_insert(args.service_key_path, args.table_storage.split('.')[0], table_store.split('.')[1],
+                     from_date, to_date)
+    except AssertionError as e:
+        e.args += ("No data was inserted.",)
+        rollback_object(args.service_key_path,'table',args.table_storage.split('.')[0],None,
+                        table_store.split('.')[1],backup_table_name)
+        raise
+
+    drop_backup_table(args.service_key_path, args.table_storage.split('.')[0], backup_table_name)
+
+    print("all done")
     
 
 #Computes the linear regression model for dividend, and produce list of years where dividend is offered. 
@@ -114,7 +144,7 @@ def get_timerange(args):
 def get_historical_price(project_name,table_historical,constituent,to_date):
     #Obtain project name, table for historical data in MySQL
     QUERY ='SELECT closing_price,date FROM '+ table_historical + ' WHERE Constituent= "'+constituent+'"'+ " AND date between TIMESTAMP ('2017-01-01 00:00:00 UTC') and TIMESTAMP ('" + str(to_date) + " UTC') ;"
-    print QUERY
+    print (QUERY)
     his=pd.read_gbq(QUERY, project_id=project_name)
     his['date'] = pd.to_datetime(his['date'],format="%Y-%m-%dT%H:%M:%S") #read the date format
     his = his.sort_values('date',ascending=1).reset_index(drop=True) #sort by date (from oldest to newest) and reset the index
@@ -125,7 +155,7 @@ def get_historical_price(project_name,table_historical,constituent,to_date):
 def get_parameters(args):
     script = 'dividend_analysis'
     query = 'SELECT * FROM'+' '+ args.parameter_table + ' WHERE ENVIRONMENT ="' +args.environment+ '";'
-    print query
+    print (query)
     parameter_table = pd.read_sql(query, con=args.sql_connection_string)
     project_name = parameter_table["PROJECT_NAME_BQ"].loc[parameter_table['SCRIPT_NAME']==script].values[0]
     
@@ -155,7 +185,7 @@ def update_result(table_store):
 #this obtains the master data as a pandas dataframe from source for one constituent. 
 def get_dividend_data(project_name,table_div,constituent_id):
     QUERY ='SELECT * FROM '+ table_div + ' WHERE constituent_id= "'+constituent_id+'";'
-    print QUERY
+    print (QUERY)
     div=pd.read_gbq(QUERY, project_id=project_name)
     div = div[div['Dividend_Cycle']=='Annually']
     div['Last_Dividend_Payment'] = pd.to_datetime(div['Last_Dividend_Payment'],format="%Y-%m-%d") #read the date format
@@ -169,38 +199,6 @@ def store_result(args,project_name,table_store,result_df):
     
     #Store result to bigquery
     result_df.to_gbq(table_store, project_id = project_name, chunksize=10000, verbose=True, reauth=False, if_exists='append',private_key=None)
-    
-    
-class Storage:
-    def __init__(self, google_key_path=None, mongo_connection_string=None):
-        if google_key_path:
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_key_path
-            self.bigquery_client = bigquery.Client()
-        else:
-            self.bigquery_client = None
-
-        if mongo_connection_string:
-            self.mongo_client = MongoClient(mongo_connection_string)
-        else:
-            self.mongo_client = None
-            
-    def get_bigquery_data(self, query, timeout=None, iterator_flag=True): 
-        if self.bigquery_client:
-            client = self.bigquery_client
-        else:
-            client = bigquery.Client()
-
-        print("Running query...")
-        query_job = client.query(query)
-        iterator = query_job.result(timeout=timeout)
-
-        if iterator_flag:
-            return iterator
-        else:
-            return list(iterator)
-
-
-
 
 def get_constituent_id_name(old_constituent_name):
     mapping = {}
@@ -251,6 +249,8 @@ if __name__ == "__main__":
     parser.add_argument('table_storage',help='BigQuery table where the new data is stored')
     parser.add_argument('environment',help = 'test or production')
     args = parser.parse_args()
-    
-    
+    from Database.BigQuery.backup_table import backup_table, drop_backup_table  # Feature PECTEN-9
+    from Database.BigQuery.data_validation import before_insert, after_insert  # Feature PECTEN-9
+    from Database.BigQuery.rollback_object import rollback_object  # Feature PECTEN-9
+    from utils.Storage import Storage  # Feature PECTEN-9
     dividend_table = dividend_main(args)

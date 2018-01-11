@@ -79,9 +79,11 @@ def ATR_main(args):
                      from_date, to_date)
     except AssertionError as e:
         e.args += ("No data was inserted.",)
+        rollback_object(args.service_key_path,'table',args.table_storage.split('.')[0],None,
+                        table_store.split('.')[1],backup_table_name)
         raise
-    finally:
-        drop_backup_table(args.service_key_path, args.table_storage.split('.')[0], backup_table_name)
+
+    drop_backup_table(args.service_key_path, args.table_storage.split('.')[0], backup_table_name)
 
     print("all done")
     
@@ -194,35 +196,6 @@ def get_constituent_id_name(old_constituent_name):
     else:
         return old_constituent_name
 
-
-class Storage:
-    def __init__(self, google_key_path=None, mongo_connection_string=None):
-        if google_key_path:
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_key_path
-            self.bigquery_client = bigquery.Client()
-        else:
-            self.bigquery_client = None
-
-        if mongo_connection_string:
-            self.mongo_client = MongoClient(mongo_connection_string)
-        else:
-            self.mongo_client = None
-            
-    def get_bigquery_data(self, query, timeout=None, iterator_flag=True): 
-        if self.bigquery_client:
-            client = self.bigquery_client
-        else:
-            client = bigquery.Client()
-
-        print("Running query...")
-        query_job = client.query(query)
-        iterator = query_job.result(timeout=timeout)
-
-        if iterator_flag:
-            return iterator
-        else:
-            return list(iterator)
-
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
@@ -232,6 +205,7 @@ if __name__ == "__main__":
     parser.add_argument('table_storage',help='BigQuery table where the new data is stored')
     args = parser.parse_args()
     from Database.BigQuery.backup_table import backup_table, drop_backup_table  # Feature PECTEN-9
-    from Database.BigQuery.data_validation import validate_data_pd, before_insert, after_insert  # Feature PECTEN-9
+    from Database.BigQuery.data_validation import before_insert, after_insert  # Feature PECTEN-9
+    from Database.BigQuery.rollback_object import rollback_object # Feature PECTEN-9
     from utils.Storage import Storage #Feature PECTEN-9
     ATR_main(args)

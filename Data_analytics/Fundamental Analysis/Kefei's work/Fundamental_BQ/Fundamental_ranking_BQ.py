@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ##This script does ranking for Fundamental Analysis
+from __future__ import print_function
 import pandas as pd
 from re import sub
 from decimal import Decimal
@@ -41,27 +42,27 @@ def fundamental_ranking_main(args):
     #current_values_list = ['Current_ROCE','Current_sales_in_Mio','Current_profit_margin','Current_PER','Current_EPS','Current_EBITDA_in_Mio']
     growth_scores_list = ['Sales_score','Profit_margin_score','PER_score','EPS_score','EBITDA_score','Dividend_consistency_score']
     current_values_list = ['Current_sales_in_Mio','Current_profit_margin','Current_PER','Current_EPS','Current_EBITDA_in_Mio','Gordon_growth_estimated_return','Current_dividend_yield']
-    print "collection done"
+    print ("collection done")
     
     #Make a score board for fundamental growth. 
     
     fundamental_growth_score_board=fundamental_growth_scoring(args,table_list,growth_scores_list,constituent_list)
-    print "fundamental_growth done"
+    print ("fundamental_growth done")
     
     #Make a score board for current fundamental value
     #Calculate statistics of the current fundamental data across all DAX constituents first. 
     current_fundamental_stats_table=current_fundamental_stats(args,table_list,current_values_list)
     current_fundamental_score_board=current_fundamental_scoring(current_fundamental_stats_table,current_values_list,table_list,constituent_list)
 
-    print "current fundamental done"
+    print ("current fundamental done")
     
-    print "table done"
+    print ("table done")
     update_result(table_store,choice=1) #Update current fundamental
     update_result(table_store,choice=0) #Update growth fundamental
-    print "update done"
+    print ("update done")
     store_result(args,project_name, table_store,fundamental_growth_score_board,choice=0)
     store_result(args,project_name, table_store,current_fundamental_score_board,choice=1)
-    print "all done"
+    print ("all done")
 
 
 
@@ -108,10 +109,22 @@ def fundamental_growth_scoring(args,table_list,value_list,constituent_list):
             else:
                 score = 0
                 fundamental_score_array[i]=0
-                print str(value_list[i]) + ' for '+ str(constituent) + ' is not avaliable'
+                print (str(value_list[i]) + ' for '+ str(constituent) + ' is not avaliable')
             total_score = sum(fundamental_score_array)
             
-        fundamental_score_board = fundamental_score_board.append(pd.DataFrame({'Constituent':constituent, 'Constituent_name':constituent_name,'Constituent_id':constituent_id,'Fundamental_growth_score':total_score,'Sales_score':fundamental_score_array[0],'Profit_margin_score':fundamental_score_array[1],'PER_score':fundamental_score_array[2],'EPS_score':fundamental_score_array[3],'EBITDA_score':fundamental_score_array[4],'Dividend_score':fundamental_score_array[5],'Table':'Fundamental growth ranking','Status':'active','Date_of_analysis':date},index=[0]),ignore_index=True)
+        fundamental_score_board = fundamental_score_board.append(pd.DataFrame({'Constituent':constituent,
+                                                                               'Constituent_name':constituent_name,
+                                                                               'Constituent_id':constituent_id,
+                                                                               'Fundamental_growth_score':total_score,
+                                                                               'Sales_score':fundamental_score_array[0],
+                                                                               'Profit_margin_score':fundamental_score_array[1],
+                                                                               'PER_score':fundamental_score_array[2],
+                                                                               'EPS_score':fundamental_score_array[3],
+                                                                               'EBITDA_score':fundamental_score_array[4],
+                                                                               'Dividend_score':fundamental_score_array[5],
+                                                                               'Table':'Fundamental growth ranking',
+                                                                               'Status':'active','Date_of_analysis':date},
+                                                                              index=[0]),ignore_index=True)
         #fundamental_score_board= fundamental_score_board.sort_values('Fundamental_growth_score',axis=0, ascending=False).reset_index(drop=True)
     return fundamental_score_board
     
@@ -166,7 +179,7 @@ def current_fundamental_scoring(stats_table,current_values_list,table_list,const
         for i in range(n): ##loop through constituents
             constituent = constituent_list[i]
             ##Taking care of the special German characters
-            print constituent
+            print (constituent)
             
             if constituent.encode('utf-8') =='M\xc3\xbcnchener R\xc3\xbcckversicherungs-Gesellschaft':
                 constituent = 'Münchener Rückversicherungs-Gesellschaft'
@@ -196,7 +209,7 @@ def current_fundamental_scoring(stats_table,current_values_list,table_list,const
                     score = 0 #poorly-performing
                 current_fundamental_array[i,j]=score
             else: 
-                print current_values_list[j]+'=N/A for '+constituent
+                print (current_values_list[j]+'=N/A for '+constituent)
                 score=0
                 current_fundamental_array[i,j]=score
 
@@ -215,7 +228,7 @@ def current_fundamental_scoring(stats_table,current_values_list,table_list,const
 def get_parameters(args):
     script = 'Fundamental_ranking'
     query = 'SELECT * FROM'+' '+ args.parameter_table + ' WHERE ENVIRONMENT ="'+args.environment + '";'
-    print query
+    print (query)
     parameter_table = pd.read_sql(query, con=args.sql_connection_string)
     project_name = parameter_table["PROJECT_NAME_BQ"].loc[parameter_table['SCRIPT_NAME']==script].values[0]
     
@@ -252,35 +265,7 @@ def store_result(args,project_name,table_store,result_df,choice):
     client = bigquery.Client()
     #Store result to bigquery
     result_df.to_gbq(table_store, project_id = project_name, chunksize=10000, verbose=True, reauth=False, if_exists='append',private_key=None)
-    
-    
-class Storage:
-    def __init__(self, google_key_path=None, mongo_connection_string=None):
-        if google_key_path:
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_key_path
-            self.bigquery_client = bigquery.Client()
-        else:
-            self.bigquery_client = None
 
-        if mongo_connection_string:
-            self.mongo_client = MongoClient(mongo_connection_string)
-        else:
-            self.mongo_client = None
-            
-    def get_bigquery_data(self, query, timeout=None, iterator_flag=True): 
-        if self.bigquery_client:
-            client = self.bigquery_client
-        else:
-            client = bigquery.Client()
-
-        print("Running query...")
-        query_job = client.query(query)
-        iterator = query_job.result(timeout=timeout)
-
-        if iterator_flag:
-            return iterator
-        else:
-            return list(iterator)
 
 
 
@@ -333,5 +318,6 @@ if __name__ == "__main__":
     parser.add_argument('environment',help = 'test or production')
     
     args = parser.parse_args()
+    from utils.Storage import Storage  # Feature PECTEN-9
     
     fundamental_ranking_main(args)

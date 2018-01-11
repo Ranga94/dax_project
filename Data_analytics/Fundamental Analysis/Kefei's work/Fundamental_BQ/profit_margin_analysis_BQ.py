@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 import pymongo
 from re import sub
 from decimal import Decimal
@@ -31,7 +32,7 @@ def profit_margin_main(args):
     #'Volkswagen (VW) vz' does not receive any data on profit margin
     for constituent in constituent_list:
         
-        print constituent
+        print (constituent)
         master = get_master_data(project_name,table_master,constituent)
         
         if constituent=='M\xc3\xbcnchener R\xc3\xbcckversicherungs-Gesellschaft':
@@ -46,11 +47,11 @@ def profit_margin_main(args):
         profit_margin_calculation,current_pm,pm_last_year,pm_four_years_ago,pct_last_year,pct_four_years_ago,score = profit_margin_calculator(master)
         profit_margin_table = profit_margin_table.append(pd.DataFrame({'Constituent': constituent, 'Constituent_name':constituent_name, 'Constituent_id':constituent_id, 'Current_profit_margin':current_pm,'Profit_margin_last_year':pm_last_year,'percentage_change_in_profit_margin_last_year':pct_last_year,'Profit_margin_4_years_ago': pm_four_years_ago,'percentage_change_in_profit_margin_4_years_ago':pct_four_years_ago,'Table':'profit margin analysis','Profit_margin_score':score,'Date':date,'Status':"active" }, index=[0]), ignore_index=True)
     
-    print "table done"
+    print ("table done")
     update_result(args)
-    print "update done"
+    print ("update done")
     store_result(args,project_name,profit_margin_table)
-    print "all done"
+    print ("all done")
 
 
 def profit_margin_calculator(master):
@@ -89,7 +90,7 @@ def profit_margin_calculator(master):
 def get_parameters(args):
     script = 'profit_margin_analysis'
     query = 'SELECT * FROM'+' '+ args.parameter_table + ';'
-    print query
+    print (query)
     parameter_table = pd.read_sql(query, con=args.sql_connection_string)
     project_name = parameter_table["PROJECT_NAME_BQ"].loc[parameter_table['SCRIPT_NAME']==script].values[0]
     
@@ -119,9 +120,9 @@ def update_result(args):
 def get_master_data(project_name,table_master,constituent):
     table_master = 'pecten_dataset.historical_key_data'
     constituent_id = get_constituent_id_name(constituent)[0]
-    print constituent_id
+    print (constituent_id)
     QUERY ='SELECT Sales_in_Mio, Net_profit,year,constituent_id,constituent_name FROM '+ table_master + ' WHERE constituent_id= "'+constituent_id+'";'
-    print QUERY
+    print (QUERY)
     master = pd.read_gbq(QUERY, project_id=project_name)
     master['year'] = pd.to_datetime(master['year'],format="%Y-%m-%dT%H:%M:%S") #read the date format
     master = master.sort_values('year',ascending=1).reset_index(drop=True) 
@@ -135,37 +136,6 @@ def store_result(args,project_name,result_df):
     client = bigquery.Client()
     #Store result to bigquery
     result_df.to_gbq(table_store, project_id = project_name, chunksize=10000, verbose=True, reauth=False, if_exists='append',private_key=None)
-    
-    
-class Storage:
-    def __init__(self, google_key_path=None, mongo_connection_string=None):
-        if google_key_path:
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_key_path
-            self.bigquery_client = bigquery.Client()
-        else:
-            self.bigquery_client = None
-
-        if mongo_connection_string:
-            self.mongo_client = MongoClient(mongo_connection_string)
-        else:
-            self.mongo_client = None
-            
-    def get_bigquery_data(self, query, timeout=None, iterator_flag=True): 
-        if self.bigquery_client:
-            client = self.bigquery_client
-        else:
-            client = bigquery.Client()
-
-        print("Running query...")
-        query_job = client.query(query)
-        iterator = query_job.result(timeout=timeout)
-
-        if iterator_flag:
-            return iterator
-        else:
-            return list(iterator)
-
-
 
 
 def get_constituent_id_name(old_constituent_name):
@@ -221,5 +191,9 @@ if __name__ == "__main__":
     
     #sys.path.insert(0, args.python_path)
     #from utils.Storage import Storage
+    from Database.BigQuery.backup_table import backup_table, drop_backup_table  # Feature PECTEN-9
+    from Database.BigQuery.data_validation import before_insert, after_insert  # Feature PECTEN-9
+    from Database.BigQuery.rollback_object import rollback_object # Feature PECTEN-9
+    from utils.Storage import Storage #Feature PECTEN-9
     
     profit_margin_main(args)

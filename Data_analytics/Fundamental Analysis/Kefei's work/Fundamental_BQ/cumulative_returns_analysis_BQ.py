@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 import pymongo
 from re import sub
 from decimal import Decimal
@@ -32,11 +33,15 @@ def cumulative_returns_main(args):
     cumulative_returns_table = pd.DataFrame()
     date = datetime.strftime(datetime.now().date(),'%Y-%m-%d %H:%M:%S') #Current time of analysis
     from_date = datetime.strftime(from_date,'%Y-%m-%d %H:%M:%S') #Convert to the standard time format
-    to_date = datetime.strftime(to_date,'%Y-%m-%d %H:%M:%S') 
-    
+    to_date = datetime.strftime(to_date,'%Y-%m-%d %H:%M:%S')
+
+    # Feature PECTEN-9
+    backup_table_name = backup_table(args.service_key_path, args.table_storage.split('.')[0],
+                                     args.table_storage.split('.')[1])
+
     #constituent_list = ['Allianz','BMW']
     for constituent in constituent_list:
-        print constituent
+        print(constituent)
         #translate special german characters
         if constituent=='M\xc3\xbcnchener R\xc3\xbcckversicherungs-Gesellschaft':
             constituent = 'Münchener Rückversicherungs-Gesellschaft'
@@ -52,11 +57,35 @@ def cumulative_returns_main(args):
         cumulative_returns_table = cumulative_returns_table.append(pd.DataFrame({'Constituent': constituent, 'Constituent_name':constituent_name, 'Constituent_id':constituent_id,'six_months_return': return_6months, 'one_year_return':return_1year,'three_years_return': return_3years,'Cumulative_return_consistency_score':score,'Table':'cumulative return analysis','Date_of_analysis':date,'From_date':from_date,'To_date':to_date,'Status':'active'}, index=[0]), ignore_index=True)
     
     
-    print "table done"
+    print ("table done")
     update_result(table_store)
-    print "update done"
+    print ("update done")
+
+
+    #Feature PECTEN-9
+    try:
+        before_insert(args.service_key_path,args.table_storage.split('.')[0],table_store.split('.')[1],
+                      from_date,to_date,Storage(args.service_key_path))
+    except AssertionError as e:
+        drop_backup_table(args.service_key_path, args.table_storage.split('.')[0], backup_table_name)
+        e.args += ("Data already exists",)
+        raise
+
     store_result(args,project_name, table_store, cumulative_returns_table)
-    print "all done"
+
+    # Feature PECTEN-9
+    try:
+        after_insert(args.service_key_path, args.table_storage.split('.')[0], table_store.split('.')[1],
+                     from_date, to_date)
+    except AssertionError as e:
+        e.args += ("No data was inserted.",)
+        rollback_object(args.service_key_path, 'table', args.table_storage.split('.')[0], None,
+                        table_store.split('.')[1], backup_table_name)
+        raise
+
+    drop_backup_table(args.service_key_path, args.table_storage.split('.')[0], backup_table_name)
+
+    print ("all done")
     
 
 
@@ -98,7 +127,7 @@ def get_timerange(args):
 def get_parameters(args):
     script = 'cumulative_return_analysis'
     query = 'SELECT * FROM'+' '+ args.parameter_table + ';'
-    print query
+    print (query)
     parameter_table = pd.read_sql(query, con=args.sql_connection_string)
     project_name = parameter_table["PROJECT_NAME_BQ"].loc[parameter_table['SCRIPT_NAME']==script].values[0]
     
@@ -108,7 +137,7 @@ def get_parameters(args):
     
     #Obtain the table storing historical price
     table_historical = parameter_table["TABLE_COLLECT_HISTORICAL_BQ"].loc[parameter_table['SCRIPT_NAME']==script].values[0]
-    print table_historical
+    print (table_historical)
     table_store = parameter_table['TABLE_STORE_ANALYSIS_BQ'].loc[parameter_table['SCRIPT_NAME']==script].values[0]
     return project_name, constituent_list,table_store,table_historical
 
@@ -138,7 +167,7 @@ def get_historical_price(project_name,table_historical,constituent,to_date):
     #QUERY ='SELECT closing_price, date FROM '+ table_historical + ' WHERE Constituent= "'+constituent+'"'+ " AND date between TIMESTAMP ('2008-01-01 00:00:00 UTC') and TIMESTAMP ('2017-12-11 00:00:00 UTC') ;"
     QUERY ='SELECT closing_price, date FROM '+ table_historical + ' WHERE Constituent= "'+constituent+'"'+ " AND date between TIMESTAMP ('2009-01-01 00:00:00 UTC') and TIMESTAMP ('" + to_date + " UTC') ;"
    
-    print QUERY
+    print (QUERY)
     his=pd.read_gbq(QUERY, project_id=project_name)
     his['date'] = pd.to_datetime(his['date'],format="%Y-%m-%dT%H:%M:%S") #read the date format
     his = his.sort_values('date',ascending=1).reset_index(drop=True) #sort by date (from oldest to newest) and reset the index
@@ -185,35 +214,6 @@ def get_constituent_id_name(old_constituent_name):
         return old_constituent_name
 
 
-class Storage:
-    def __init__(self, google_key_path=None, mongo_connection_string=None):
-        if google_key_path:
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_key_path
-            self.bigquery_client = bigquery.Client()
-        else:
-            self.bigquery_client = None
-
-        if mongo_connection_string:
-            self.mongo_client = MongoClient(mongo_connection_string)
-        else:
-            self.mongo_client = None
-            
-    def get_bigquery_data(self, query, timeout=None, iterator_flag=True): 
-        if self.bigquery_client:
-            client = self.bigquery_client
-        else:
-            client = bigquery.Client()
-
-        print("Running query...")
-        query_job = client.query(query)
-        iterator = query_job.result(timeout=timeout)
-
-        if iterator_flag:
-            return iterator
-        else:
-            return list(iterator)
-
-
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
@@ -223,4 +223,8 @@ if __name__ == "__main__":
     parser.add_argument('table_storage',help='BigQuery table where the new data is stored')
     #parser.add_argument('table_store_analysis', help='Name of table for stroing the analysis')
     args = parser.parse_args()
+    from Database.BigQuery.backup_table import backup_table, drop_backup_table  # Feature PECTEN-9
+    from Database.BigQuery.data_validation import before_insert, after_insert  # Feature PECTEN-9
+    from Database.BigQuery.rollback_object import rollback_object  # Feature PECTEN-9
+    from utils.Storage import Storage #Feature PECTEN-9
     cumulative_returns_main(args)

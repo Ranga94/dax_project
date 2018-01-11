@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ##This script does ranking for technical/price analysis
+from __future__ import print_function
 import pandas as pd
 from re import sub
 from decimal import Decimal
@@ -31,6 +32,10 @@ from google.cloud import bigquery
 
 
 def price_ranking_main(args):
+    # Feature PECTEN-9
+    backup_table_name = backup_table(args.service_key_path, args.table_storage.split('.')[0],
+                                     args.table_storage.split('.')[1])
+
     project_name,table_store,table_collect=get_parameters(args)
     from_date, to_date = get_timerange(args)
     from_date = datetime.strftime(from_date,'%Y-%m-%d %H:%M:%S') #Convert to the standard time format
@@ -38,7 +43,7 @@ def price_ranking_main(args):
     
     table_store = args.table_storage
     cumulative_returns_table,quarter_mean_table,standard_dev_table,ATR_table,RSI_table=price_analysis_collection(project_name)
-    print "collection done"
+    print ("collection done")
     
     #Obtain this table from MySQL
     table_list = [cumulative_returns_table,cumulative_returns_table,quarter_mean_table,quarter_mean_table,RSI_table]
@@ -60,11 +65,32 @@ def price_ranking_main(args):
     
     ##Update the collection
     
-    print "table done"
+    print ("table done")
     update_result(table_store)
-    print "update done"
+    print ("update done")
+
+    #Feature PECTEN-9
+    try:
+        before_insert(args.service_key_path,args.table_storage.split('.')[0],table_store.split('.')[1],
+                      from_date,to_date,Storage(args.service_key_path))
+    except AssertionError as e:
+        drop_backup_table(args.service_key_path, args.table_storage.split('.')[0], backup_table_name)
+        e.args += ("Data already exists",)
+        raise
+
     store_result(args,project_name, table_store,price_growth_board)
-    print "all done"
+
+    #Feature PECTEN-9
+    try:
+        after_insert(args.service_key_path, args.table_storage.split('.')[0], table_store.split('.')[1],
+                     from_date, to_date)
+    except AssertionError as e:
+        e.args += ("No data was inserted.",)
+        rollback_object(args.service_key_path,'table',args.table_storage.split('.')[0],None,
+                        table_store.split('.')[1],backup_table_name)
+        raise
+
+    print ("all done")
 
 
 
@@ -118,7 +144,7 @@ def price_growth_scoring(args,stats_table,table_list,value_list,constituent_list
     
     for j in range(m): ##loop through fundamental quantities
         table = value_list[j]
-        print str(table)
+        print (str(table))
         top_lower = float(stats_table['Top_lower_bound'].loc[stats_table['Price_growth_quantity']==value_list[j]])
         good_lower = float(stats_table['Good_lower_bound'].loc[stats_table['Price_growth_quantity']==value_list[j]])
         fair_lower = float(stats_table['Fair_lower_bound'].loc[stats_table['Price_growth_quantity']==value_list[j]])
@@ -129,7 +155,7 @@ def price_growth_scoring(args,stats_table,table_list,value_list,constituent_list
             constituent = constituent_list[i]
 
             ##Taking care of the special German characters
-            print constituent
+            print (constituent)
             
             
             if constituent.encode('utf-8') =='M\xc3\xbcnchener R\xc3\xbcckversicherungs-Gesellschaft':
@@ -146,7 +172,7 @@ def price_growth_scoring(args,stats_table,table_list,value_list,constituent_list
             #elif constituent == 'Munchener Ruckversicherungs-Gesellschaft':
                 #constituent = u'M\xfcnchener R\xfcckversicherungs-Gesellschaft'
             
-            print "conversion of constituent name done"
+            print ("conversion of constituent name done")
             
             table = table_list[j]
             if table[value_list[j]].loc[table['Constituent']==constituent].empty==False: 
@@ -162,7 +188,7 @@ def price_growth_scoring(args,stats_table,table_list,value_list,constituent_list
                     score = 1 #poorly-performing
                 price_growth_array[i,j]=score
             else: 
-                print value_list[j]+'=N/A for '+constituent
+                print (value_list[j]+'=N/A for '+constituent)
                 score=0
                 price_growth_array[i,j]=score
         
@@ -199,7 +225,7 @@ def get_timerange(args):
 def get_parameters(args):
     script = 'Price_ranking'
     query = 'SELECT * FROM'+' '+ args.parameter_table + ';'
-    print query
+    print (query)
     parameter_table = pd.read_sql(query, con=args.sql_connection_string)
     project_name = parameter_table["PROJECT_NAME_BQ"].loc[parameter_table['SCRIPT_NAME']==script].values[0]
     
@@ -225,37 +251,6 @@ def store_result(args,project_name,table_store,result_df):
     client = bigquery.Client()
     #Store result to bigquery
     result_df.to_gbq(table_store, project_id = project_name, chunksize=10000, verbose=True, reauth=False, if_exists='append',private_key=None)
-    
-    
-class Storage:
-    def __init__(self, google_key_path=None, mongo_connection_string=None):
-        if google_key_path:
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_key_path
-            self.bigquery_client = bigquery.Client()
-        else:
-            self.bigquery_client = None
-
-        if mongo_connection_string:
-            self.mongo_client = MongoClient(mongo_connection_string)
-        else:
-            self.mongo_client = None
-            
-    def get_bigquery_data(self, query, timeout=None, iterator_flag=True): 
-        if self.bigquery_client:
-            client = self.bigquery_client
-        else:
-            client = bigquery.Client()
-
-        print("Running query...")
-        query_job = client.query(query)
-        iterator = query_job.result(timeout=timeout)
-
-        if iterator_flag:
-            return iterator
-        else:
-            return list(iterator)
-
-
 
 def get_constituent_id_name(old_constituent_name):
     mapping = {}
@@ -306,6 +301,10 @@ if __name__ == "__main__":
     parser.add_argument('table_storage',help='BigQuery table where the new data is stored')
     
     args = parser.parse_args()
+    from Database.BigQuery.backup_table import backup_table, drop_backup_table  # Feature PECTEN-9
+    from Database.BigQuery.data_validation import before_insert, after_insert  # Feature PECTEN-9
+    from Database.BigQuery.rollback_object import rollback_object  # Feature PECTEN-9
+    from utils.Storage import Storage  # Feature PECTEN-9
     
     #sys.path.insert(0, args.python_path)
     #from utils.Storage import Storage

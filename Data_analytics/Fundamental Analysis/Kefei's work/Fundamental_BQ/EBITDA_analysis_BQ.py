@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 import pymongo
 from re import sub
 from decimal import Decimal
@@ -47,11 +48,13 @@ def EBITDA_main(args):
         EBITDA_table = EBITDA_table.append(pd.DataFrame({'Constituent': constituent,'Constituent_name':constituent_name, 'Constituent_id':constituent_id, 'Current_EBITDA_in_Mio':current_EBITDA,'EBITDA_last_year_in_Mio':last_year_EBITDA, 'percentage_change_in_EBITDA_from_last_year': round(pct_last_year,2),'EBITDA_score': score,'EBITDA_4_years_ago_in_Mio': four_years_ago_EBITDA,'percentage_change_in_EBITDA_from_4_years_ago':round(pct_four_years,2),'Table':'EBITDA analysis','Date':date,'Status':"active" }, index=[0]), ignore_index=True)
     
     #store the analysis
-    print "table done"
+    print ("table done")
     update_result(args)
-    print "update done"
+    print ("update done")
+
     store_result(args,project_name,EBITDA_table)
-    print "all done"
+
+    print ("all done")
       
    
    
@@ -87,7 +90,7 @@ def EBITDA_collection(master):
 def get_parameters(args):
     script = 'EBITDA_analysis'
     query = 'SELECT * FROM'+' '+ args.parameter_table + ';'
-    print query
+    print (query)
     parameter_table = pd.read_sql(query, con=args.sql_connection_string)
     project_name = parameter_table["PROJECT_NAME_BQ"].loc[parameter_table['SCRIPT_NAME']==script].values[0]
     
@@ -122,7 +125,7 @@ def get_master_data(project_name,table_master,constituent):
     constituent_name = get_constituent_id_name(constituent)[1]
     constituent_id = get_constituent_id_name(constituent)[0]
     QUERY ='SELECT EBITDA_in_Mio,year,constituent_id,constituent_name FROM '+ table_master + ' WHERE constituent_id= "'+constituent_id+'";'
-    print QUERY
+    print (QUERY)
     master=pd.read_gbq(QUERY, project_id=project_name)
     master['year'] = pd.to_datetime(master['year'],format="%Y-%m-%dT%H:%M:%S") #read the date format
     master = master.sort_values('year',ascending=1).reset_index(drop=True) 
@@ -135,36 +138,6 @@ def store_result(args,project_name,result_df):
     client = bigquery.Client()
     #Store result to bigquery
     result_df.to_gbq(table_store, project_id = project_name, chunksize=10000, verbose=True, reauth=False, if_exists='append',private_key=None)
-    
-    
-class Storage:
-    def __init__(self, google_key_path=None, mongo_connection_string=None):
-        if google_key_path:
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_key_path
-            self.bigquery_client = bigquery.Client()
-        else:
-            self.bigquery_client = None
-
-        if mongo_connection_string:
-            self.mongo_client = MongoClient(mongo_connection_string)
-        else:
-            self.mongo_client = None
-            
-    def get_bigquery_data(self, query, timeout=None, iterator_flag=True): 
-        if self.bigquery_client:
-            client = self.bigquery_client
-        else:
-            client = bigquery.Client()
-
-        print("Running query...")
-        query_job = client.query(query)
-        iterator = query_job.result(timeout=timeout)
-
-        if iterator_flag:
-            return iterator
-        else:
-            return list(iterator)
-
 
 
 def get_constituent_id_name(old_constituent_name):
@@ -215,8 +188,10 @@ if __name__ == "__main__":
     parser.add_argument('parameter_table',help="The name of the parameter table in MySQL")
     parser.add_argument('service_key_path',help='google service key path')
     parser.add_argument('table_storage',help='BigQuery table where the new data is stored')
-
-
     args = parser.parse_args()
+    from Database.BigQuery.backup_table import backup_table, drop_backup_table  # Feature PECTEN-9
+    from Database.BigQuery.data_validation import before_insert, after_insert  # Feature PECTEN-9
+    from Database.BigQuery.rollback_object import rollback_object # Feature PECTEN-9
+    from utils.Storage import Storage #Feature PECTEN-9
     
     EBITDA_main(args)
