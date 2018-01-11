@@ -2,61 +2,73 @@ import sys
 
 def main(args):
     try:
+        print("****************************")
         print("country_data")
         get_country_data(args)
     except Exception as e:
         print(e)
     try:
+        print("****************************")
         print("get_influencer_price_tweets")
         get_influencer_price_tweets(args)
     except Exception as e:
         print(e)
     try:
+        print("****************************")
         print("get_influencer_prices")
         get_influencer_prices(args)
     except Exception as e:
         print(e)
     try:
+        print("****************************")
         print("get_news_all")
         get_news_all(args)
     except Exception as e:
         print(e)
     try:
+        print("****************************")
         print("get_news_analytics_daily_sentiment_bq")
         get_news_analytics_daily_sentiment_bq(args)
     except Exception as e:
         print(e)
     try:
+        print("****************************")
         print("get_news_analytics_topic_articles")
         get_news_analytics_topic_articles(args)
     except Exception as e:
         print(e)
     try:
+        print("****************************")
         print("get_news_analytics_topic_sentiment_bq")
         get_news_analytics_topic_sentiment_bq(args)
     except Exception as e:
         print(e)
     try:
+        print("****************************")
         print("get_news_tags_bq")
         get_news_tags_bq(args)
     except Exception as e:
         print(e)
     try:
+        print("****************************")
         print("get_target_prices")
         get_target_prices(args)
     except Exception as e:
         print(e)
     try:
+        print("****************************")
         print("get_twitter_analytics_latest_price_tweets")
         get_twitter_analytics_latest_price_tweets(args)
     except Exception as e:
         print(e)
     try:
+        print("****************************")
         print("get_twitter_analytics_latest_price_tweets")
         get_twitter_sentiment_count_daily(args)
     except Exception as e:
         print(e)
     try:
+        print("****************************")
         print("get_twitter_sentiment_popularity")
         get_twitter_sentiment_popularity(args)
     except Exception as e:
