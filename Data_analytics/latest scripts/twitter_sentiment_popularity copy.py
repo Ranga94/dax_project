@@ -1,11 +1,16 @@
 import sys
 import itertools
 import pandas as pd
-sys.path.insert(0, '')
-from utils.Storage import Storage
 from datetime import datetime, date
 
 def get_twitter_sentiment_popularity(args):
+    sys.path.insert(0, args.python_path)
+    from utils.Storage import Storage
+    from utils.twitter_analytics_helpers import get_parameters
+    from Database.BigQuery.backup_table import backup_table, drop_backup_table  # Feature PECTEN-9
+    from Database.BigQuery.data_validation import before_insert, after_insert  # Feature PECTEN-9
+    from Database.BigQuery.rollback_object import rollback_object  # Feature PECTEN-9
+
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET", "FROM_DATE", "TO_DATE"]
     common_where = lambda x: (x["ENVIRONMENT"] == args.environment) & (x["STATUS"] == 'active')
@@ -13,7 +18,7 @@ def get_twitter_sentiment_popularity(args):
 
     print("twitter_sentiment_popularity")
     # Feature PECTEN-9
-    backup_table_name = backup_table(args.google_key_path, common_parameters["BQ_DATASET"], "country_data")
+    backup_table_name = backup_table(args.google_key_path, common_parameters["BQ_DATASET"], 'twitter_sentiment_popularity')
 
     columns = ["count", "constituent", "avg_sentiment_all", "constituent_name", "constituent_id", "date", "from_date", "to_date"]
 
@@ -28,7 +33,7 @@ group by date, constituent_name, constituent_id, constituent order by count DESC
     """.format(common_parameters["BQ_DATASET"],common_parameters["FROM_DATE"].strftime("%Y-%m-%d %H:%M:%S"),
                common_parameters["TO_DATE"].strftime("%Y-%m-%d %H:%M:%S"))
 
-    storage_client = Storage.Storage(args.google_key_path)
+    storage_client = Storage(args.google_key_path)
 
     result = storage_client.get_bigquery_data(query, iterator_flag=True)
     to_insert = []
@@ -59,13 +64,14 @@ group by date, constituent_name, constituent_id, constituent order by count DESC
             return
     except Exception as e:
         print(e)
-        drop_backup_table(args.google_key_path, common_parameters["BQ_DATASET"], backup_table_name)
+        rollback_object(args.google_key_path, 'table', common_parameters["BQ_DATASET"], None,
+                        'twitter_sentiment_popularity', backup_table_name)
         raise
 
     #Feature PECTEN-9
     try:
         after_insert(args.google_key_path,common_parameters["BQ_DATASET"],'twitter_sentiment_popularity',
-                     from_date,to_date)
+                     from_date,to_date,storage_client)
     except AssertionError as e:
         e.args += ("No data was inserted.",)
         raise
@@ -80,9 +86,4 @@ if __name__ == "__main__":
     parser.add_argument('param_connection_string', help='The MySQL connection string')
     parser.add_argument('environment', help='production or test')
     args = parser.parse_args()
-    sys.path.insert(0, args.python_path)
-    from utils.Storage import Storage
-    from utils.twitter_analytics_helpers import *
-    from Database.BigQuery.backup_table import backup_table, drop_backup_table  # Feature PECTEN-9
-    from Database.BigQuery.data_validation import before_insert, after_insert  # Feature PECTEN-9
     get_twitter_sentiment_popularity(args)

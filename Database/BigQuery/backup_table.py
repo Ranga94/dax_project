@@ -5,7 +5,7 @@ import os
 import random
 
 def backup_table(google_key_path, dataset_name, table_name):
-    print("Backing up table {}".format('country_data'))
+    print("Backing up table {}".format(table_name))
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_key_path
     client = bigquery.Client()
 

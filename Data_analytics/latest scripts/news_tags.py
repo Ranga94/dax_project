@@ -1,11 +1,16 @@
 import sys
 import itertools
 import pandas as pd
-sys.path.insert(0, 'dax_project-master')
-from utils.Storage import Storage
 from datetime import datetime
 
 def get_news_tags_bq(args):
+    sys.path.insert(0, args.python_path)
+    from utils.Storage import Storage
+    from utils.twitter_analytics_helpers import get_parameters
+    from Database.BigQuery.backup_table import backup_table, drop_backup_table  # Feature PECTEN-9
+    from Database.BigQuery.data_validation import before_insert, after_insert  # Feature PECTEN-9
+    from Database.BigQuery.rollback_object import rollback_object  # Feature PECTEN-9
+
     # Get dataset name
     common_table = "PARAM_READ_DATE"
     common_list = ["BQ_DATASET", "FROM_DATE", "TO_DATE"]
@@ -17,12 +22,12 @@ def get_news_tags_bq(args):
     # Feature PECTEN-9
     backup_table_name = backup_table(args.google_key_path, common_parameters["BQ_DATASET"], 'news_tag')
 
-    columns = ["Date", "constituent", "Tags", "Count", "constituent_name", "constituent_id", "From_date", "To_date"]
+    columns = ["Date", "Constituent", "Tags", "Count", "constituent_name", "constituent_id", "From_date", "To_date"]
 
     query = """
     SELECT
   a.news_date AS Date,
-  a.constituent,
+  a.constituent as Constituent,
   b.news_topics as Tags,
   COUNT(b.news_topics) AS Count,
   a.constituent_name,
@@ -48,7 +53,7 @@ GROUP BY
     """.format(common_parameters["BQ_DATASET"],common_parameters["FROM_DATE"].strftime("%Y-%m-%d"),
                common_parameters["TO_DATE"].strftime("%Y-%m-%d"))
 
-    storage_client = Storage.Storage(args.google_key_path)
+    storage_client = Storage(args.google_key_path)
 
     result = storage_client.get_bigquery_data(query, iterator_flag=True)
     to_insert = []
@@ -77,12 +82,14 @@ GROUP BY
             return
     except Exception as e:
         print(e)
-        drop_backup_table(args.google_key_path, common_parameters["BQ_DATASET"], backup_table_name)
+        rollback_object(args.google_key_path, 'table', common_parameters["BQ_DATASET"], None,
+                        'news_tag', backup_table_name)
         raise
 
     #Feature PECTEN-9
     try:
-        after_insert(args.google_key_path,common_parameters["BQ_DATASET"],'news_tag',from_date,to_date)
+        after_insert(args.google_key_path,common_parameters["BQ_DATASET"],'news_tag',from_date,to_date,
+                     storage_client)
     except AssertionError as e:
         e.args += ("No data was inserted.",)
         raise
@@ -97,9 +104,4 @@ if __name__ == "__main__":
     parser.add_argument('param_connection_string', help='The MySQL connection string')
     parser.add_argument('environment', help='production or test')
     args = parser.parse_args()
-    sys.path.insert(0, args.python_path)
-    from utils.Storage import Storage
-    from utils.twitter_analytics_helpers import *
-    from Database.BigQuery.backup_table import backup_table, drop_backup_table  # Feature PECTEN-9
-    from Database.BigQuery.data_validation import before_insert, after_insert  # Feature PECTEN-9
     get_news_tags_bq(args)        

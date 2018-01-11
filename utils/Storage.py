@@ -195,7 +195,7 @@ class Storage:
             if not errors:
                 return True
             else:
-                print(errors[0])
+                print(errors)
                 return None
         except Exception as e:
             print(e)

@@ -1,8 +1,6 @@
 import sys
 import itertools
 import pandas as pd
-sys.path.insert(0, 'dax_project-master')
-from utils.Storage import Storage
 from datetime import datetime
 from langdetect import detect
 
@@ -30,7 +28,7 @@ def get_news_analytics_topic_articles(args):
     a.news_title as News_Title_NewsDim, a.news_date as Date, a.news_article_txt as NEWS_ARTICLE_TXT_NewsDim,
     TIMESTAMP('{1}') as From_Date, TIMESTAMP('{2}') as To_Date,
     ROW_NUMBER() OVER (PARTITION BY constituent_name ORDER BY news_date DESC) row_num
-    FROM `pecten_dataset_test.all_news` a, (SELECT
+    FROM `{0}.all_news` a, (SELECT
                             x.news_id,
                             news_topics
                             FROM
@@ -44,18 +42,19 @@ WHERE row_num between 0 and 20;
 
     storage_client = Storage.Storage(args.google_key_path)
 
-    result = storage_client.get_bigquery_data(query, iterator_flag=True)
+    try:
+        result = storage_client.get_bigquery_data(query, iterator_flag=True)
+    except Exception as e:
+        print(e)
+        drop_backup_table(args.google_key_path,common_parameters["BQ_DATASET"],backup_table_name)
+        raise
+
     to_insert = []
-    print(len(result))
     for item in result:
         article = dict((k,item[k].strftime('%Y-%m-%d %H:%M:%S')) if isinstance(item[k],datetime) else
                    (k,item[k]) for k in columns)
-        print(detect(article["News_Title_NewsDim"]))
         if detect(article["News_Title_NewsDim"]) == 'en':
             to_insert.append(article)
-
-    print(len(to_insert))
-    return
 
     #Feature PECTEN-9
     from_date = common_parameters["FROM_DATE"].strftime("%Y-%m-%d %H:%M:%S")
@@ -92,13 +91,15 @@ WHERE row_num between 0 and 20;
                                             to_insert[int(len(to_insert) * 0.9):])
     except Exception as e:
         print(e)
-        drop_backup_table(args.google_key_path, common_parameters["BQ_DATASET"], backup_table_name)
+        rollback_object(args.google_key_path, 'table', common_parameters["BQ_DATASET"], None,
+                        'news_analytics_topic_articles', backup_table_name)
         raise
 
 
     #Feature PECTEN-9
     try:
-        after_insert(args.google_key_path,common_parameters["BQ_DATASET"],'news_analytics_topic_articles',from_date,to_date)
+        after_insert(args.google_key_path,common_parameters["BQ_DATASET"],'news_analytics_topic_articles',
+                     from_date,to_date,storage_client)
     except AssertionError as e:
         e.args += ("No data was inserted.",)
         raise
@@ -118,4 +119,5 @@ if __name__ == "__main__":
     from utils.twitter_analytics_helpers import *
     from Database.BigQuery.backup_table import backup_table, drop_backup_table  # Feature PECTEN-9
     from Database.BigQuery.data_validation import before_insert, after_insert  # Feature PECTEN-9
+    from Database.BigQuery.rollback_object import rollback_object  # Feature PECTEN-9
     get_news_analytics_topic_articles(args)

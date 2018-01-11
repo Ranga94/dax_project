@@ -1,8 +1,6 @@
 import sys
 import itertools
 import pandas as pd
-sys.path.insert(0, 'dax_project-master')
-from utils.Storage import Storage
 from datetime import datetime
 
 def get_news_analytics_topic_sentiment_bq(args):
@@ -17,7 +15,8 @@ def get_news_analytics_topic_sentiment_bq(args):
     # Feature PECTEN-9
     backup_table_name = backup_table(args.google_key_path, common_parameters["BQ_DATASET"], 'news_analytics_topic_sentiment')
 
-    columns = ["constituent_id", "overall_sentiment", "categorised_tag", "constituent_name", "count", "date", "constituent", "From_date", "to_date"]
+    columns = ["constituent_id", "overall_sentiment", "categorised_tag", "constituent_name",
+               "count", "date", "constituent", "From_date", "To_date"]
 
     query = """
     SELECT
@@ -80,12 +79,14 @@ GROUP BY
             return
     except Exception as e:
         print(e)
-        drop_backup_table(args.google_key_path, common_parameters["BQ_DATASET"], backup_table_name)
+        rollback_object(args.google_key_path, 'table', common_parameters["BQ_DATASET"], None,
+                        'news_analytics_topic_sentiment', backup_table_name)
         raise
 
     #Feature PECTEN-9
     try:
-        after_insert(args.google_key_path,common_parameters["BQ_DATASET"],'news_analytics_topic_sentiment',from_date,to_date)
+        after_insert(args.google_key_path,common_parameters["BQ_DATASET"],'news_analytics_topic_sentiment',
+                     from_date,to_date,storage_client)
     except AssertionError as e:
         e.args += ("No data was inserted.",)
         raise
@@ -105,4 +106,5 @@ if __name__ == "__main__":
     from utils.twitter_analytics_helpers import *
     from Database.BigQuery.backup_table import backup_table, drop_backup_table  # Feature PECTEN-9
     from Database.BigQuery.data_validation import before_insert, after_insert  # Feature PECTEN-9
+    from Database.BigQuery.rollback_object import rollback_object  # Feature PECTEN-9
     get_news_analytics_topic_sentiment_bq(args)
