@@ -1,8 +1,6 @@
 import sys
 import itertools
 import pandas as pd
-sys.path.insert(0, '')
-from utils.Storage import Storage
 from datetime import datetime
 
 def get_country_data(args):
