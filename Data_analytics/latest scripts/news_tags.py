@@ -70,9 +70,24 @@ GROUP BY
     try:
         print("Inserting into BQ")
         # Feature PECTEN-9
-        storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], 'news_tag', to_insert)
+        if storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], 'news_tag', to_insert):
+            print("Data inserted to BQ")
+        else:
+            drop_backup_table(args.google_key_path, common_parameters["BQ_DATASET"], backup_table_name)
+            return
     except Exception as e:
         print(e)
+        drop_backup_table(args.google_key_path, common_parameters["BQ_DATASET"], backup_table_name)
+        raise
+
+    #Feature PECTEN-9
+    try:
+        after_insert(args.google_key_path,common_parameters["BQ_DATASET"],'news_tag',from_date,to_date)
+    except AssertionError as e:
+        e.args += ("No data was inserted.",)
+        raise
+    finally:
+        drop_backup_table(args.google_key_path,common_parameters["BQ_DATASET"],backup_table_name)
 
 if __name__ == "__main__":
     import argparse
