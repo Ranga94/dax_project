@@ -14,6 +14,9 @@ def get_news_all(args):
     common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
     print("news_all")
 
+    # Feature PECTEN-9
+    backup_table_name = backup_table(args.google_key_path, common_parameters["BQ_DATASET"], "country_data")
+
     #columns = ["NEWS_DATE_NewsDim", "score", "NEWS_PUBLICATION_NewsDim", "categorised_tag", "constituent_id", "NEWS_ARTICLE_TXT_NewsDim", "sentiment", "NEWS_TITLE_NewsDim", "entity_tags", "entity_tags.FACILITY", "entity_tags.QUANTITY", "entity_tags.EVENT", "entity_tags.PERSON", "entity_tags.DATE", "entity_tags.TIME", "entity_tags.CARDINAL", "entity_tags.PRODUCT", "count"]
     '''
     columns = ["NEWS_DATE_NewsDim", "score", "NEWS_PUBLICATION_NewsDim",
@@ -72,10 +75,26 @@ def get_news_all(args):
         else:
             continue
 
+
+    #Feature PECTEN-9
+    from_date = common_parameters["FROM_DATE"].strftime("%Y-%m-%d %H:%M:%S")
+    to_date = common_parameters["TO_DATE"].strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        before_insert(args.google_key_path,common_parameters["BQ_DATASET"],"news_all",from_date,to_date,storage_client)
+    except AssertionError as e:
+        drop_backup_table(args.google_key_path,common_parameters["BQ_DATASET"],backup_table_name)
+        e.args += ("Data already exists",)
+        raise
+
     try:
         print("Inserting to BQ")
         print(len(to_insert))
-        storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], 'news_all',to_insert)
+        # Feature PECTEN-9
+        if storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], 'news_all',to_insert):
+            print("Data inserted to BQ")
+        else:
+            drop_backup_table(args.google_key_path, common_parameters["BQ_DATASET"], backup_table_name)
+            return
         '''
         storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], 'news_all',
                                             to_insert[:int(len(to_insert) * 0.25)])
@@ -88,6 +107,17 @@ def get_news_all(args):
         '''
     except Exception as e:
         print(e)
+        drop_backup_table(args.google_key_path, common_parameters["BQ_DATASET"], backup_table_name)
+        raise
+
+    #Feature PECTEN-9
+    try:
+        after_insert(args.google_key_path,common_parameters["BQ_DATASET"],"news_all",from_date,to_date)
+    except AssertionError as e:
+        e.args += ("No data was inserted.",)
+        raise
+    finally:
+        drop_backup_table(args.google_key_path,common_parameters["BQ_DATASET"],backup_table_name)
 
 if __name__ == "__main__":
     import argparse
@@ -100,4 +130,6 @@ if __name__ == "__main__":
     sys.path.insert(0, args.python_path)
     from utils.Storage import Storage
     from utils.twitter_analytics_helpers import *
+    from Database.BigQuery.backup_table import backup_table, drop_backup_table  # Feature PECTEN-9
+    from Database.BigQuery.data_validation import validate_data, before_insert, after_insert  # Feature PECTEN-9
     get_news_all(args)

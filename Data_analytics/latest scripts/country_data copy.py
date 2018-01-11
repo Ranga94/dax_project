@@ -80,5 +80,5 @@ if __name__ == "__main__":
     from utils.Storage import Storage
     from utils.twitter_analytics_helpers import *
     from Database.BigQuery.backup_table import backup_table,drop_backup_table #Feature PECTEN-9
-    from Database.BigQuery.data_validation import validate_data, before_insert, after_insert #Feature PECTEN-9
+    from Database.BigQuery.data_validation import before_insert, after_insert #Feature PECTEN-9
     get_country_data(args)
