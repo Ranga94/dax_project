@@ -14,7 +14,7 @@ def get_twitter_analytics_latest_price_tweets(args):
 
     print("twitter_latest_price_tweets")
 
-    columns = ["tweet_date", "constituent_name", "from_date", "date", "text", "MONEY", "sentiment_score", "constituent", "constituent_id", "to_date"]
+    columns = ["tweet_date", "constituent_name", "from_date", "date", "text", "MONEY", "sentiment_score", "constituent", "constituent_id", "to_date", "users.location", "users.followers_count"]
 
     query = """
     SELECT date as tweet_date,
@@ -23,6 +23,8 @@ def get_twitter_analytics_latest_price_tweets(args):
     sentiment_score,
     constituent,
     constituent_id,
+    user.location,
+    user.followers_count,
     TIMESTAMP('{1}') as from_date,
     TIMESTAMP('{2}') as to_date,
 CASE
@@ -82,4 +84,3 @@ if __name__ == "__main__":
     print(fuzz.partial_ratio(s1,s2))
 
     #98,96
-    
