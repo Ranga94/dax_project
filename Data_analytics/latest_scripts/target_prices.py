@@ -94,6 +94,8 @@ def get_target_prices(args):
         to_insert.append(dict((k, item[k].strftime('%Y-%m-%d %H:%M:%S')) if isinstance(item[k], datetime) else
                               (k, item[k]) for k in columns))
 
+    print(len(to_insert))
+
     #Feature PECTEN-9
     from_date = common_parameters["FROM_DATE"].strftime("%Y-%m-%d %H:%M:%S")
     to_date = common_parameters["TO_DATE"].strftime("%Y-%m-%d %H:%M:%S")
