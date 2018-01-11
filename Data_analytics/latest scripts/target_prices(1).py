@@ -12,16 +12,15 @@ def get_target_prices(args):
     common_parameters = get_parameters(args.param_connection_string, common_table, common_list, common_where)
 
 
-    print("target_prices")
+    print("twitter_sentiment_popularity")
 
     columns = ["entity_tags", "constituent", "sentiment_score", "from_date", "constituent_name", "constituent_id",
-               "price", "to_date", "tweet_date", "date"]
+               "price", "to_date", "tweet_date", "date", "user.location"]
 
     query = r"""
-  CREATE TEMPORARY FUNCTION
-  format_price(input_txt STRING)
-  RETURNS FLOAT64
-  LANGUAGE js AS '''
+CREATE TEMPORARY FUNCTION format_price(input_txt STRING)
+RETURNS FLOAT64
+LANGUAGE js AS '''
   result = null
   input_txt.split(" ").forEach(function(x){{
   new_value = parseFloat(x.replace('€',''));
@@ -30,49 +29,26 @@ def get_target_prices(args):
   }}
   }});
   return result
-    ''';
-    SELECT
-      * EXCEPT(closing_price)
-    FROM (
-      SELECT
-        a.text,
-        a.constituent,
-        a.sentiment_score,
-        a.constituent_name,
-        a.constituent_id,
-        ARRAY_TO_STRING(a.entity_tags.MONEY, ",") AS entity_tags,
-        a.date AS tweet_date,
-        format_price(a.text) AS price,
-        b.closing_price,
-        TIMESTAMP('{1}') AS from_date,
-        TIMESTAMP('{2}') AS to_date,
-        CASE
-          WHEN a.date > '2017-11-17 00:00:00' THEN '2017-12-13 00:00:00 UTC'
-        END AS date
-      FROM
-        {0}.twitter_analytics_latest_price_tweets a,
-        (
-        SELECT
-          * EXCEPT(row_num)
-        FROM (
-          SELECT
-            closing_price,
-            constituent_id,
-            ROW_NUMBER() OVER (PARTITION BY constituent_id ORDER BY date DESC) row_num
-          FROM
-            `{0}.historical`
-          WHERE
-            date BETWEEN TIMESTAMP('{1}')
-            AND TIMESTAMP('{2}') )
-        WHERE
-          row_num = 1 ) b
-      WHERE
-        a.constituent_id = b.constituent_id
-        AND a.tweet_date BETWEEN TIMESTAMP('{1}')
-        AND TIMESTAMP('{2}') )
-    WHERE
-      price BETWEEN closing_price*0.7
-      AND closing_price*1.3;
+''';
+SELECT
+  text,
+  constituent,
+  sentiment_score,
+  constituent_name,
+  constituent_id,
+  ARRAY_TO_STRING(entity_tags.MONEY, ",") as entity_tags,
+  user.location,
+  date AS tweet_date,
+  format_price(text) AS price,
+  TIMESTAMP('{1}') as from_date, TIMESTAMP('{2}') as to_date,
+  CASE
+        WHEN date > '2017-11-17 00:00:00' THEN '2017-12-13 00:00:00 UTC'
+    END AS date
+FROM
+  {0}.twitter_analytics_latest_price_tweets
+WHERE
+  tweet_date BETWEEN TIMESTAMP('{1}')
+  AND TIMESTAMP('{2}');
 """.format(common_parameters["BQ_DATASET"],common_parameters["FROM_DATE"].strftime('%Y-%m-%d %H:%M:%S'),
                common_parameters["TO_DATE"].strftime('%Y-%m-%d %H:%M:%S'))
 
@@ -86,7 +62,6 @@ def get_target_prices(args):
                               (k, item[k]) for k in columns))
 
     try:
-        print("Inserting to BQ")
         storage_client.insert_bigquery_data(common_parameters["BQ_DATASET"], 'target_prices', to_insert)
         print(len(to_insert))
     except Exception as e:
