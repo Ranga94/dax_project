@@ -13,7 +13,7 @@ def get_news_all(args):
     print("news_all")
 
     # Feature PECTEN-9
-    backup_table_name = backup_table(args.google_key_path, common_parameters["BQ_DATASET"], "country_data")
+    backup_table_name = backup_table(args.google_key_path, common_parameters["BQ_DATASET"], 'news_all')
 
     #columns = ["NEWS_DATE_NewsDim", "score", "NEWS_PUBLICATION_NewsDim", "categorised_tag", "constituent_id", "NEWS_ARTICLE_TXT_NewsDim", "sentiment", "NEWS_TITLE_NewsDim", "entity_tags", "entity_tags.FACILITY", "entity_tags.QUANTITY", "entity_tags.EVENT", "entity_tags.PERSON", "entity_tags.DATE", "entity_tags.TIME", "entity_tags.CARDINAL", "entity_tags.PRODUCT", "count"]
     '''
