@@ -1,4 +1,6 @@
-def create_table(dataset_id, table_id="Profitability_tag_ranking", project=None):
+from google.cloud import bigquery
+
+def create_table(dataset_id="pecten_dataset_dev", table_id="Profitability_tag_ranking", project="igenie-project"):
     """Creates a simple table in the given dataset.
 
     If no project is specified, then the currently active project is used.
@@ -14,14 +16,17 @@ def create_table(dataset_id, table_id="Profitability_tag_ranking", project=None)
         bigquery.SchemaField('Constituent','STRING','REQUIRED'),
         bigquery.SchemaField('Constituent_id','STRING','REQUIRED'),
         bigquery.SchemaField('Constituent_name','STRING','REQUIRED'),
-		bigquery.SchemaField('Fundamental_growth','STRING','REQUIRED'),
-		bigquery.SchemaField('Price_growth','STRING','REQUIRED'),
-		bigquery.SchemaField('Profitabilty_rank','INTEGER','REQUIRED'),
-		bigquery.SchemaField('Status','STRING','NULLABLE'),
-		bigquery.SchemaField('From_date','STRING','REQUIRED'),
-		bigquery.SchemaField('To_date','STRING','REQUIRED'),
+	bigquery.SchemaField('Fundamental_growth','STRING','REQUIRED'),
+	bigquery.SchemaField('Price_growth','STRING','REQUIRED'),
+	bigquery.SchemaField('Profitabilty_rank','INTEGER','REQUIRED'),
+	bigquery.SchemaField('Status','STRING','NULLABLE'),
+	bigquery.SchemaField('From_date','STRING','REQUIRED'),
+	bigquery.SchemaField('To_date','STRING','REQUIRED'),
     )
 
     table = bigquery_client.create_table(table)
 
     print('Created table {} in dataset {}.'.format(table_id, dataset_id))
+
+if __name__ == '__main__':
+    create_table()

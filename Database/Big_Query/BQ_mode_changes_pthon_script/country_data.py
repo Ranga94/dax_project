@@ -1,6 +1,6 @@
 from google.cloud import bigquery
 
-def create_table(dataset_id="pecten_dataset_dev", table_id="ranga_testing", project="igenie-project"):
+def create_table(dataset_id="pecten_dataset_dev", table_id="country_data", project="igenie-project"):
     """Creates a simple table in the given dataset.
 
     If no project is specified, then the currently active project is used.
@@ -14,14 +14,14 @@ def create_table(dataset_id="pecten_dataset_dev", table_id="ranga_testing", proj
     # Set the table schema
     table.schema = (
         bigquery.SchemaField('count','INTEGER','REQUIRED'),
-		bigquery.SchemaField('status','STRING','NULLABLE'),
-		bigquery.SchemaField('avg_sentiment','FLOAT','REQUIRED'),
-		bigquery.SchemaField('constituent_name','STRING','REQUIRED'),
-		bigquery.SchemaField('country_name','STRING','REQUIRED'),
-		bigquery.SchemaField('constituent','STRING','REQUIRED'),
-		bigquery.SchemaField('date_of_analysis','TIMESTAMP','NULLABLE'),
+	bigquery.SchemaField('status','STRING','NULLABLE'),
+	bigquery.SchemaField('avg_sentiment','FLOAT','REQUIRED'),
+	bigquery.SchemaField('constituent_name','STRING','REQUIRED'),
+	bigquery.SchemaField('country_name','STRING','REQUIRED'),
+	bigquery.SchemaField('constituent','STRING','REQUIRED'),
+	bigquery.SchemaField('date_of_analysis','TIMESTAMP','NULLABLE'),
         bigquery.SchemaField('constituent_id','STRING','REQUIRED'),
-		bigquery.SchemaField('from_date','TIMESTAMP','REQUIRED'),
+	bigquery.SchemaField('from_date','TIMESTAMP','REQUIRED'),
         bigquery.SchemaField('to_date','TIMESTAMP','REQUIRED'),
     )
 

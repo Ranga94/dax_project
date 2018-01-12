@@ -1,4 +1,6 @@
-def create_table(dataset_id = "pecten_dtaaset_dev", table_id="summary_box", project="igenie-project"):
+from google.cloud import bigquery
+
+def create_table(dataset_id = "pecten_dataset_dev", table_id="summary_box", project="igenie-project"):
     """Creates a simple table in the given dataset.
 
     If no project is specified, then the currently active project is used.
@@ -14,15 +16,19 @@ def create_table(dataset_id = "pecten_dtaaset_dev", table_id="summary_box", proj
         bigquery.SchemaField('Constituent_id', 'STRING','REQUIRED'),
         bigquery.SchemaField('Date_of_analysis', 'TIMESTAMP','NULLABLE'),
         bigquery.SchemaField('News_sent_color', 'INTEGER','REQUIRED'),
-		bigquery.SchemaField('Twitter_sent_color','INTEGER','REQUIRED'),
-		bigquery.SchemaField('From_date','TIMESTAMP','REQUIRED'),
-		bigquery.SchemaField('To_date','TIMESTAMP','REQUIRED'),
-		bigquery.SchemaField('Constituent','STRING','REQUIRED'),
-		bigquery.SchemaField('Constituent_name','STRING','REQUIRED'),
-		bigquery.SchemaField('Profitability_color','INTEGER','REQUIRED'),
-		bigquery.SchemaField('Risk_color','INTEGER','REQUIRED')
+	bigquery.SchemaField('Twitter_sent_color','INTEGER','REQUIRED'),
+	bigquery.SchemaField('From_date','TIMESTAMP','REQUIRED'),
+	bigquery.SchemaField('To_date','TIMESTAMP','REQUIRED'),
+	bigquery.SchemaField('Constituent','STRING','REQUIRED'),
+	bigquery.SchemaField('Constituent_name','STRING','REQUIRED'),
+	bigquery.SchemaField('Profitability_color','INTEGER','REQUIRED'),
+	bigquery.SchemaField('Risk_color','INTEGER','REQUIRED')
     )
 
     table = bigquery_client.create_table(table)
 
     print('Created table {} in dataset {}.'.format(table_id, dataset_id))
+
+
+if __name__ == '__main__':
+    create_table()

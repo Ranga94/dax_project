@@ -1,4 +1,6 @@
-def create_table(dataset_id, table_id="news_analytics_topic_articles", project=None):
+from google.cloud import bigquery
+
+def create_table(dataset_id="pecten_dataset_dev", table_id="news_analytics_topic_articles", project="igenie-project"):
     """Creates a simple table in the given dataset.
 
     If no project is specified, then the currently active project is used.
@@ -11,21 +13,25 @@ def create_table(dataset_id, table_id="news_analytics_topic_articles", project=N
 
     # Set the table schema
     table.schema = (
-		bigquery.SchemaField('constituent_name','STRING','REQUIRED'),
-		bigquery.SchemaField('constituent_id','STRING','REQUIRED'),
-		bigquery.SchemaField('sentiment','STRING','NULLABLE'),
-		bigquery.SchemaField('News_Date_NewsDim','TIMESTAMP','REQUIRED'),
+	bigquery.SchemaField('constituent_name','STRING','REQUIRED'),
+	bigquery.SchemaField('constituent_id','STRING','REQUIRED'),
+	bigquery.SchemaField('sentiment','STRING','NULLABLE'),
+	bigquery.SchemaField('News_Date_NewsDim','TIMESTAMP','REQUIRED'),
         bigquery.SchemaField('constituent','STRING','REQUIRED'),
-		bigquery.SchemaField('News_source_NewsDim','STRING','NULLABLE'),
+	bigquery.SchemaField('News_source_NewsDim','STRING','NULLABLE'),
         bigquery.SchemaField('To_Date','TIMESTAMP','REQUIRED'),
-		bigquery.SchemaField('Score','FLOAT','NULLABLE'),
-		bigquery.SchemaField('Categorised_tag','STRING','REQUIRED'),
-		bigquery.SchemaField('News_Title_NewsDim','STRING','REQUIRED'),
-		bigquery.SchemaField('Date','TIMESTAMP','NULLABLE'),
-		bigquery.SchemaField('From_Date','TIMESTAMP','REQUIRED'),
-		bigquery.SchemaField('NEWS_ARTICLE_TXT_NewsDim','STRING','REQUIRED'),
+	bigquery.SchemaField('Score','FLOAT','NULLABLE'),
+	bigquery.SchemaField('Categorised_tag','STRING','REQUIRED'),
+	bigquery.SchemaField('News_Title_NewsDim','STRING','REQUIRED'),
+	bigquery.SchemaField('Date','TIMESTAMP','NULLABLE'),
+	bigquery.SchemaField('From_Date','TIMESTAMP','REQUIRED'),
+	bigquery.SchemaField('NEWS_ARTICLE_TXT_NewsDim','STRING','REQUIRED'),
     )
 
     table = bigquery_client.create_table(table)
 
     print('Created table {} in dataset {}.'.format(table_id, dataset_id))
+
+
+if __name__ == '__main__':
+    create_table()

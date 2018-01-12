@@ -1,3 +1,5 @@
+from google.cloud import bigquery
+
 def create_table(dataset_id, table_id="twitter_sentiment_count_daily", project=None):
     """Creates a simple table in the given dataset.
 
@@ -14,13 +16,16 @@ def create_table(dataset_id, table_id="twitter_sentiment_count_daily", project=N
         bigquery.SchemaField('constituent_name','STRING','REQUIRED'),
         bigquery.SchemaField('line','STRING','REQUIRED'),
         bigquery.SchemaField('date','TIMESTAMP','REQUIRED'),
-		bigquery.SchemaField('count','INTEGER','REQUIRED'),
-		bigquery.SchemaField('constituent_id','STRING','REQUIRED'),
-		bigquery.SchemaField('constituent','STRING','REQUIRED'),
-		bigquery.SchemaField('From_date','STRING','REQUIRED'),
-		bigquery.SchemaField('To_date','STRING','REQUIRED'),
+	bigquery.SchemaField('count','INTEGER','REQUIRED'),
+	bigquery.SchemaField('constituent_id','STRING','REQUIRED'),
+	bigquery.SchemaField('constituent','STRING','REQUIRED'),
+	bigquery.SchemaField('From_date','STRING','REQUIRED'),
+	bigquery.SchemaField('To_date','STRING','REQUIRED'),
     )
 
     table = bigquery_client.create_table(table)
 
     print('Created table {} in dataset {}.'.format(table_id, dataset_id))
+
+if __name__ == '__main__':
+    create_table()
