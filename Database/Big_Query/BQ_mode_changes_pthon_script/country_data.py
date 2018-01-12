@@ -1,4 +1,6 @@
-def create_table(dataset_id, table_id="country_data", project=None):
+from google.cloud import bigquery
+
+def create_table(dataset_id="pecten_dataset_dev", table_id="ranga_testing", project="igenie-project"):
     """Creates a simple table in the given dataset.
 
     If no project is specified, then the currently active project is used.
@@ -26,3 +28,6 @@ def create_table(dataset_id, table_id="country_data", project=None):
     table = bigquery_client.create_table(table)
 
     print('Created table {} in dataset {}.'.format(table_id, dataset_id))
+
+if __name__ == '__main__':
+    create_table()
