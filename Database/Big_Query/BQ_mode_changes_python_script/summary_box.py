@@ -10,9 +10,8 @@ def create_table(dataset_id, table_id, project):
 
     table_ref = dataset_ref.table(table_id)
     table = bigquery.Table(table_ref)
-
     # Set the table schema
-	table.schema = (
+    table.schema = (
 	bigquery.SchemaField('Constituent_id', 'STRING','REQUIRED'),
 	bigquery.SchemaField('Date_of_analysis', 'TIMESTAMP','NULLABLE'),
 	bigquery.SchemaField('News_sent_color', 'INTEGER','REQUIRED'),
@@ -24,7 +23,6 @@ def create_table(dataset_id, table_id, project):
 	bigquery.SchemaField('Profitability_color','INTEGER','REQUIRED'),
 	bigquery.SchemaField('Risk_color','INTEGER','REQUIRED')
     )
-
     table = bigquery_client.create_table(table)
 
     print('Created table {} in dataset {}.'.format(table_id, dataset_id))
