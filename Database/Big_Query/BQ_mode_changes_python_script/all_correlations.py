@@ -61,7 +61,7 @@ def copy_table(dataset_id, table_id, new_table_id, project):
 	job_config = bigquery.CopyJobConfig()
 	job_config.create_disposition = (bigquery.job.CreateDisposition.CREATE_IF_NEEDED)
 	copy_job = bigquery_client.copy_table(table_ref, destination_table_ref, job_config=job_config)
-    print('Waiting for job to finish...')
+	print('Waiting for job to finish...')
 	copy_job.result()
 	print('Table {} copied to {}.'.format(table_id, new_table_id))
 	
