@@ -38,7 +38,7 @@ def create_table(dataset_id, table_id, project):
 	
 def load_data_from_gcs(dataset_id, table_id, source):
 	bigquery_client = bigquery.Client()
-    dataset_ref = bigquery_client.dataset(dataset_id)
+	dataset_ref = bigquery_client.dataset(dataset_id)
 	table_ref = dataset_ref.table(table_id)
 	job_config = bigquery.LoadJobConfig()
 	job_config.source_format = 'NEWLINE_DELIMITED_JSON'
