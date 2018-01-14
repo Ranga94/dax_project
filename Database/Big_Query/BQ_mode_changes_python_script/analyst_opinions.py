@@ -70,8 +70,8 @@ def copy_table(dataset_id, table_id, new_table_id, project):
 		
 		
 if __name__ == '__main__':
-	create_table("pecten_dataset_dev","analyst_opinions_copy","igenie-project")
-	load_data_from_gcs("pecten_dataset_dev","analyst_opinions_copy","gs://pecten_dataset_dev/analyst_opinions.json")
-	drop_table("pecten_dataset_dev","analyst_opinions")
-	copy_table("pecten_dataset_dev","analyst_opinions_copy","analyst_opinions","igenie-project")
-	drop_table("pecten_dataset_dev","analyst_opinions_copy")
+	create_table("pecten_dataset_test","analyst_opinions_copy","igenie-project")
+	load_data_from_gcs("pecten_dataset_test","analyst_opinions_copy","gs://pecten_dataset_test/analyst_opinions.json")
+	drop_table("pecten_dataset_test","analyst_opinions")
+	copy_table("pecten_dataset_test","analyst_opinions_copy","analyst_opinions","igenie-project")
+	drop_table("pecten_dataset_test","analyst_opinions_copy")

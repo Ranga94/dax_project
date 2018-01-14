@@ -62,8 +62,8 @@ def copy_table(dataset_id, table_id, new_table_id, project):
 	print('Table {} copied to {}.'.format(table_id, new_table_id))
 
 if __name__ == '__main__':
-	create_table("pecten_dataset_dev","influencer_prices_copy","igenie-project")
-	load_data_from_gcs("pecten_dataset_dev","influencer_prices_copy","gs://pecten_dataset_dev/influencer_prices.json")
-	drop_table("pecten_dataset_dev","influencer_prices")
-	copy_table("pecten_dataset_dev","influencer_prices_copy","influencer_prices","igenie-project")
-	drop_table("pecten_dataset_dev","influencer_prices_copy")
+	create_table("pecten_dataset_test","influencer_prices_copy","igenie-project")
+	load_data_from_gcs("pecten_dataset_test","influencer_prices_copy","gs://pecten_dataset_test/influencer_prices.json")
+	drop_table("pecten_dataset_test","influencer_prices")
+	copy_table("pecten_dataset_test","influencer_prices_copy","influencer_prices","igenie-project")
+	drop_table("pecten_dataset_test","influencer_prices_copy")

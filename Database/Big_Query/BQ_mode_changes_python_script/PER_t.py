@@ -66,8 +66,8 @@ def copy_table(dataset_id, table_id, new_table_id, project):
 	
 
 if __name__ == '__main__':
-	create_table("pecten_dataset_dev","PER_t_copy","igenie-project")
-	load_data_from_gcs("pecten_dataset_dev","PER_t_copy","gs://pecten_dataset_dev/PER_t.json")
-	drop_table("pecten_dataset_dev","PER_t")
-	copy_table("pecten_dataset_dev","PER_t_copy","PER_t","igenie-project")
-	drop_table("pecten_dataset_dev","PER_t_copy")
+	create_table("pecten_dataset_test","PER_t_copy","igenie-project")
+	load_data_from_gcs("pecten_dataset_test","PER_t_copy","gs://pecten_dataset_test/PER_t.json")
+	drop_table("pecten_dataset_test","PER_t")
+	copy_table("pecten_dataset_test","PER_t_copy","PER_t","igenie-project")
+	drop_table("pecten_dataset_test","PER_t_copy")

@@ -68,8 +68,8 @@ def copy_table(dataset_id, table_id, new_table_id, project):
 	
 
 if __name__ == '__main__':
-	create_table("pecten_dataset_dev","EPS_t_copy","igenie-project")
-	load_data_from_gcs("pecten_dataset_dev","EPS_t_copy","gs://pecten_dataset_dev/EPS_t.json")
-	drop_table("pecten_dataset_dev","EPS_t")
-	copy_table("pecten_dataset_dev","EPS_t_copy","EPS_t","igenie-project")
-	drop_table("pecten_dataset_dev","EPS_t_copy")
+	create_table("pecten_dataset_test","EPS_t_copy","igenie-project")
+	load_data_from_gcs("pecten_dataset_test","EPS_t_copy","gs://pecten_dataset_test/EPS_t.json")
+	drop_table("pecten_dataset_test","EPS_t")
+	copy_table("pecten_dataset_test","EPS_t_copy","EPS_t","igenie-project")
+	drop_table("pecten_dataset_test","EPS_t_copy")
