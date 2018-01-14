@@ -28,9 +28,9 @@ def create_table(dataset_id, table_id, project):
 	bigquery.SchemaField('NEWS_ARTICLE_TXT_NewsDim','STRING','REQUIRED'),
     )
 
-    table = bigquery_client.create_table(table)
+	table = bigquery_client.create_table(table)
 
-    print('Created table {} in dataset {}.'.format(table_id, dataset_id))
+	print('Created table {} in dataset {}.'.format(table_id, dataset_id))
 
 def load_data_from_gcs(dataset_id, table_id, source):
 	bigquery_client = bigquery.Client()
@@ -61,7 +61,7 @@ def copy_table(dataset_id, table_id, new_table_id, project):
 	job_config = bigquery.CopyJobConfig()
 	job_config.create_disposition = (bigquery.job.CreateDisposition.CREATE_IF_NEEDED)
 	copy_job = bigquery_client.copy_table(table_ref, destination_table_ref, job_config=job_config)
-    print('Waiting for job to finish...')
+	print('Waiting for job to finish...')
 	copy_job.result()
 	print('Table {} copied to {}.'.format(table_id, new_table_id))
 
