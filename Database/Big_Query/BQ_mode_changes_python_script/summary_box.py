@@ -25,8 +25,9 @@ def create_table(dataset_id, table_id, project):
 	bigquery.SchemaField('Risk_color','INTEGER','REQUIRED')
     )
 
-	table = bigquery_client.create_table(table)
-	print('Created table {} in dataset {}.'.format(table_id, dataset_id))
+    table = bigquery_client.create_table(table)
+
+    print('Created table {} in dataset {}.'.format(table_id, dataset_id))
 
 def load_data_from_gcs(dataset_id, table_id, source):
 	bigquery_client = bigquery.Client()
