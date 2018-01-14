@@ -35,8 +35,9 @@ def load_data_from_gcs(dataset_id, table_id, source):
 	table_ref = dataset_ref.table(table_id)
 	job_config = bigquery.LoadJobConfig()
 	job_config.source_format = 'NEWLINE_DELIMITED_JSON'
+	job_config.maxBadRecords=10
 	job = bigquery_client.load_table_from_uri(source, table_ref,job_config=job_config)
-	#job_config.load.maxBadRecords=some number
+	
 	job.result()  # Waits for job to complete
 		
 	print('Loaded {} rows into {}:{}.'.format(job.output_rows, dataset_id, table_id))
