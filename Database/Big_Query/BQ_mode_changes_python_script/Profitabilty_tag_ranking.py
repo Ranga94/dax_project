@@ -18,7 +18,7 @@ def create_table(dataset_id, table_id, project):
 	bigquery.SchemaField('Constituent_name','STRING','REQUIRED'),
 	bigquery.SchemaField('Fundamental_growth','STRING','REQUIRED'),
 	bigquery.SchemaField('Price_growth','STRING','REQUIRED'),
-	bigquery.SchemaField('Profitabilty_rank','INTEGER','REQUIRED'),
+	bigquery.SchemaField('Profitability_rank','INTEGER','REQUIRED'),
 	bigquery.SchemaField('Status','STRING','NULLABLE'),
 	bigquery.SchemaField('From_date','STRING','REQUIRED'),
 	bigquery.SchemaField('To_date','STRING','REQUIRED'),
