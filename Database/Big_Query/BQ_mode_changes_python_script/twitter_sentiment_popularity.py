@@ -59,7 +59,7 @@ def copy_table(dataset_id, table_id, new_table_id, project):
 
 if __name__ == '__main__':
 	create_table("pecten_dataset_dev","twitter_sentiment_popularity_copy","igenie-project")
-	load_data_from_gcs("pecten_dataset_dev","twitter_sentiment_popularity_copy","gs://pecten_dataset_dev/influencer_prices.json")
+	load_data_from_gcs("pecten_dataset_dev","twitter_sentiment_popularity_copy","gs://pecten_dataset_dev/twitter_sentiment_popularity.json")
 	drop_table("pecten_dataset_dev","twitter_sentiment_popularity")
 	copy_table("pecten_dataset_dev","twitter_sentiment_popularity_copy","twitter_sentiment_popularity","igenie-project")
 	drop_table("pecten_dataset_dev","twitter_sentiment_popularity_copy")
