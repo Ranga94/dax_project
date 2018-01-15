@@ -40,7 +40,7 @@ def create_table(dataset_id, table_id, project):
 	bigquery.SchemaField('NORP','STRING','REPEATED'),
 	bigquery.SchemaField('LANGUAGE','STRING','REPEATED'),
 	bigquery.SchemaField('MONEY','STRING','REPEATED'),
-	bigquery.SchemaField('LAW','STRING','REPEATED')]
+	bigquery.SchemaField('LAW','STRING','REPEATED')])
 	bigquery.SchemaField('constituent_name','STRING','REQUIRED'),
 	bigquery.SchemaField('count','INTEGER','NULLABLE'),
 	bigquery.SchemaField('url','STRING','NULLABLE'),
