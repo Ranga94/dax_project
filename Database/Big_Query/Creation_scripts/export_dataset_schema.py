@@ -12,6 +12,7 @@ def export_schema(args):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
+	parser.add_argument('python_path', help='The connection string')
     parser.add_argument('source_dataset')
     args = parser.parse_args()
     sys.path.insert(0, args.python_path)
