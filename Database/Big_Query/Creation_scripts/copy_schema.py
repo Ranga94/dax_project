@@ -3,7 +3,7 @@ import sys
 import os
 
 def copy_missing_objects(args):
-	print("test")
+    print("test")
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.google_key_path
     client = bigquery.Client()
     source_dataset_ref = client.dataset(args.source_dataset)
