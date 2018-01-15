@@ -1,4 +1,5 @@
 from google.cloud import bigquery
+import sys
 
 def create_table(dataset_id, table_id, project):
     """Creates a simple table in the given dataset.
