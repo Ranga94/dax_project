@@ -21,6 +21,17 @@ def create_table(dataset_id, table_id, project):
 	bigquery.SchemaField('NEWS_ARTICLE_TXT_NewsDim','STRING','REQUIRED'),
 	bigquery.SchemaField('sentiment','STRING','REQUIRED'),
 	bigquery.SchemaField('NEWS_TITLE_NewsDim','STRING','REQUIRED'),
+	bigquery.SchemaField('constituent_name','STRING','REQUIRED'),
+	bigquery.SchemaField('count','INTEGER','NULLABLE'),
+	bigquery.SchemaField('url','STRING','NULLABLE'),
+	bigquery.SchemaField('news_language','STRING','NULLABLE'),
+	bigquery.SchemaField('news_id','INTEGER','NULLABLE'),
+	bigquery.SchemaField('news_country','STRING','NULLABLE'),
+	bigquery.SchemaField('news_companies','STRING','NULLABLE'),
+	bigquery.SchemaField('news_region','STRING','NULLABLE'),
+	bigquery.SchemaField('constituent','STRING','REQUIRED'),
+	bigquery.SchemaField('To_date','TIMESTAMP','REQUIRED'),
+	bigquery.SchemaField('From_date','TIMESTAMP','REQUIRED'),
 	bigquery.SchemaField('entity_tags','RECORD','NULLABLE',fields=[
 	bigquery.SchemaField('FACILITY','STRING','REPEATED'),
 	bigquery.SchemaField('QUANTITY','STRING','REPEATED'),
@@ -41,17 +52,6 @@ def create_table(dataset_id, table_id, project):
 	bigquery.SchemaField('LANGUAGE','STRING','REPEATED'),
 	bigquery.SchemaField('MONEY','STRING','REPEATED'),
 	bigquery.SchemaField('LAW','STRING','REPEATED')])
-	bigquery.SchemaField('constituent_name','STRING','REQUIRED'),
-	bigquery.SchemaField('count','INTEGER','NULLABLE'),
-	bigquery.SchemaField('url','STRING','NULLABLE'),
-	bigquery.SchemaField('news_language','STRING','NULLABLE'),
-	bigquery.SchemaField('news_id','INTEGER','NULLABLE'),
-	bigquery.SchemaField('news_country','STRING','NULLABLE'),
-	bigquery.SchemaField('news_companies','STRING','NULLABLE'),
-	bigquery.SchemaField('news_region','STRING','NULLABLE'),
-	bigquery.SchemaField('constituent','STRING','REQUIRED'),
-	bigquery.SchemaField('To_date','TIMESTAMP','REQUIRED'),
-	bigquery.SchemaField('From_date','TIMESTAMP','REQUIRED'),
     )
 
 	table = bigquery_client.create_table(table)
