@@ -12,12 +12,12 @@ def copy_missing_objects(args):
 
     destination_dataset_ref = client.dataset(args.destination_dataset)
     destination_dataset = client.get_dataset(destination_dataset_ref)
-
+    print(tables)
     for table in tables:
         source_table_ref = source_dataset.table(table.table_id)
         destination_table_ref = destination_dataset.table(table.table_id)
     if not table_exists(client, destination_table_ref):
-        print("Creating table {} in {}".format(table.table_id, args.destination_dataset))
+	    print("Creating table {} in {}".format(table.table_id, args.destination_dataset))
         #Get schema of source table
         source_table = client.get_table(source_table_ref)
         schema = source_table.schema
