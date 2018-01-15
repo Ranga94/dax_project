@@ -54,9 +54,10 @@ def create_table(dataset_id, table_id, project):
 	bigquery.SchemaField('LAW','STRING','REPEATED')])
     )
 
-	table = bigquery_client.create_table(table)
+    table = bigquery_client.create_table(table)
 
-	print('Created table {} in dataset {}.'.format(table_id, dataset_id))
+    print('Created table {} in dataset {}.'.format(table_id, dataset_id))
+	
 	
 def load_data_from_gcs(dataset_id, table_id, source):
 	bigquery_client = bigquery.Client()
