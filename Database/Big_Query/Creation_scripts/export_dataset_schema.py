@@ -3,7 +3,6 @@ import sys
 import os
 
 def export_schema(args):
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.google_key_path
     client = bigquery.Client()
     source_dataset_ref = client.dataset(args.source_dataset)
     source_dataset = client.get_dataset(source_dataset_ref)
