@@ -18,14 +18,15 @@ def create_table(dataset_id, table_id, project):
         bigquery.SchemaField('from_date','TIMESTAMP','REQUIRED'),
 		bigquery.SchemaField('date','TIMESTAMP','NULLABLE'),
 		bigquery.SchemaField('text','STRING','REQUIRED'),
-		bigquery.SchemaField('entity_tags','RECORD','NULLABLE'),
-		bigquery.SchemaField('entity_tags.MONEY','STRING','REPEATED'),
+
 		bigquery.SchemaField('sentiment_score','FLOAT','REQUIRED'),
 		bigquery.SchemaField('constituent','STRING','REQUIRED'),
 		bigquery.SchemaField('constituent_id','STRING','REQUIRED'),
 		bigquery.SchemaField('to_date','TIMESTAMP','REQUIRED'),
 		bigquery.SchemaField('followers','INTEGER','NULLABLE'),
 		bigquery.SchemaField('location','STRING','NULLABLE'),
+		bigquery.SchemaField('entity_tags','RECORD','NULLABLE',fields =[
+		bigquery.SchemaField('MONEY','STRING','REPEATED')])
     )
 
     table = bigquery_client.create_table(table)
