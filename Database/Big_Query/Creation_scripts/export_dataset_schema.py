@@ -7,7 +7,7 @@ def export_schema(args):
     source_dataset_ref = client.dataset(args.source_dataset)
     source_dataset = client.get_dataset(source_dataset_ref)
     return list(client.list_dataset_tables(source_dataset))
-
+#
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
