@@ -22,8 +22,8 @@ def create_table(dataset_id, table_id, project):
 	bigquery.SchemaField('open','FLOAT','NULLABLE'),
 	bigquery.SchemaField('high','FLOAT','NULLABLE'),
 	bigquery.SchemaField('low','FLOAT','NULLABLE'),
-	bigquery.SchemaField('close','FLOAT','NULLABLE')
-	bigquery.SchemaField('volume','FLOAT','NULLABLE')
+	bigquery.SchemaField('close','FLOAT','NULLABLE'),
+	bigquery.SchemaField('volume','FLOAT','NULLABLE'),
 		
     )
 
