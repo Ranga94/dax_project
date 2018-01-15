@@ -3,6 +3,7 @@ import sys
 import os
 
 def copy_missing_objects(args):
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.google_key_path
     client = bigquery.Client()
     source_dataset_ref = client.dataset(args.source_dataset)
     source_dataset = client.get_dataset(source_dataset_ref)
@@ -45,9 +46,10 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('python_path', help='The connection string')
+    parser.add_argument('google_key_path', help='The connection string')
     parser.add_argument('source_dataset')
     parser.add_argument('destination_dataset')
     args = parser.parse_args()
     sys.path.insert(0, args.python_path)
-    from Database.BigQuery.export_dataset_schema import export_schema
+    from .export_dataset_schema import export_schema
     copy_missing_objects(args)
