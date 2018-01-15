@@ -94,7 +94,7 @@ def copy_table(dataset_id, table_id, new_table_id, project):
 	
 
 if __name__ == '__main__':
-	create_table("pecten_dataset_dev","news_all_copy","igenie-project")
+	create_table("pecten_dataset_dev","news_all_copy1","igenie-project")
 	#load_data_from_gcs("pecten_dataset_dev","news_all_copy","gs://pecten_dataset_dev/news_all.json")
 	#drop_table("pecten_dataset_dev","news_all")
 	#copy_table("pecten_dataset_dev","news_all_copy","news_all","igenie-project")
