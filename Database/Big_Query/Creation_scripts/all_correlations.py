@@ -34,5 +34,5 @@ def create_table(dataset_id, table_id, project):
     print('Created table {} in dataset {}.'.format(table_id, dataset_id))
 
 if __name__ == '__main__':
-	create_table(sys.argv[1],sys.argv[2],,"igenie-project")
+	create_table(sys.argv[1],sys.argv[2],"igenie-project")
 	
