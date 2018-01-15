@@ -52,5 +52,5 @@ if __name__ == "__main__":
     parser.add_argument('destination_dataset')
     args = parser.parse_args()
     sys.path.insert(0, args.python_path)
-    from Database.Big_Query.Creations_scripts.export_dataset_schema import export_schema
+    from Database.Big_Query.Creation_scripts.export_dataset_schema import export_schema
     copy_missing_objects(args)
