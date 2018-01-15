@@ -21,26 +21,26 @@ def create_table(dataset_id, table_id, project):
 	bigquery.SchemaField('NEWS_ARTICLE_TXT_NewsDim','STRING','REQUIRED'),
 	bigquery.SchemaField('sentiment','STRING','REQUIRED'),
 	bigquery.SchemaField('NEWS_TITLE_NewsDim','STRING','REQUIRED'),
-	bigquery.SchemaField('entity_tags','RECORD','NULLABLE')
-	bigquery.SchemaField('entity_tags.FACILITY','STRING','REPEATED'),
-	bigquery.SchemaField('entity_tags.QUANTITY','STRING','REPEATED'),
-	bigquery.SchemaField('entity_tags.EVENT','STRING','REPEATED'),
-	bigquery.SchemaField('entity_tags.PERSON','STRING','REPEATED'),
-	bigquery.SchemaField('entity_tags.DATE','STRING','REPEATED'),
-	bigquery.SchemaField('entity_tags.TIME','STRING','REPEATED'),
-	bigquery.SchemaField('entity_tags.CARDINAL','STRING','REPEATED'),
-	bigquery.SchemaField('entity_tags.PRODUCT','STRING','REPEATED'),
-	bigquery.SchemaField('entity_tags.LOC','STRING','REPEATED'),
-	bigquery.SchemaField('entity_tags.WORK_OF_ART','STRING','REPEATED'),
-	bigquery.SchemaField('entity_tags.GPE','STRING','REPEATED'),
-	bigquery.SchemaField('entity_tags.PERCENT','STRING','REPEATED'),
-	bigquery.SchemaField('entity_tags.FAC','STRING','REPEATED'),
-	bigquery.SchemaField('entity_tags.ORDINAL','STRING','REPEATED'),
-	bigquery.SchemaField('entity_tags.ORG','STRING','REPEATED'),
-	bigquery.SchemaField('entity_tags.NORP','STRING','REPEATED'),
-	bigquery.SchemaField('entity_tags.LANGUAGE','STRING','REPEATED'),
-	bigquery.SchemaField('entity_tags.MONEY','STRING','REPEATED'),
-	bigquery.SchemaField('entity_tags.LAW','STRING','REPEATED'),
+	FACILITY = bigquery.SchemaField('FACILITY','STRING','REPEATED'),
+	QUANTITY = bigquery.SchemaField('QUANTITY','STRING','REPEATED'),
+	EVENT = bigquery.SchemaField('EVENT','STRING','REPEATED'),
+	PERSON = bigquery.SchemaField('PERSON','STRING','REPEATED'),
+	DATE = bigquery.SchemaField('DATE','STRING','REPEATED'),
+	TIME = bigquery.SchemaField('TIME','STRING','REPEATED'),
+	CARDINAL = bigquery.SchemaField('CARDINAL','STRING','REPEATED'),
+	PRODUCT = bigquery.SchemaField('PRODUCT','STRING','REPEATED'),
+	LOC = bigquery.SchemaField('LOC','STRING','REPEATED'),
+	WORK_OF_ART = bigquery.SchemaField('WORK_OF_ART','STRING','REPEATED'),
+	GPR = bigquery.SchemaField('GPE','STRING','REPEATED'),
+	PERCENT = bigquery.SchemaField('PERCENT','STRING','REPEATED'),
+	FAC = bigquery.SchemaField('FAC','STRING','REPEATED'),
+	ORDINAL = bigquery.SchemaField('ORDINAL','STRING','REPEATED'),
+	ORG = bigquery.SchemaField('ORG','STRING','REPEATED'),
+	NORP = bigquery.SchemaField('NORP','STRING','REPEATED'),
+	LANGUAGE = bigquery.SchemaField('LANGUAGE','STRING','REPEATED'),
+	MONEY = bigquery.SchemaField('MONEY','STRING','REPEATED'),
+	LAW = bigquery.SchemaField('LAW','STRING','REPEATED'),
+	bigquery.SchemaField('entity_tags','RECORD','NULLABLE',fields=[FACILITY,QUANTITY, EVENT, PERSON, DATE, TIME, CARDINAL, PRODUCT, LOC, WORK_OF_ART,GPR, PERCENT,FAC, ORDINAL,ORG,NORP, LANGUAGE,MONEY, LAW]),
 	bigquery.SchemaField('constituent_name','STRING','REQUIRED'),
 	bigquery.SchemaField('count','INTEGER','NULLABLE'),
 	bigquery.SchemaField('url','STRING','NULLABLE'),
@@ -93,8 +93,8 @@ def copy_table(dataset_id, table_id, new_table_id, project):
 	
 
 if __name__ == '__main__':
-	create_table("pecten_dataset_dev","news_all_copy","igenie-project")
-	load_data_from_gcs("pecten_dataset_dev","news_all_copy","gs://pecten_dataset_dev/news_all.json")
-	drop_table("pecten_dataset_dev","news_all")
-	copy_table("pecten_dataset_dev","news_all_copy","news_all","igenie-project")
-	drop_table("pecten_dataset_dev","news_all_copy")
+	create_table("pecten_dataset_dev","news_all_copy2","igenie-project")
+	#load_data_from_gcs("pecten_dataset_dev","news_all_copy","gs://pecten_dataset_dev/news_all.json")
+	#drop_table("pecten_dataset_dev","news_all")
+	#copy_table("pecten_dataset_dev","news_all_copy","news_all","igenie-project")
+	#drop_table("pecten_dataset_dev","news_all_copy")
