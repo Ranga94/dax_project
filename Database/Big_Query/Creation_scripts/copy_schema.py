@@ -3,6 +3,7 @@ import sys
 import os
 
 def copy_missing_objects(args):
+	print("test")
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = args.google_key_path
     client = bigquery.Client()
     source_dataset_ref = client.dataset(args.source_dataset)
@@ -23,6 +24,7 @@ def copy_missing_objects(args):
         #Create empty table on the other dataset
         destination_table = bigquery.Table(destination_table_ref, schema=schema)
         destination_table = client.create_table(destination_table)
+		print("Destination Data set is: {}".format(destination_table))
 
 def table_exists(client, table_reference):
     """Return if a table exists.
