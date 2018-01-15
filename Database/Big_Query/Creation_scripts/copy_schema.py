@@ -46,7 +46,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('google_key_path', help='The connection string')
-	parser.add_argument('python_path', help='The connection string')
+    parser.add_argument('python_path', help='The connection string')
     parser.add_argument('source_dataset')
     parser.add_argument('destination_dataset')
     args = parser.parse_args()
