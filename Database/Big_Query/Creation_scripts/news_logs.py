@@ -14,7 +14,7 @@ def news_log_read():
 	results = query_job.result()
 	msg = []
 	for row in results:
-		msg.append(i)
+		msg.append(row)
 		
 	print(msg)
 		
