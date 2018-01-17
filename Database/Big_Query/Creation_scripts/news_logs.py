@@ -1,5 +1,6 @@
 from google.cloud import bigquery
 import datetime as DT
+import sys
 
 
 def news_log_read():
@@ -11,7 +12,14 @@ def news_log_read():
 		
 	results = query_job.result()
 	for row in results:
-		print("{} news items were inserted for {}".format(row.number, row.constituent_name))
+		msg = ("{} news items were inserted for {}".format(row.number, row.constituent_name))
+		
+	server = smtplib.SMTP('smtp.gmail.com', 587)
+	server.starttls()
+	server.login("rangavittal2@gmail.com", sys.argv[1])
+	toaddrs = [sys.argv[2]]
+	server.sendmail("rangavittal2@gmail", toaddrs, msg)
+	server.quit()
 		
 if __name__ == '__main__':
 	news_log_read()
