@@ -22,6 +22,10 @@ def news_log_read():
 		
 	print(number)
 	print(constituent_name)
+	msg = []
+	for i, j in number, constituent_name:
+		msg = "{} news items were inserted for {} \n".format(i,j))
+	print(msg)
 	"""server = smtplib.SMTP('smtp.gmail.com', 587)
 	server.starttls()
 	server.login("rangavittal2@gmail.com", sys.argv[1])
