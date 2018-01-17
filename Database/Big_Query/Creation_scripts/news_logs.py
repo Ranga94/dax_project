@@ -18,9 +18,7 @@ def news_log_read():
 	#constituent_name = []
 	for row in results:
 		s += (row.number+" news items were inserted for "+row.constituent_name+"\n"
-	#	constituent_name.append(row.constituent_name)
-	#for i, j in zip(number, constituent_name):
-	#	msg = "{} news items were inserted for {} \n".format(i,j)
+	
 	print(s)
 	"""server = smtplib.SMTP('smtp.gmail.com', 587)
 	server.starttls()
