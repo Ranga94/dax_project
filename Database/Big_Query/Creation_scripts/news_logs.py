@@ -2,6 +2,8 @@ from google.cloud import bigquery
 import datetime as DT
 import sys
 import smtplib
+import pandas as pd
+
 
 
 def news_log_read():
@@ -13,11 +15,11 @@ def news_log_read():
 		
 	results = query_job.result()
 	print(results)
-	#msg = []
-	#for row in results:
-		#msg.append(row)
+	msg = pd.DataFrame()
+	for row in results:
+		msg.append(row)
 		
-	#print(msg)
+	print(msg)
 		
 	"""server = smtplib.SMTP('smtp.gmail.com', 587)
 	server.starttls()
