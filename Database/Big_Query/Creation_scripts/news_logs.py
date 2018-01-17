@@ -1,6 +1,7 @@
 from google.cloud import bigquery
 import datetime as DT
 import sys
+import smtplib
 
 
 def news_log_read():
