@@ -17,7 +17,7 @@ def news_log_read():
 	print(results)
 	msg = pd.DataFrame()
 	for row in results:
-		msg.append(row)
+		msg = msg.append(row)
 		
 	print(msg)
 		
