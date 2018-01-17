@@ -16,12 +16,14 @@ def news_log_read():
 	for row in results:
 		msg.append(i)
 		
-	server = smtplib.SMTP('smtp.gmail.com', 587)
+	print(msg)
+		
+	"""server = smtplib.SMTP('smtp.gmail.com', 587)
 	server.starttls()
 	server.login("rangavittal2@gmail.com", sys.argv[1])
 	toaddrs = [sys.argv[2]]
 	server.sendmail("rangavittal2@gmail", toaddrs, msg)
-	server.quit()
+	server.quit()"""
 		
 if __name__ == '__main__':
 	news_log_read()
