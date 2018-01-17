@@ -17,7 +17,7 @@ def news_log_read():
 	s = ""
 	#constituent_name = []
 	for row in results:
-		s +=  (row.number+" news items were inserted for "+row.constituent_name+"\n")
+		s = s+row.number+" news items were inserted for "+row.constituent_name+"\n"
 	print(s)	
 	
 	"""server = smtplib.SMTP('smtp.gmail.com', 587)
