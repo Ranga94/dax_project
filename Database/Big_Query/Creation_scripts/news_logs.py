@@ -17,7 +17,7 @@ def news_log_read():
 	s = ""
 	#constituent_name = []
 	for row in results:
-		s = s + row.constituent_name +": " row.number
+		s = s + row.constituent_name +": " + row.number
 		#s = s+str(row.number)+" news items were inserted for "+row.constituent_name+"\n"
 	message = message + "\n" + s	
 	
