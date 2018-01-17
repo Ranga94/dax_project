@@ -19,10 +19,6 @@ def news_log_read():
 	for row in results:
 		number.append(row.number)
 		constituent_name.append(row.constituent_name)
-		
-	print(number)
-	print(constituent_name)
-	msg = []
 	for i, j in number, constituent_name:
 		msg = "{} news items were inserted for {} \n".format(i,j)
 	print(msg)
