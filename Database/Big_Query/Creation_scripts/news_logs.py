@@ -1,5 +1,5 @@
 from google.cloud import bigquery
-import os 
+import datetime
 
 
 def news_log_read():
