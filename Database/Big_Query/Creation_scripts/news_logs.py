@@ -20,12 +20,12 @@ def news_log_read():
 		s = s+str(row.number)+" news items were inserted for "+row.constituent_name+"\n"
 	print(s)	
 	
-	"""server = smtplib.SMTP('smtp.gmail.com', 587)
+	server = smtplib.SMTP('smtp.gmail.com', 587)
 	server.starttls()
 	server.login("rangavittal2@gmail.com", sys.argv[1])
 	toaddrs = [sys.argv[2]]
 	server.sendmail("rangavittal2@gmail", toaddrs, s)
-	server.quit()"""
+	server.quit()
 		
 if __name__ == '__main__':
 	news_log_read()
