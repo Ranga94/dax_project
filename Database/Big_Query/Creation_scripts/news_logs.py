@@ -17,10 +17,11 @@ def news_log_read():
 	number = []
 	constituent_name = []
 	for row in results:
-		print(row.number)
-		print(row.constituent_name)
+		number.append(row.number)
+		constituent_name.append(row.constituent_name)
 		
-		
+	print(number)
+	print(constituent_name)
 	"""server = smtplib.SMTP('smtp.gmail.com', 587)
 	server.starttls()
 	server.login("rangavittal2@gmail.com", sys.argv[1])
