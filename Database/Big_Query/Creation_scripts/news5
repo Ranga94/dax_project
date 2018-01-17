@@ -1,0 +1,1 @@
+bq mk -t pecten_dataset_new.master_data constituent_name:STRING,constituent_id:STRING,date_of_collection:TIMESTAMP,Transparency_Level_on_First_Quotation:STRING,Market_segment:STRING,Trading_Model:STRING,Country:STRING,Branch:STRING,Share_Type:STRING,Sector:STRING,Subsector:STRING
