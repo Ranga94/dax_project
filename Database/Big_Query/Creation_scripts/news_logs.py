@@ -11,7 +11,7 @@ def news_log_read():
 		
 	results = query_job.result()
 	for row in results:
-		print("{} news items were inserted for {}".format(row.unique_words, row.constituent_name))
+		print("{} news items were inserted for {}".format(row.number, row.constituent_name))
 		
 if __name__ == '__main__':
 	news_log_read()
