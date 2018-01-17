@@ -7,7 +7,7 @@ def news_log_read():
 	week_ago = today - DT.timedelta(days=7)
 	print("News collection report for the date range between {} and {}:".format(week_ago, today))
 	client = bigquery.Client()
-	query_job = client.query("SELECT constituent_name, count(*) as unique_words FROM pecten_dataset_test.news_logs where date between TIMESTAMP'{}' and TIMESTAMP '{}' GROUP BY constituent_name".format(week_ago, today))
+	query_job = client.query("SELECT constituent_name, count(*) as number FROM pecten_dataset_test.news_logs where date between TIMESTAMP'{}' and TIMESTAMP '{}' GROUP BY constituent_name ORDER BY number".format(week_ago, today))
 		
 	results = query_job.result()
 	for row in results:
