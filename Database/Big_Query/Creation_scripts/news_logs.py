@@ -2,24 +2,23 @@ from google.cloud import bigquery
 import datetime as DT
 import sys
 import smtplib
-import pandas as pd
-
 
 
 def news_log_read():
 	today = DT.date.today()
 	week_ago = today - DT.timedelta(days=7)
-	message = ("News collection report for the date range between " + str(week_ago) + " and " +str(today)+":")
+	subject = ("News collection report for the date range between " + str(week_ago) + " and " +str(today)+":")
 	client = bigquery.Client()
 	query_job = client.query("SELECT constituent_name, count(*) as number FROM pecten_dataset_test.news_logs where date between TIMESTAMP'{}' and TIMESTAMP '{}' GROUP BY constituent_name ORDER BY number".format(week_ago, today))
 		
 	results = query_job.result()
-	s = ""
+	body = ""
 	#constituent_name = []
 	for row in results:
-		s = s + row.constituent_name +": " + str(row.number) + "\n"
+		body = body + row.constituent_name +": " + str(row.number) + "\n"
 		#s = s+str(row.number)+" news items were inserted for "+row.constituent_name+"\n"
-	message = message + "\n" + s	
+	#message = message + "\n" + s
+	message = 'Subject: {}\n\n{}'.format(subject, body)	
 	print(message)
 	server = smtplib.SMTP('smtp.gmail.com', 587)
 	server.starttls()
