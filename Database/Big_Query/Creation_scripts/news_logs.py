@@ -12,11 +12,12 @@ def news_log_read():
 	query_job = client.query("SELECT constituent_name, count(*) as number FROM pecten_dataset_test.news_logs where date between TIMESTAMP'{}' and TIMESTAMP '{}' GROUP BY constituent_name ORDER BY number".format(week_ago, today))
 		
 	results = query_job.result()
-	msg = []
-	for row in results:
+	print(results)
+	#msg = []
+	#for row in results:
 		msg.append(row)
 		
-	print(msg)
+	#print(msg)
 		
 	"""server = smtplib.SMTP('smtp.gmail.com', 587)
 	server.starttls()
