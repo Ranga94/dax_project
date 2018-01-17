@@ -15,7 +15,7 @@ def news_log_read():
 	print(results)
 	#msg = []
 	#for row in results:
-		msg.append(row)
+		#msg.append(row)
 		
 	#print(msg)
 		
