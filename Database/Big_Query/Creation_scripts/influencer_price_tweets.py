@@ -14,11 +14,19 @@ def create_table(dataset_id, table_id, project):
 
     # Set the table schema
     table.schema = (
-	bigquery.SchemaField('date','TIMESTAMP','NULLABLE'),
+	bigquery.SchemaField('tweet_date','TIMESTAMP','NULLABLE'),
 	bigquery.SchemaField('constituent_name','STRING','NULLABLE'),
+	bigquery.SchemaField('from_date','TIMESTAMP','NULLABLE'),
+	bigquery.SchemaField('date','TIMESTAMP','NULLABLE'),
+	bigquery.SchemaField('text','STRING','NULLABLE'),
+	bigquery.SchemaField('CCP_Eligible','FLOAT','NULLABLE'),
+	bigquery.SchemaField('sentiment_score','FLOAT','NULLABLE'),
+	bigquery.SchemaField('constituent','STRING','NULLABLE'),
 	bigquery.SchemaField('constituent_id','STRING','NULLABLE'),
-	bigquery.SchemaField('downloaded_ticks','TIMESTAMP','NULLABLE'),
-
+	bigquery.SchemaField('to_date','FLOAT','NULLABLE'),
+	bigquery.SchemaField('entity_tags','RECORD','NULLABLE',fields =[
+	bigquery.SchemaField('MONEY','STRING','NULLABLE')])
+		
     )
 
     table = bigquery_client.create_table(table)
