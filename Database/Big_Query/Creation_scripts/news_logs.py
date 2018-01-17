@@ -15,13 +15,13 @@ def news_log_read():
 		
 	results = query_job.result()
 	number = []
-	constituent_name = []
+	#constituent_name = []
 	for row in results:
-		number.append(row.number)
-		constituent_name.append(row.constituent_name)
-	for i, j in zip(number, constituent_name):
-		msg = "{} news items were inserted for {} \n".format(i,j)
-	print(msg)
+		number.append("{} news items were inserted for {}".format(row.number,row.constituent_name))
+	#	constituent_name.append(row.constituent_name)
+	#for i, j in zip(number, constituent_name):
+	#	msg = "{} news items were inserted for {} \n".format(i,j)
+	print(number)
 	"""server = smtplib.SMTP('smtp.gmail.com', 587)
 	server.starttls()
 	server.login("rangavittal2@gmail.com", sys.argv[1])
