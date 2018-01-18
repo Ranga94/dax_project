@@ -9,7 +9,7 @@ def news_log_read():
 	week_ago = today - DT.timedelta(days=7)
 	subject = ("News collection report for the date range between " + str(week_ago) + " and " +str(today)+":")
 	client = bigquery.Client()
-	query_job = client.query("SELECT constituent_name, count(*) as number FROM pecten_dataset_test.news_logs where date between TIMESTAMP'{}' and TIMESTAMP '{}' GROUP BY constituent_name ORDER BY number".format(week_ago, today))
+	query_job = client.query("SELECT constituent_name, sum(downloaded_news) as number FROM `igenie-project.pecten_dataset_new.news_logs` where date = TIMESTAMP '{}' and TIMESTAMP'{}' GROUP BY constituent_name ORDER BY number".format(week_ago, today))
 		
 	results = query_job.result()
 	body = ""
