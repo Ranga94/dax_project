@@ -7,7 +7,7 @@ import smtplib
 def ticker_log():
 	today = DT.date.today()
 	week_ago = today - DT.timedelta(days=7)
-	subject = ("News collection report for the date range between " + str(week_ago) + " and " +str(today)+":")
+	subject = ("Ticker collection report for the date range between " + str(week_ago) + " and " +str(today)+":")
 	client = bigquery.Client()
 	query_job = client.query("SELECT constituent_name, sum(downloaded_ticks) as number FROM `igenie-project.pecten_dataset_new.ticker_logs` where date BETWEEN TIMESTAMP '{}' and TIMESTAMP'{}' GROUP BY constituent_name ORDER BY number".format(week_ago, today))
 		
@@ -28,4 +28,4 @@ def ticker_log():
 	server.quit()
 		
 if __name__ == '__main__':
-	ticker_log
+	ticker_log()
