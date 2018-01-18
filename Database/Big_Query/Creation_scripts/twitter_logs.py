@@ -20,3 +20,5 @@ def twitter_logs():
 	message = 'Subject: {}\n\n{}'.format(subject, body)	
 	print(message)	
 	
+if __name__ == '__main__':
+	twitter_logs()
