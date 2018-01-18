@@ -19,6 +19,12 @@ def twitter_logs():
 	#message = message + "\n" + s
 	message = 'Subject: {}\n\n{}'.format(subject, body)	
 	print(message)	
+	server = smtplib.SMTP('smtp.gmail.com', 587)
+	server.starttls()
+	server.login("rangavittal2@gmail.com", sys.argv[1])
+	toaddrs = [sys.argv[2]]
+	server.sendmail("rangavittal2@gmail", toaddrs, message)
+	server.quit()
 	
 if __name__ == '__main__':
 	twitter_logs()
