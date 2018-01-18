@@ -22,9 +22,9 @@ def news_log_read():
 	print(message)
 	server = smtplib.SMTP('smtp.gmail.com', 587)
 	server.starttls()
-	server.login("rangavittal2@gmail.com", sys.argv[1])
-	toaddrs = [sys.argv[2]]
-	server.sendmail("rangavittal2@gmail", toaddrs, message)
+	server.login(sys.argv[1], sys.argv[2])
+	toaddrs = [sys.argv[3]]
+	server.sendmail(sys.argv[1], toaddrs, message)
 	server.quit()
 		
 if __name__ == '__main__':
