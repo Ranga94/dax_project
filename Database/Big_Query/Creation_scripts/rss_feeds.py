@@ -14,7 +14,7 @@ def rss_feeds():
 	body = ""
 	#constituent_name = []
 	for row in results:
-		body = body + row.constituent_name +": " + str(row.number) + "\n"
+		body = body + row.constituent +": " + str(row.number) + "\n"
 		#s = s+str(row.number)+" news items were inserted for "+row.constituent_name+"\n"
 	#message = message + "\n" + s
 	message = 'Subject: {}\n\n{}'.format(subject, body)	
