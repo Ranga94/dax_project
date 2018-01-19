@@ -6,7 +6,7 @@ import smtplib
 def rss_feeds():
 	today = DT.date.today()
 	week_ago = today - DT.timedelta(days=7)
-	subject = ("RSS feeds data collection report for the date range between " + str(week_ago) + "and" + str(today) + ":")
+	subject = ("RSS feeds data collection report for the date range between " + str(week_ago) + " and " + str(today) + ":")
 	client = bigquery.Client()
 	query_job = client.query("SELECT constituent, count(*) as number FROM `igenie-project.pecten_dataset_test.all_news` where news_origin = "Yahoo Finance RSS" and news_date BETWEEN TIMESTAMP '{}' and TIMESTAMP'{}' GROUP BY constituent ORDER BY number".format(week_ago, today))
 	

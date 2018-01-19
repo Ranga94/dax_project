@@ -6,7 +6,7 @@ import smtplib
 def stocktwits():
 	today = DT.date.today()
 	week_ago = today - DT.timedelta(days=7)
-	subject = ("Stocktwits collection report for the date range between " + str(week_ago) + "and" + str(today) + ":")
+	subject = ("Stocktwits collection report for the date range between " + str(week_ago) + " and " + str(today) + ":")
 	client = bigquery.Client()
 	query_job = client.query("SELECT constituent_name, count(*) as number FROM `igenie-project.pecten_dataset_test.tweets` where source = 'StockTwits' and date BETWEEN TIMESTAMP '{}' and TIMESTAMP'{}' GROUP BY constituent_name ORDER BY number".format(week_ago, today))
 	
