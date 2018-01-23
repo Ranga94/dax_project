@@ -63,13 +63,6 @@ def log_table():
 								'rss':rss})
 	collect2 = pd.merge(collect1,rss_df,on='Constituent_name',how='left')
 	print(collect2)
-	date = []
-	for i in collect2:
-		date.append(day_before)
-		
-	date_df = pd.DataFrame({'Date':date})
-	collect3 = pd.merge(date_df, collect2, how = 'outer')
-	print(collect3)
 	########################################Stocktwits Logs#####################
 	
 	
