@@ -29,7 +29,7 @@ def log_table():
 	for row in bloomberg_results:
 		constituent_name1.append(row.constituent_name)
 		bloomberg.append(row.bloomberg)
-	bloomberg_df = pd.DataFrame({'date':date,'Constituent_name':constituent_name1,
+	bloomberg_df = pd.DataFrame({'Constituent_name':constituent_name1,
 								'bloomberg':bloomberg})
 	print(date)
 	collect = pd.merge(tweets_df,bloomberg_df,on ='Constituent_name',how='left')
