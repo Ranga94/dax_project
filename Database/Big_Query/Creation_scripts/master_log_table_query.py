@@ -48,7 +48,7 @@ def log_table():
 								'orbis':orbis})
 	collect1 = pd.merge(collect,orbis_df,on='Constituent_name',how='left')
 	########################################rss_feeds######################
-	query_rss = client.query("""SELECT constituent_name, sum(downloaded_news) as orbis FROM `igenie-project.pecten_dataset_test.news_logs` 
+	query_rss = client.query("""SELECT constituent_name, sum(downloaded_news) as rss FROM `igenie-project.pecten_dataset_test.news_logs` 
 	where date = TIMESTAMP('{}') and source = 'Yahoo Finance RSS'
 	GROUP BY constituent_name""".format(day_before))
 	rss_results = query_rss.result()
