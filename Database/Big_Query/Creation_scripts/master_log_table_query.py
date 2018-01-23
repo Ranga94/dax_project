@@ -47,7 +47,7 @@ def log_table():
 	orbis_df = pd.DataFrame({'Constituent_name':constituent_name2,
 								'orbis':orbis})
 	collect1 = pd.merge(collect,orbis_df,on='Constituent_name',how='left')
-	print(collect)
+	print(collect1)
 if __name__ == '__main__':
 	log_table()
 	
