@@ -19,6 +19,7 @@ def log_table():
 	collect = pd.DataFrame({'Constituent_name':[constituent_name],
 							'tweets':[tweets]})
 	print(collect)
+	print(type(collect))
 	
 if __name__ == '__main__':
 	log_table()
