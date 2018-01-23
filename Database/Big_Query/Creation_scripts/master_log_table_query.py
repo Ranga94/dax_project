@@ -30,7 +30,9 @@ def log_table():
 		bloomberg.append(row.bloomberg)
 	collect1 = pd.DataFrame({'Constituent_name':[constituent_name1],
 								'bloomberg':[bloomberg]})
-	print(collect1)
+	
+	collect2 = pd.merge(collect,collect1, on = 'constiuent_name')
+	print(collect2)
 	
 if __name__ == '__main__':
 	log_table()
