@@ -20,18 +20,20 @@ def log_table():
 	tweets_df = pd.DataFrame({'Constituent_name':constituent_name,
 							'tweets':tweets})
 	######################################Bloomberg log query################################
-	query_bloomberg = client.query("""SELECT constituent_name, sum(downloaded_news) as bloomberg FROM `igenie-project.pecten_dataset_test.news_logs` 
+	query_bloomberg = client.query("""SELECT constituent_name, sum(downloaded_news), date as bloomberg FROM `igenie-project.pecten_dataset_test.news_logs` 
 	where date = TIMESTAMP('{}') and source = 'Bloomberg'
 	GROUP BY constituent_name""".format(day_before))
 	bloomberg_results = query_bloomberg.result()
 	constituent_name1 = []
+	date = []
 	bloomberg = []
 	for row in bloomberg_results:
 		constituent_name1.append(row.constituent_name)
 		bloomberg.append(row.bloomberg)
+		date.append(row.date)
 	bloomberg_df = pd.DataFrame({'Constituent_name':constituent_name1,
 								'bloomberg':bloomberg})
-	
+	print(date)
 	collect = pd.merge(tweets_df,bloomberg_df,on ='Constituent_name',how='left')
 	#print(collect2)
 	##########################################Orbis Log Query################################
@@ -48,7 +50,7 @@ def log_table():
 								'orbis':orbis})
 	collect1 = pd.merge(collect,orbis_df,on='Constituent_name',how='left')
 	########################################rss_feeds######################
-	query_rss = client.query("""SELECT constituent_name, sum(downloaded_news) as rss FROM `igenie-project.pecten_dataset_test.news_logs` 
+	query_rss = client.query("""SELECT date, constituent_name, sum(downloaded_news) as rss FROM `igenie-project.pecten_dataset_test.news_logs` 
 	where date = TIMESTAMP('{}') and source = 'Yahoo Finance RSS'
 	GROUP BY constituent_name""".format(day_before))
 	rss_results = query_rss.result()
@@ -62,10 +64,7 @@ def log_table():
 	collect2 = pd.merge(collect1,rss_df,on='Constituent_name',how='left')
 	print(collect2)
 	########################################Stocktwits Logs#####################
-	date = []
-	for i in collect2:
-		date.append(day_before)
-	print(date)
+	
 	
 if __name__ == '__main__':
 	log_table()
