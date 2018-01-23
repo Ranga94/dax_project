@@ -71,12 +71,14 @@ def log_table():
 	for row in stocktwits_results:
 		constituent_name4.append(row.constituent_name)
 		stocktwits.append(row.stocktwits)
-	#rss_df = pd.DataFrame({'Constituent_name':constituent_name3,
-				#				'rss':rss})
+	stocktwits_df = pd.DataFrame({'Constituent_name':constituent_name4,
+				#				'stocktwits':stocktwits})
+	total_rows = stocktwits_df.count
+	print(total_rows)
 	#collect2 = pd.merge(collect1,rss_df,on='Constituent_name',how='left')
 	#print(collect2)
-	print(stocktwits)
-	print(constituent_name4)
+	#print(stocktwits)
+	#print(constituent_name4)
 	########################################Ticker log Query ###############################
 	
 if __name__ == '__main__':
