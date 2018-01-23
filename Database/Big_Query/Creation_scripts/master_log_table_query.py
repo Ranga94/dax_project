@@ -10,16 +10,15 @@ def log_table():
 	FROM `igenie-project.pecten_dataset_test.tweet_logs`
 	where date = timestamp('{}')
 	GROUP BY constituent_name""".format(day_before))
-	results = query_twitter.result()
+	tweet_results = query_twitter.result()
 	constituent_name = []
 	tweets = []
-	for row in results:
+	for row in tweet_results:
 		constituent_name.append(row.constituent_name)
 		tweets.append(row.tweets)
 	collect = pd.DataFrame({'Constituent_name':[constituent_name],
 							'tweets':[tweets]})
 	print(collect)
-	print(type(collect))
 	
 if __name__ == '__main__':
 	log_table()
