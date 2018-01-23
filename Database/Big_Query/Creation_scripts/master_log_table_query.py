@@ -63,7 +63,7 @@ def log_table():
 	print(collect2)
 	########################################Stocktwits Logs#####################
 	date = []
-	for i in collect2
+	for i in collect2:
 		date.append(day_before)
 	print(date)
 	
