@@ -60,7 +60,7 @@ def log_table():
 	rss_df = pd.DataFrame({'Constituent_name':constituent_name3,
 								'rss':rss})
 	collect2 = pd.merge(collect1,rss_df,on='Constituent_name',how='left')
-	print(collect2)
+	#print(collect2)
 	########################################Stocktwits Logs#####################
 	query_stocktwits = client.query("""SELECT constituent_name, sum(downloaded_news) as stocktwits FROM `igenie-project.pecten_dataset_test.news_logs` 
 	where date = TIMESTAMP('{}') and source = 'Yahoo Finance RSS'
