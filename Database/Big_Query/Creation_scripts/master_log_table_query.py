@@ -31,7 +31,6 @@ def log_table():
 		bloomberg.append(row.bloomberg)
 	bloomberg_df = pd.DataFrame({'Constituent_name':constituent_name1,
 								'bloomberg':bloomberg})
-	print(date)
 	collect = pd.merge(tweets_df,bloomberg_df,on ='Constituent_name',how='left')
 	#print(collect2)
 	##########################################Orbis Log Query################################
