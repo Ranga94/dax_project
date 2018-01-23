@@ -55,16 +55,26 @@ def log_table():
 	GROUP BY constituent_name""".format(day_before))
 	rss_results = query_rss.result()
 	constituent_name3 = []
-	rss = []
+	rss_feeds = []
 	for row in rss_results:
 		constituent_name3.append(row.constituent_name)
-		rss.append(row.rss)
+		rss_feeds.append(row.rss)
 	rss_df = pd.DataFrame({'Constituent_name':constituent_name3,
 								'rss':rss})
 	collect2 = pd.merge(collect1,rss_df,on='Constituent_name',how='left')
 	print(collect2)
-	########################################Stocktwits Logs#####################
-	
+	dataset_ref = client.dataset("pecten_dataset_dev")
+	table_ref = dataset_ref.table("master_log_table")
+	table = client.get_table(table_ref)
+	rows = [collect2]
+	errors = bigquery_client.create_rows(table, rows)
+	if not errors:
+        print('Loaded 1 row into {}:{}'.format(dataset_id, table_id))
+	else:
+		print("Errors")
+	#for i in date, constituen
+	#insert_query = client.create_rows("INSERT INTO `igenie-project.pecten_dataset_test.master_log_table` (`Date`, `Constituent_name`, `tweets`, `bloomberg`, `orbis`, `rss_feeds`) VALUES ('', 'Adidas', '34', '45', '89', '90');
+
 	
 if __name__ == '__main__':
 	log_table()
