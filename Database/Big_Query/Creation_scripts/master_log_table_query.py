@@ -16,7 +16,7 @@ def log_table():
 	for row in results:
 		#constituent_name = row.constituent_name
 		#tweets = row.tweets
-		print(row.constituent_name:row.tweets)
+		print("{}:{}".format(row.constituent_name,row.tweets))
 	print(constituent_name)
 	print(tweets)
 	collect = pd.DataFrame({'Constituent_name':[constituent_name],
