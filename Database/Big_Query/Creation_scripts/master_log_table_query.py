@@ -61,19 +61,7 @@ def log_table():
 								'rss':rss})
 	collect2 = pd.merge(collect1,rss_df,on='Constituent_name',how='left')
 	########################################Ticker log Query ###############################
-	"""query_ticker = client.query("""SELECT constituent_name, sum(downloaded_ticks) as ticks  FROM `igenie-project.pecten_dataset_test.ticker_logs`
-	where date = TIMESTAMP('{}')
-	GROUP BY constituent_name""".format(day_before))
-	ticker_results = query_ticker.result()
-	constituent_name3 = []
-	ticker = []
-	for row in ticker_results:
-		constituent_name3.append(row.constituent_name)
-		ticker.append(row.ticks)
-	ticker_df = pd.DataFrame({'Constituent_name':constituent_name2,
-								'ticker':ticker})
-	collect2 = pd.merge(collect1, ticker_df, on = 'Constituent_name', how ='left')
-	print(collect2)"""
+	
 if __name__ == '__main__':
 	log_table()
 	
