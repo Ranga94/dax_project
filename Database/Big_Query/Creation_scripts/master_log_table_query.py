@@ -54,7 +54,7 @@ def log_table():
 	ticker_results = query_ticker.result()
 	constituent_name3 = []
 	ticker = []
-	for row in orbis_results:
+	for row in ticker_results:
 		constituent_name3.append(row.constituent_name)
 		ticker.append(row.ticks)
 	ticker_df = pd.DataFrame({'Constituent_name':constituent_name2,
