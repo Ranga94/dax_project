@@ -6,6 +6,7 @@ def log_table():
 	today = DT.date.today()
 	day_before = today - DT.timedelta(days=1)
 	client = bigquery.Client()
+	########################################Twitter logs Query################################
 	query_twitter = client.query("""SELECT constituent_name, sum(downloaded_tweets) as tweets
 	FROM `igenie-project.pecten_dataset_test.tweet_logs`
 	where date = timestamp('{}')
@@ -16,9 +17,9 @@ def log_table():
 	for row in tweet_results:
 		constituent_name.append(row.constituent_name)
 		tweets.append(row.tweets)
-	collect = pd.DataFrame({'Constituent_name':constituent_name,
+	tweets_df = pd.DataFrame({'Constituent_name':constituent_name,
 							'tweets':tweets})
-	
+	######################################Bloomberg log query################################
 	query_bloomberg = client.query("""SELECT constituent_name, sum(downloaded_news) as bloomberg FROM `igenie-project.pecten_dataset_test.news_logs` 
 	where date = TIMESTAMP('{}') and source = 'Bloomberg'
 	GROUP BY constituent_name""".format(day_before))
@@ -28,10 +29,10 @@ def log_table():
 	for row in bloomberg_results:
 		constituent_name1.append(row.constituent_name)
 		bloomberg.append(row.bloomberg)
-	collect1 = pd.DataFrame({'Constituent_name':constituent_name1,
+	bloomberg_df = pd.DataFrame({'Constituent_name':constituent_name1,
 								'bloomberg':bloomberg})
 	
-	collect2 = pd.merge(collect,collect1,on ='Constituent_name',how='left')
+	collect2 = pd.merge(tweets_df,bloomberg_df,on ='Constituent_name',how='left')
 	print(collect2)
 	
 if __name__ == '__main__':
