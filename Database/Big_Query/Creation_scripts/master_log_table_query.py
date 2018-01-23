@@ -60,7 +60,7 @@ def log_table():
 		constituent_name3.append(row.constituent_name)
 		rss_feeds.append(row.rss)
 	rss_df = pd.DataFrame({'Constituent_name':constituent_name3,
-								'rss':rss})
+								'rss_feeds':rss_feeds})
 	collect2 = pd.merge(collect1,rss_df,on='Constituent_name',how='left')
 	print(collect2)
 	dataset_ref = client.dataset("pecten_dataset_dev")
