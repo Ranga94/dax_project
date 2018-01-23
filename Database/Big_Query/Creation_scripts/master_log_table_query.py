@@ -69,7 +69,7 @@ def log_table():
 	rows = [collect2]
 	errors = bigquery_client.create_rows(table, rows)
 	if not errors:
-        print('Loaded 1 row into {}:{}'.format(dataset_id, table_id))
+		print('Loaded 1 row into {}:{}'.format(dataset_id, table_id))
 	else:
 		print("Errors")
 	#for i in date, constituen
