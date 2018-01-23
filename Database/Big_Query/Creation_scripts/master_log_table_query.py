@@ -35,7 +35,7 @@ def log_table():
 	#collect2 = pd.merge(tweets_df,bloomberg_df,on ='Constituent_name',how='left')
 	#print(collect2)
 	##########################################Orbis Log Query################################
-	query_orbis = client.query("""SELECT constituent_name, sum(downloaded_news) as bloomberg FROM `igenie-project.pecten_dataset_test.news_logs` 
+	query_orbis = client.query("""SELECT constituent_name, sum(downloaded_news) as orbis FROM `igenie-project.pecten_dataset_test.news_logs` 
 	where date = TIMESTAMP('{}') and source = 'Orbis'
 	GROUP BY constituent_name""".format(day_before))
 	orbis_results = query_orbis.result()
