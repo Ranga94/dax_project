@@ -41,7 +41,7 @@ def log_table():
 	orbis_results = query_orbis.result()
 	constituent_name2 = []
 	orbis = []
-	for row in bloomberg_results:
+	for row in orbis_results:
 		constituent_name2.append(row.constituent_name)
 		orbis.append(row.orbis)
 	orbis_df = pd.DataFrame({'Constituent_name':constituent_name2,
