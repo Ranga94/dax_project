@@ -14,11 +14,8 @@ def log_table():
 	constituent_name = []
 	tweets = []
 	for row in results:
-		#constituent_name = row.constituent_name
-		#tweets = row.tweets
-		print("{}:{}".format(row.constituent_name,row.tweets))
-	print(constituent_name)
-	print(tweets)
+		constituent_name.append(row.constituent_name)
+		tweets.append(row.tweets)
 	collect = pd.DataFrame({'Constituent_name':[constituent_name],
 							'tweets':[tweets]})
 	print(collect)
