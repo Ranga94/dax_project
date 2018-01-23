@@ -22,7 +22,7 @@ def log_table():
 	######################################Bloomberg log query################################
 	query_bloomberg = client.query("""SELECT constituent_name, date, sum(downloaded_news) as bloomberg FROM `igenie-project.pecten_dataset_test.news_logs` 
 	where date = TIMESTAMP('{}') and source = 'Bloomberg'
-	GROUP BY constituent_name""".format(day_before))
+	GROUP BY constituent_name, date""".format(day_before))
 	bloomberg_results = query_bloomberg.result()
 	constituent_name1 = []
 	date = []
