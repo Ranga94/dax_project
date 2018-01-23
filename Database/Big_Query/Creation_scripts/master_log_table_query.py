@@ -16,8 +16,8 @@ def log_table():
 	for row in tweet_results:
 		constituent_name.append(row.constituent_name)
 		tweets.append(row.tweets)
-	collect = pd.DataFrame({'Constituent_name':[constituent_name],
-							'tweets':[tweets]})
+	collect = pd.DataFrame({'Constituent_name':constituent_name,
+							'tweets':tweets})
 	
 	query_bloomberg = client.query("""SELECT constituent_name, sum(downloaded_news) as bloomberg FROM `igenie-project.pecten_dataset_test.news_logs` 
 	where date = TIMESTAMP('{}') and source = 'Bloomberg'
@@ -28,8 +28,8 @@ def log_table():
 	for row in bloomberg_results:
 		constituent_name1.append(row.constituent_name)
 		bloomberg.append(row.bloomberg)
-	collect1 = pd.DataFrame({'Constituent_name':[constituent_name1],
-								'bloomberg':[bloomberg]})
+	collect1 = pd.DataFrame({'Constituent_name':constituent_name1,
+								'bloomberg':bloomberg})
 	
 	collect2 = pd.merge(collect,collect1,on ='Constituent_name')
 	print(collect2)
