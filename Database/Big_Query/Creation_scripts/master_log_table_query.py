@@ -32,7 +32,7 @@ def log_table():
 	bloomberg_df = pd.DataFrame({'Constituent_name':constituent_name1,
 								'bloomberg':bloomberg})
 	
-	#collect2 = pd.merge(tweets_df,bloomberg_df,on ='Constituent_name',how='left')
+	collect = pd.merge(tweets_df,bloomberg_df,on ='Constituent_name',how='left')
 	#print(collect2)
 	##########################################Orbis Log Query################################
 	query_orbis = client.query("""SELECT constituent_name, sum(downloaded_news) as orbis FROM `igenie-project.pecten_dataset_test.news_logs` 
@@ -46,7 +46,7 @@ def log_table():
 		orbis.append(row.orbis)
 	orbis_df = pd.DataFrame({'Constituent_name':constituent_name2,
 								'orbis':orbis})
-	collect = pd.merge(tweets_df,bloomberg_df,orbis_df,on='Constituent_name',how='left')
+	collect1 = pd.merge(collect,orbis_df,on='Constituent_name',how='left')
 	print(collect)
 if __name__ == '__main__':
 	log_table()
