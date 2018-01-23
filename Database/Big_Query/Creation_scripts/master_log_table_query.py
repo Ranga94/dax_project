@@ -60,6 +60,7 @@ def log_table():
 	rss_df = pd.DataFrame({'Constituent_name':constituent_name3,
 								'rss':rss})
 	collect2 = pd.merge(collect1,rss_df,on='Constituent_name',how='left')
+	print(collect2)
 	########################################Ticker log Query ###############################
 	
 if __name__ == '__main__':
