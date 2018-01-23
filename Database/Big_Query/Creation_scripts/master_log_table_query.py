@@ -20,7 +20,7 @@ def log_table():
 	tweets_df = pd.DataFrame({'Constituent_name':constituent_name,
 							'tweets':tweets})
 	######################################Bloomberg log query################################
-	query_bloomberg = client.query("""SELECT constituent_name, sum(downloaded_news), date as bloomberg FROM `igenie-project.pecten_dataset_test.news_logs` 
+	query_bloomberg = client.query("""SELECT constituent_name, date, sum(downloaded_news) as bloomberg FROM `igenie-project.pecten_dataset_test.news_logs` 
 	where date = TIMESTAMP('{}') and source = 'Bloomberg'
 	GROUP BY constituent_name""".format(day_before))
 	bloomberg_results = query_bloomberg.result()
