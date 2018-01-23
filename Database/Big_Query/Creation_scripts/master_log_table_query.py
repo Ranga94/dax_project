@@ -17,8 +17,8 @@ def log_table():
 		constituent_name = row.constituent_name
 		tweets = row.tweets
 		
-	collect = pd.DataFrame({'Constituent_name':constituent_name,
-							'tweets':tweets})
+	collect = pd.DataFrame({'Constituent_name':[constituent_name],
+							'tweets':[tweets]})
 	print(collect)
 	
 if __name__ == '__main__':
