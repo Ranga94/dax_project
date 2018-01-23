@@ -22,7 +22,7 @@ def analyst_rating():
 	server = smtplib.SMTP('smtp.gmail.com', 587)
 	server.starttls()
 	server.login(sys.argv[1], sys.argv[2])
-	toaddrs = [sys.argv[3]]
+	toaddrs = [sys.argv[3],sys.argv[4]]
 	server.sendmail(sys.argv[1], toaddrs, message)
 	server.quit()
 	
