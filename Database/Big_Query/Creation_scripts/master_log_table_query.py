@@ -31,7 +31,7 @@ def log_table():
 	collect1 = pd.DataFrame({'Constituent_name':[constituent_name1],
 								'bloomberg':[bloomberg]})
 	
-	collect2 = pd.merge(collect,collect1, on = 'constiuent_name')
+	collect2 = pd.merge(collect,collect1, on = 'Constiuent_name')
 	print(collect2)
 	
 if __name__ == '__main__':
