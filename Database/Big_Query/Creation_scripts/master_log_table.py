@@ -22,9 +22,10 @@ def create_table(dataset_id, table_id, project):
 	bigquery.SchemaField('rss_feeds', 'INTEGER','NULLABLE'),
 	)
 	
-	table = bigquery_client.create_table(table)
-	print('Created table {} in dataset {}.'.format(table_id, dataset_id))
-	
+    table = bigquery_client.create_table(table)
+
+    print('Created table {} in dataset {}.'.format(table_id, dataset_id))
+
 if __name__ == '__main__':
 #System argument 1 takes Dataset ID
 #System argument 2 takes table ID
