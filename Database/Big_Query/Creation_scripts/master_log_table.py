@@ -16,12 +16,10 @@ def create_table(dataset_id, table_id, project):
     table.schema = (
 	bigquery.SchemaField('Date','TIMESTAMP','NULLABLE'),
 	bigquery.SchemaField('Constituent_name','STRING','NULLABLE'),
-	bigquery.SchemaField('Downlaoded_tweets','INTEGER','NULLABLE'),
-	bigquery.SchemaField('Downloaded_ticks','INTEGER','NULLABLE'),
-	bigquery.SchemaField('Downloaded_news', 'INTEGER','NULLABLE'),
-	bigquery.SchemaField('Stocktwits','INTEGER','NULLABLE'),
+	bigquery.SchemaField('tweets','INTEGER','NULLABLE'),
+	bigquery.SchemaField('bloomberg','INTEGER','NULLABLE'),
+	bigquery.SchemaField('orbis', 'INTEGER','NULLABLE'),
 	bigquery.SchemaField('rss_feeds', 'INTEGER','NULLABLE'),
-	bigquery.SchemaField('Analyst_opinion','INTEGER','NULLABLE'),
 	)
 	
 	table = bigquery_client.create_table(table)
