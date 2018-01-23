@@ -21,6 +21,9 @@ def log_table():
 							'tweets':tweets})
 	print(collect)
 	
+if __name__ == '__main__':
+	log_table()
+	
 	
 		
 	
