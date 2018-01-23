@@ -17,7 +17,10 @@ def log_table():
 	for row in tweet_results:
 		constituent_name.append(row.constituent_name)
 		tweets.append(row.tweets)
-	tweets_df = pd.DataFrame({'Constituent_name':constituent_name,
+	date = []
+	for i in collect2:
+		date.append(day_before)	
+	tweets_df = pd.DataFrame({'Date':date,'Constituent_name':constituent_name,
 							'tweets':tweets})
 	######################################Bloomberg log query################################
 	query_bloomberg = client.query("""SELECT constituent_name, sum(downloaded_news) as bloomberg FROM `igenie-project.pecten_dataset_test.news_logs` 
