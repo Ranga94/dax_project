@@ -67,7 +67,7 @@ def log_table():
 	table_ref = dataset_ref.table("master_log_table")
 	table = client.get_table(table_ref)
 	rows = [collect2]
-	errors = bigquery_client.create_rows(table, rows)
+	errors = client.create_rows(table, rows)
 	if not errors:
 		print('Loaded 1 row into {}:{}'.format(dataset_id, table_id))
 	else:
