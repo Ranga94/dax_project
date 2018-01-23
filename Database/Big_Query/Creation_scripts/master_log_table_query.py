@@ -18,7 +18,7 @@ def log_table():
 		constituent_name.append(row.constituent_name)
 		tweets.append(row.tweets)
 	date = []
-	for i in 30:
+	for i in constituent_name:
 		date.append(day_before)	
 	tweets_df = pd.DataFrame({'Date':date,'Constituent_name':constituent_name,
 							'tweets':tweets})
