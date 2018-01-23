@@ -68,7 +68,7 @@ def log_table():
 	stocktwits_results = query_rss.result()
 	constituent_name4 = []
 	stocktwits = []
-	for row in rss_results:
+	for row in stocktwits_results:
 		constituent_name4.append(row.constituent_name)
 		stocktwits.append(row.stocktwits)
 	#rss_df = pd.DataFrame({'Constituent_name':constituent_name3,
