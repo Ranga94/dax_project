@@ -23,7 +23,6 @@ def create_table(dataset_id, table_id, project):
 	)
 	
 	table = bigquery_client.create_table(table)
-	
 	print('Created table {} in dataset {}.'.format(table_id, dataset_id))
 	
 if __name__ == '__main__':
