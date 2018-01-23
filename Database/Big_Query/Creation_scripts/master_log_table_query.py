@@ -72,7 +72,7 @@ def log_table():
 		constituent_name4.append(row.constituent_name)
 		stocktwits.append(row.stocktwits)
 	#rss_df = pd.DataFrame({'Constituent_name':constituent_name3,
-								'rss':rss})
+				#				'rss':rss})
 	#collect2 = pd.merge(collect1,rss_df,on='Constituent_name',how='left')
 	#print(collect2)
 	print(stocktwits)
