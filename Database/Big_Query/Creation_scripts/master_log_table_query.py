@@ -65,7 +65,7 @@ def log_table():
 		date.append(day_before)
 		
 	date_df = pd.DataFrame({'Date':date})
-	collect3 = pd.merge(collect2, date)
+	collect3 = pd.merge(collect2, date_df)
 	print(collect3)
 	########################################Stocktwits Logs#####################
 	
