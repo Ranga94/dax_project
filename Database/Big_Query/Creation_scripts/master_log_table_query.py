@@ -120,7 +120,7 @@ def log_table():
 	df = ticker_merge.fillna(0)
 	print(df)
 	
-	constituent = df.iloc[:,'Constituent_name']
+	constituent = df.iloc[:,0]
 	print(constituent)
 	Date = df.iloc[:,'date']
 	Tweets = df.iloc[:,'tweets']
