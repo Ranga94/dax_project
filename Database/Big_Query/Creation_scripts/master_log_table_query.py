@@ -101,7 +101,7 @@ def log_table():
 								'ticker':ticker})
 	collect4 = pd.merge(collect3, ticker_df,on='Constituent_name', how = 'left')
 	collect5 = collect4.fillna(0)
-	print(collect4)
+	print(collect5)
 	#print(collect4.iloc[[0],[3]])
 	constituent = collect4.iloc[:,0]
 	Date = collect4.iloc[:,1]
