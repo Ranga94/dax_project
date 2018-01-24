@@ -63,17 +63,25 @@ def log_table():
 								'rss_feeds':rss_feeds})
 	collect2 = pd.merge(collect1,rss_df,on='Constituent_name',how='left')
 	#print(collect2)
-	#############################################stocktwits####################33
+	#############################################stocktwits######################
 	query_stocktwits = client.query("""SELECT constituent_name, count(*) as stocktwits FROM `igenie-project.pecten_dataset_test.tweets` 
 	where source = 'StockTwits' and date = TIMESTAMP("2018-1-23")
 	group by constituent_name""")
 	stocktwits_results = query_stocktwits.result()
 	stocktwits = [0]
-	constituent_name4 = [0]
+	constituent_name4 = ['E.ON SE']
 	for row in stocktwits_results:
 		constituent_name4.append(row.constituent_name)
 		stocktwits.append(row.stocktwits)
-	print(len(stocktwits))
+	if(len(stocktwits)==1):
+		pass
+	else:
+		del stocktwits[0]
+		del constituent_name4[0]
+	stocktwits_df = pd.DataFrame({'Constituent_name':constituent_name4,
+									'stocktwits':stocktwits})
+	collect3 = pd.merge(collect2, stocktwits_df,on='Constituent_name',how='left')
+	print(collect3)
 	
 	
 	
