@@ -122,18 +122,20 @@ def log_table():
 	
 	constituent = df.iloc[:,0]
 	print(constituent)
-	Date = df.iloc[:,'date']
-	Tweets = df.iloc[:,'tweets']
-	Bloomberg = df.iloc[:,'bloomberg']
-	Orbis = df.iloc[:,'orbis']
-	RSS_feeds = df.iloc[:,'rss_feeds']
-	StockTwits = df.iloc[:,'stocktwits']
-	Ticker = df.iloc[:,'ticker']
+	Date = df.iloc[:,1]
+	Tweets = df.iloc[:,2]
+	Bloomberg = df.iloc[:,3]
+	Orbis = df.iloc[:,4]
+	RSS_feeds = df.iloc[:,5]
+	StockTwits = df.iloc[:,6]
+	Ticker = df.iloc[:,7]
 	######################################Insert into table###########################
-	query_insert = client.query("""INSERT INTO `igenie-project.pecten_dataset_dev.master_log_table`
-	(`Date`, `Constituent_name`, `tweets`, `bloomberg`, `orbis`, `rss_feeds`,`stocktwits`,`ticker`) 
-	VALUES ('{0}', '{1}', {2}, {3}, {4}, {5}, {6},{7})""".format(Date[0],constituent[0],Tweets[0],Bloomberg[0],Orbis[0],RSS_feeds[0],StockTwits[0],Ticker[0]))
-	insert_result = query_insert.result()
+	for i in df:
+	
+		query_insert = client.query("""INSERT INTO `igenie-project.pecten_dataset_dev.master_log_table`
+		(`Date`, `Constituent_name`, `tweets`, `bloomberg`, `orbis`, `rss_feeds`,`stocktwits`,`ticker`) 
+		VALUES ('{0}', '{1}', {2}, {3}, {4}, {5}, {6},{7})""".format(Date[i],constituent[i],int(Tweets[i]),int(Bloomberg[i]),int(Orbis[i]),int(RSS_feeds[i]),int(StockTwits[i]),int(Ticker[i])))
+		insert_result = query_insert.result()
 	
 	
 if __name__ == '__main__':
