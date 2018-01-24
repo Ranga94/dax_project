@@ -118,10 +118,10 @@ def log_table():
 	ticker_merge = pd.merge(stocktwits_merge, ticker_df,on='Constituent_name', how = 'left')
 	#############Replace Nan in dataframes with zero#######
 	df = ticker_merge.fillna(0)
-	print(df)
-	
+	#print(df)
+	##########################Split dataframes for data insertion##########
 	constituent = df.iloc[:,0]
-	print(constituent)
+	print(len(constituent):
 	Date = df.iloc[:,1]
 	Tweets = df.iloc[:,2]
 	Bloomberg = df.iloc[:,3]
@@ -130,12 +130,12 @@ def log_table():
 	StockTwits = df.iloc[:,6]
 	Ticker = df.iloc[:,7]
 	######################################Insert into table###########################
-	for i in range(0,30):
+	#for i in range(0,30):
 	
-		query_insert = client.query("""INSERT INTO `igenie-project.pecten_dataset_dev.master_log_table`
-		(`Date`, `Constituent_name`, `tweets`, `bloomberg`, `orbis`, `rss_feeds`,`stocktwits`,`ticker`) 
-		VALUES ('{0}', '{1}', {2}, {3}, {4}, {5}, {6},{7})""".format(Date[i],constituent[i],int(Tweets[i]),int(Bloomberg[i]),int(Orbis[i]),int(RSS_feeds[i]),int(StockTwits[i]),int(Ticker[i])))
-		insert_result = query_insert.result()
+		#query_insert = client.query("""INSERT INTO `igenie-project.pecten_dataset_dev.master_log_table`
+		#(`Date`, `Constituent_name`, `tweets`, `bloomberg`, `orbis`, `rss_feeds`,`stocktwits`,`ticker`) 
+		#VALUES ('{0}', '{1}', {2}, {3}, {4}, {5}, {6},{7})""".format(Date[i],constituent[i],int(Tweets[i]),int(Bloomberg[i]),int(Orbis[i]),int(RSS_feeds[i]),int(StockTwits[i]),int(Ticker[i])))
+		#insert_result = query_insert.result()
 	
 	
 if __name__ == '__main__':
