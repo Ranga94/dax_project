@@ -1,8 +1,9 @@
 from google.cloud import bigquery
 import datetime as DT
 import pandas as pd
+import sys
 
-def log_table():
+def log_table(dataset_id):
 	##################################Set Date and take previous day for data agregation##############
 	today = DT.date.today()
 	day_before = today - DT.timedelta(days=1)
@@ -131,14 +132,14 @@ def log_table():
 	######################################Insert into table###########################
 	for i in range(0,len(constituent)):
 	
-		query_insert = client.query("""INSERT INTO `igenie-project.pecten_dataset_dev.master_log_table`
+		query_insert = client.query("""INSERT INTO `igenie-project.{8}.master_log_table`
 		(`Date`, `Constituent_name`, `tweets`, `bloomberg`, `orbis`, `rss_feeds`,`stocktwits`,`ticker`) 
-		VALUES ('{0}', '{1}', {2}, {3}, {4}, {5}, {6},{7})""".format(Date[i],constituent[i],int(Tweets[i]),int(Bloomberg[i]),int(Orbis[i]),int(RSS_feeds[i]),int(StockTwits[i]),int(Ticker[i])))
+		VALUES ('{0}', '{1}', {2}, {3}, {4}, {5}, {6},{7})""".format(Date[i],constituent[i],int(Tweets[i]),int(Bloomberg[i]),int(Orbis[i]),int(RSS_feeds[i]),int(StockTwits[i]),int(Ticker[i]),dataset_id))
 		insert_result = query_insert.result()
 	
 	
 if __name__ == '__main__':
-	log_table()
+	log_table(sys.argv[1])
 	
 	
 		
