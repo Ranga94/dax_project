@@ -130,7 +130,7 @@ def log_table():
 	StockTwits = df.iloc[:,6]
 	Ticker = df.iloc[:,7]
 	######################################Insert into table###########################
-	for i in constituent:
+	for i in constituent_name:
 	
 		query_insert = client.query("""INSERT INTO `igenie-project.pecten_dataset_dev.master_log_table`
 		(`Date`, `Constituent_name`, `tweets`, `bloomberg`, `orbis`, `rss_feeds`,`stocktwits`,`ticker`) 
