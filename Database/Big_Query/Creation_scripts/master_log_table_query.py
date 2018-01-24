@@ -121,6 +121,7 @@ def log_table():
 	print(df)
 	
 	constituent = df.iloc[:,'Constituent_name']
+	print(constituent)
 	Date = df.iloc[:,'date']
 	Tweets = df.iloc[:,'tweets']
 	Bloomberg = df.iloc[:,'bloomberg']
