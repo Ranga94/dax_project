@@ -67,9 +67,10 @@ def log_table():
 	query_stocktwits = client.query("""SELECT constituent_name, count(*) as stocktwits FROM `igenie-project.pecten_dataset_test.tweets` 
 	where source = 'StockTwits' and date = TIMESTAMP("2018-1-23")
 	group by constituent_name""")
+	stocktwits_results = query_stocktwits.result()
 	stocktwits = [0]
 	constituent_name4 = [0]
-	for row in stocktwits:
+	for row in stocktwits_results:
 		constituent_name4.append(row.constituent_name)
 		stocktwits.append(row.stocktwits)
 	print(len(stocktwits))
