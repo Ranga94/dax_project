@@ -20,6 +20,8 @@ def create_table(dataset_id, table_id, project):
 	bigquery.SchemaField('bloomberg','INTEGER','NULLABLE'),
 	bigquery.SchemaField('orbis', 'INTEGER','NULLABLE'),
 	bigquery.SchemaField('rss_feeds', 'INTEGER','NULLABLE'),
+	bigquery.SchemaField('stocktwits', 'INTEGER','NULLABLE'),
+	bigquery.SchemaField('ticker', 'INTEGER','NULLABLE'),
 	)
 	
     table = bigquery_client.create_table(table)
