@@ -119,15 +119,15 @@ def log_table():
 	#############Replace Nan in dataframes with zero#######
 	df = ticker_merge.fillna(0)
 	print(df)
-	#print(collect4.iloc[[0],[3]])
-	constituent = collect5.iloc[:,0]
-	Date = collect5.iloc[:,1]
-	Tweets = collect5.iloc[:,2]
-	Bloomberg = collect5.iloc[:,3]
-	Orbis = collect5.iloc[:,4]
-	RSS_feeds = collect5.iloc[:,5]
-	StockTwits = collect5.iloc[:,6]
-	Ticker = collect5.iloc[:,7]
+	
+	constituent = df.iloc[:,'Constituent_name']
+	Date = df.iloc[:,'date']
+	Tweets = df.iloc[:,'tweets']
+	Bloomberg = df.iloc[:,'bloomberg']
+	Orbis = df.iloc[:,'orbis']
+	RSS_feeds = df.iloc[:,'rss_feeds']
+	StockTwits = df.iloc[:,'stocktwits']
+	Ticker = df.iloc[:,'ticker']
 	######################################Insert into table###########################
 	query_insert = client.query("""INSERT INTO `igenie-project.pecten_dataset_dev.master_log_table`
 	(`Date`, `Constituent_name`, `tweets`, `bloomberg`, `orbis`, `rss_feeds`,`stocktwits`,`ticker`) 
