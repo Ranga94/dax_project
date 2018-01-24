@@ -101,7 +101,7 @@ def log_table():
 								'ticker':ticker})
 	print(ticker_df)
 	collect4 = pd.merge(collect3, ticker_df,on='Constituent_name', how = 'left')
-	#print(collect4)
+	print(collect4)
 	
 	
 if __name__ == '__main__':
