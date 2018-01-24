@@ -105,7 +105,7 @@ def log_table():
 	######################################Insert into table###########################
 	query_insert = client.query("""INSERT INTO `igenie-project.pecten_dataset_dev.master_log_table`
 	(`Date`, `Constituent_name`, `tweets`, `bloomberg`, `orbis`, `rss_feeds`,`stocktwits`,`ticker`) 
-	VALUES ('2018-1-22', '{}', 34, 20, 89, 90, 50, 90)""".format(contituent[0]))
+	VALUES ('2018-1-22', '{}', 34, 20, 89, 90, 50, 90)""".format(constituent[0]))
 	insert_result = query_insert.result()
 	
 	
