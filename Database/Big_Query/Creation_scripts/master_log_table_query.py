@@ -121,7 +121,7 @@ def log_table():
 	#print(df)
 	##########################Split dataframes for data insertion##########
 	constituent = df.iloc[:,0]
-	print(len(constituent):
+	print(len(constituent)
 	Date = df.iloc[:,1]
 	Tweets = df.iloc[:,2]
 	Bloomberg = df.iloc[:,3]
