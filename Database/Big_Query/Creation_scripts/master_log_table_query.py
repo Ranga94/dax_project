@@ -100,7 +100,7 @@ def log_table():
 	ticker_df = pd.DataFrame({'Constituent_name':constituent_name5,
 								'ticker':ticker})
 	collect4 = pd.merge(collect3, ticker_df,on='Constituent_name', how = 'left')
-	collect4.fillna(0)
+	collect5 = collect4.fillna(0)
 	print(collect4)
 	#print(collect4.iloc[[0],[3]])
 	constituent = collect4.iloc[:,0]
