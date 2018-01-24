@@ -63,15 +63,7 @@ def log_table():
 								'rss_feeds':rss_feeds})
 	collect2 = pd.merge(collect1,rss_df,on='Constituent_name',how='left')
 	print(collect2)
-	dataset_ref = client.dataset("pecten_dataset_dev")
-	table_ref = dataset_ref.table("master_log_table")
-	table = client.get_table(table_ref)
-	rows = [collect2]
-	errors = client.create_rows(table, rows)
-	if not errors:
-		print('Loaded 1 row into {}:{}'.format(dataset_id, table_id))
-	else:
-		print("Errors")
+	
 	#for i in date, constituen
 	#insert_query = client.create_rows("INSERT INTO `igenie-project.pecten_dataset_test.master_log_table` (`Date`, `Constituent_name`, `tweets`, `bloomberg`, `orbis`, `rss_feeds`) VALUES ('', 'Adidas', '34', '45', '89', '90');
 
