@@ -132,7 +132,7 @@ def log_table(dataset_id):
 	######################################Insert into table###########################
 	for i in range(0,len(constituent)):
 	
-		query_insert = client.query("""INSERT INTO `igenie-project.{8}.master_log_table`
+		query_insert = client.query("""INSERT INTO `igenie-project.{8}.master_log_table1`
 		(`Date`, `Constituent_name`, `tweets`, `bloomberg`, `orbis`, `rss_feeds`,`stocktwits`,`ticker`) 
 		VALUES ('{0}', '{1}', {2}, {3}, {4}, {5}, {6},{7})""".format(Date[i],constituent[i],int(Tweets[i]),int(Bloomberg[i]),int(Orbis[i]),int(RSS_feeds[i]),int(StockTwits[i]),int(Ticker[i]),dataset_id))
 		insert_result = query_insert.result()
