@@ -102,11 +102,11 @@ def log_table():
 	collect4 = pd.merge(collect3, ticker_df,on='Constituent_name', how = 'left')
 	#print(collect4.iloc[[0],[3]])
 	constituent = collect4.iloc[:,0]
-	print(constituent)
+	print(constituent[0])
 	######################################Insert into table###########################
 	#query_insert = client.query("""INSERT INTO `igenie-project.pecten_dataset_dev.master_log_table`
 	#(`Date`, `Constituent_name`, `tweets`, `bloomberg`, `orbis`, `rss_feeds`,`stocktwits`,`ticker`) 
-	#VALUES ('2018-1-22', 'adidas', 34, {}, 89, 90, 50, 90)""".format((collect4.iloc[[0],[3]])))
+	#VALUES ('2018-1-22', '{}', 34, {}, 89, 90, 50, 90)""".format((contituent.iloc[1]))
 	#insert_result = query_insert.result()
 	
 	
