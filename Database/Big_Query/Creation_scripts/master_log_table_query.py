@@ -81,7 +81,7 @@ def log_table():
 	stocktwits_df = pd.DataFrame({'Constituent_name':constituent_name4,
 									'stocktwits':stocktwits})
 	collect3 = pd.merge(collect2, stocktwits_df,on='Constituent_name',how='left')
-	print(collect3)
+	#print(collect3)
 	##########################################ticker##############################
 	query_ticker = client.query("""SELECT constituent_name, sum(downloaded_ticks) as ticker FROM `igenie-project.pecten_dataset_test.ticker_logs` 
 	where date = TIMESTAMP('{}')
@@ -92,7 +92,7 @@ def log_table():
 	for row in ticker_results:
 		constituent_name5.append(row.constituent_name)
 		ticker.append(row.ticker)
-	if(len(stocktwits)==1):
+	if(len(ticker)==1):
 		pass
 	else:
 		del ticker[0]
