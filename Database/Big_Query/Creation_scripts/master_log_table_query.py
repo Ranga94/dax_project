@@ -135,7 +135,7 @@ def log_table(read_dataset_id, insert_dataset_id):
 	
 		query_insert = client.query("""INSERT INTO `igenie-project.{8}.master_log_table`
 		(`Date`, `Constituent_name`, `tweets`, `bloomberg`, `orbis`, `rss_feeds`,`stocktwits`,`ticker`) 
-		VALUES ('{0}', '{1}', {2}, {3}, {4}, {5}, {6},{7})""".format(Date[i],constituent[i],int(Tweets[i]),int(Bloomberg[i]),int(Orbis[i]),int(RSS_feeds[i]),int(StockTwits[i]),int(Ticker[i]),insert_dataset_iddataset_id))
+		VALUES ('{0}', '{1}', {2}, {3}, {4}, {5}, {6},{7})""".format(Date[i],constituent[i],int(Tweets[i]),int(Bloomberg[i]),int(Orbis[i]),int(RSS_feeds[i]),int(StockTwits[i]),int(Ticker[i]),insert_dataset_id))
 		insert_result = query_insert.result()
 	
 	
