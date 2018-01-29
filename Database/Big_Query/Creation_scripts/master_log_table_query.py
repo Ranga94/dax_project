@@ -2,17 +2,18 @@ from google.cloud import bigquery
 import datetime as DT
 import pandas as pd
 import sys
-########insert dataset id as first system argument while running###########3
-def log_table(dataset_id):
+########insert dataset id from which the query needs to read as first system argument and the one it has to insert into as second argument while running###########3
+###Ex: If it has to read from test dataset and insert into new dataset, first argument will be test datase, second argument will be new dataset#####
+def log_table(read_dataset_id, insert_dataset_id):
 	##################################Set Date and take previous day for data agregation##############
 	today = DT.date.today()
 	day_before = today - DT.timedelta(days=1)
 	client = bigquery.Client()  
 	########################################Twitter logs Query#############################################
 	query_twitter = client.query("""SELECT constituent_name, sum(downloaded_tweets) as tweets
-	FROM `igenie-project.pecten_dataset_test.tweet_logs`
-	where date = timestamp('{}')
-	GROUP BY constituent_name""".format(day_before))
+	FROM `igenie-project.{1}.tweet_logs`
+	where date = timestamp('{0}')
+	GROUP BY constituent_name""".format(day_before, read_dataset_id))
 	tweet_results = query_twitter.result()
 	######Initialise empty list and append results from BQ######
 	constituent_name_twitter = [] 
@@ -27,9 +28,9 @@ def log_table(dataset_id):
 	tweets_df = pd.DataFrame({'Date':date,'Constituent_name':constituent_name_twitter,
 							'tweets':tweets})
 	######################################Bloomberg log query################################
-	query_bloomberg = client.query("""SELECT constituent_name, sum(downloaded_news) as bloomberg FROM `igenie-project.pecten_dataset_test.news_logs` 
-	where date = TIMESTAMP('{}') and source = 'Bloomberg'
-	GROUP BY constituent_name""".format(day_before))
+	query_bloomberg = client.query("""SELECT constituent_name, sum(downloaded_news) as bloomberg FROM `igenie-project.{1}.news_logs` 
+	where date = TIMESTAMP('{0}') and source = 'Bloomberg'
+	GROUP BY constituent_name""".format(day_before, read_dataset_id))
 	bloomberg_results = query_bloomberg.result()
 	######Initialise empty list and append results from BQ####
 	constituent_name_bloomberg = []
@@ -43,9 +44,9 @@ def log_table(dataset_id):
 	######Merge the two dataframes based on key value Constituent_name#######							
 	bloomberg_merge = pd.merge(tweets_df,bloomberg_df,on ='Constituent_name',how='left')
 	##########################################Orbis Log Query################################
-	query_orbis = client.query("""SELECT constituent_name, sum(downloaded_news) as orbis FROM `igenie-project.pecten_dataset_test.news_logs` 
-	where date = TIMESTAMP('{}') and source = 'Orbis'
-	GROUP BY constituent_name""".format(day_before))
+	query_orbis = client.query("""SELECT constituent_name, sum(downloaded_news) as orbis FROM `igenie-project.{1}.news_logs` 
+	where date = TIMESTAMP('{0}') and source = 'Orbis'
+	GROUP BY constituent_name""".format(day_before, read_dataset_id))
 	orbis_results = query_orbis.result()
 	constituent_name_orbis = []
 	orbis = []
@@ -58,9 +59,9 @@ def log_table(dataset_id):
 	####Merge the previous dataframe with orbis_df based on Constituent_name#########
 	orbis_merge = pd.merge(bloomberg_merge,orbis_df,on='Constituent_name',how='left')
 	########################################rss_feeds###########################################
-	query_rss = client.query("""SELECT constituent_name, sum(downloaded_news) as rss FROM `igenie-project.pecten_dataset_test.news_logs` 
-	where date = TIMESTAMP('{}') and source = 'Yahoo Finance RSS'
-	GROUP BY constituent_name""".format(day_before))
+	query_rss = client.query("""SELECT constituent_name, sum(downloaded_news) as rss FROM `igenie-project.{1}.news_logs` 
+	where date = TIMESTAMP('{0}') and source = 'Yahoo Finance RSS'
+	GROUP BY constituent_name""".format(day_before, read_dataset_id))
 	rss_results = query_rss.result()
 	#####Initialise empty list and append result from BQ####
 	constituent_name_rss = []
@@ -74,9 +75,9 @@ def log_table(dataset_id):
 	######Merge rss dataframe with the previous dataframe based on constituent_name#######
 	rss_merge = pd.merge(orbis_merge,rss_df,on='Constituent_name',how='left')
 	#############################################stocktwits######################
-	query_stocktwits = client.query("""SELECT constituent_name, count(*) as stocktwits FROM `igenie-project.pecten_dataset_test.tweets` 
-	where source = 'StockTwits' and date = TIMESTAMP('{}')
-	group by constituent_name""".format(day_before))
+	query_stocktwits = client.query("""SELECT constituent_name, count(*) as stocktwits FROM `igenie-project.{1}.tweets` 
+	where source = 'StockTwits' and date = TIMESTAMP('{0}')
+	group by constituent_name""".format(day_before, read_dataset_id))
 	stocktwits_results = query_stocktwits.result()
 	######Initialise list with a dummy value because of the possibility of query result being nil for stocktwits######################
 	stocktwits = [0]
@@ -96,9 +97,9 @@ def log_table(dataset_id):
 	######Merge the two dataframes
 	stocktwits_merge = pd.merge(rss_merge, stocktwits_df,on='Constituent_name',how='left')
 	##########################################ticker log query##############################
-	query_ticker = client.query("""SELECT constituent_name, sum(downloaded_ticks) as ticker FROM `igenie-project.pecten_dataset_test.ticker_logs` 
-	where date = TIMESTAMP('{}')
-	group by constituent_name""".format(day_before))
+	query_ticker = client.query("""SELECT constituent_name, sum(downloaded_ticks) as ticker FROM `igenie-project.{1}.ticker_logs` 
+	where date = TIMESTAMP('{0}')
+	group by constituent_name""".format(day_before, read_dataset_id))
 	ticker_results = query_ticker.result()
 	##############Initialise list with a dummy value because of the possibility of query result being nil for ticker#####
 	ticker = [0]
@@ -134,12 +135,12 @@ def log_table(dataset_id):
 	
 		query_insert = client.query("""INSERT INTO `igenie-project.{8}.master_log_table`
 		(`Date`, `Constituent_name`, `tweets`, `bloomberg`, `orbis`, `rss_feeds`,`stocktwits`,`ticker`) 
-		VALUES ('{0}', '{1}', {2}, {3}, {4}, {5}, {6},{7})""".format(Date[i],constituent[i],int(Tweets[i]),int(Bloomberg[i]),int(Orbis[i]),int(RSS_feeds[i]),int(StockTwits[i]),int(Ticker[i]),dataset_id))
+		VALUES ('{0}', '{1}', {2}, {3}, {4}, {5}, {6},{7})""".format(Date[i],constituent[i],int(Tweets[i]),int(Bloomberg[i]),int(Orbis[i]),int(RSS_feeds[i]),int(StockTwits[i]),int(Ticker[i]),insert_dataset_iddataset_id))
 		insert_result = query_insert.result()
 	
 	
 if __name__ == '__main__':
-	log_table(sys.argv[1])
+	log_table(sys.argv[1],sys.argv[2])
 	
 	
 		
