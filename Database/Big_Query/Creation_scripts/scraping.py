@@ -84,8 +84,8 @@ Thyssenkrupp['constituent'] = 'Thyssenkrupp'
 frames = [Lufthansa,BMW,Vonovia,Daimler,Bayer,Heidelberg,Fresenius_Medical_Care,BASF,Fresenius,Volkswagen,Merck,Adidas,Deutsche_Post,Siemens,Deutsche_Telekom,Sap,Continental,EON,Henkel,Thyssenkrupp]
 results = pd.concat(frames)
 
-type = results.iloc[:,0]
-print(type)
+type1 = results.iloc[:,0]
+print(type1)
 year_2014 = results.iloc[:,1]
 print(year_2014)
 year_2015 = results.iloc[:,2]
