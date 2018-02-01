@@ -98,9 +98,9 @@ constituent_name = results.iloc[:,5]
 print(constituent_name)
 client = bigquery.Client()  
 
-for i in range(6,7):
-	query_insert = client.query("""INSERT INTO `igenie-project.pecten_dataset_dev.obermatt`
+#for i in range(3,):
+query_insert = client.query("""INSERT INTO `igenie-project.pecten_dataset_dev.obermatt`
 		(`year_2014`, `year_2015`, `year_2016`, `year_2017`) 
-		VALUES ({0}, {1}, {2}, {3},)""".format(year_2014[i], year_2015[i],year_2016[i], year_2017[i]))
-	insert_result = query_insert.result()
+		VALUES ({0}, {1}, {2}, {3},)""".format(year_2014[3], year_2015[3],year_2016[3], year_2017[3]))
+insert_result = query_insert.result()
 	
