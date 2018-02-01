@@ -89,7 +89,7 @@ print(type(type1))
 #print(type1)
 year_2014 = results.iloc[:,1]
 #print(year_2014)
-#year_2015 = results.iloc[:,2]
+year_2015 = results.iloc[:,2]
 #print(year_2015)
 year_2016 = results.iloc[:,3]
 #print(year_2016)
