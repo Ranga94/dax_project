@@ -85,11 +85,11 @@ frames = [Lufthansa,BMW,Vonovia,Daimler,Bayer,Heidelberg,Fresenius_Medical_Care,
 results = pd.concat(frames)
 
 type = result.iloc[:,0]
-year_2014 = result.iloc[:,1]
-year_2015 = result.iloc[:,2]
-year_2016 = result.iloc[:,3]
-year_2017 = result.iloc[:,4]
-constituent_name = result.iloc[:,5]
+year_2014 = results.iloc[:,1]
+year_2015 = results.iloc[:,2]
+year_2016 = results.iloc[:,3]
+year_2017 = results.iloc[:,4]
+constituent_name = results.iloc[:,5]
 client = bigquery.Client()  
 
 for i in range(0,len(results)):
