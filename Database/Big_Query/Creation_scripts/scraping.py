@@ -91,7 +91,7 @@ year_2016 = result.iloc[:,3]
 year_2017 = result.iloc[:,4]
 constituent_name = result.iloc[:,5]
 
-for i in range(0,len(constituent)):
+for i in range(0,len(result)):
 	query_insert = client.query("""INSERT INTO `igenie-project.pecten_dataset_dev.obermatt`
 		(`type`, `year_2014`, `year_2015`, `year_2016`, `year_2017`, `constituent_name`) 
 		VALUES ('{0}', '{1}', {2}, {3}, {4}, {5})""".format(type[i],year_2014[i],year_2015[i],year_2016[i],year_2017[i],constituent_name[i],))
