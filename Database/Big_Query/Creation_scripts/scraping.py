@@ -82,7 +82,7 @@ Thyssenkrupp = Thyssenkrupp_tables[4]
 Thyssenkrupp['constituent'] = 'Thyssenkrupp'
 
 frames = [Lufthansa,BMW,Vonovia,Daimler,Bayer,Heidelberg,Fresenius_Medical_Care,BASF,Fresenius,Volkswagen,Merck,Adidas,Deutsche_Post,Siemens,Deutsche_Telekom,Sap,Continental,EON,Henkel,Thyssenkrupp]
-result = pd.concat(frames)
+results = pd.concat(frames)
 
 type = result.iloc[:,0]
 year_2014 = result.iloc[:,1]
@@ -92,7 +92,7 @@ year_2017 = result.iloc[:,4]
 constituent_name = result.iloc[:,5]
 client = bigquery.Client()  
 
-for i in range(0,len(result)):
+for i in range(0,len(results)):
 	query_insert = client.query("""INSERT INTO `igenie-project.pecten_dataset_dev.obermatt`
 		(`type`, `year_2014`, `year_2015`, `year_2016`, `year_2017`, `constituent_name`) 
 		VALUES ('{0}', '{1}', {2}, {3}, {4}, {5})""".format(type[i],year_2014[i],year_2015[i],year_2016[i],year_2017[i],constituent_name[i],))
