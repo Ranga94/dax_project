@@ -101,6 +101,6 @@ client = bigquery.Client()
 #for i in range(3,):
 query_insert = client.query("""INSERT INTO `igenie-project.pecten_dataset_dev.obermatt`
 		(`year_2014`, `year_2015`, `year_2016`, `year_2017`) 
-		VALUES ({0}, {1}, {2}, {3},)""".format(year_2014[3], year_2015[3],year_2016[3], year_2017[3]))
+		VALUES ({0}, {1}, {2}, {3},)""".format(year_2014[6], year_2015[6],year_2016[6], year_2017[6]))
 insert_result = query_insert.result()
 	
