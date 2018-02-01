@@ -90,6 +90,7 @@ year_2015 = result.iloc[:,2]
 year_2016 = result.iloc[:,3]
 year_2017 = result.iloc[:,4]
 constituent_name = result.iloc[:,5]
+client = bigquery.Client()  
 
 for i in range(0,len(result)):
 	query_insert = client.query("""INSERT INTO `igenie-project.pecten_dataset_dev.obermatt`
