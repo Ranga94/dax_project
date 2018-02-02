@@ -24,5 +24,6 @@ def drop_table(dataset_name,table_name):
 	
 if __name__ == '__main__':
 	#copy_table("pecten_dataset_test","pecten_dataset_new","dividend","divedend_94","igenie-project")
-	drop_table("pecten_dataset_new","dividend")
+	#drop_table("pecten_dataset_new","dividend")
+	copy_table("pecten_dataset_new","pecten_dataset_new","divedend_94","dividend","igenie-project")
 	
