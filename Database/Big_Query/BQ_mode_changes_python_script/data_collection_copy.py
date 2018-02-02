@@ -11,10 +11,10 @@ def copy_table(from_dataset_id, to_dataset_id, table_id, new_table_id, project):
 	copy_job = bigquery_client.copy_table(table_ref, destination_table_ref, job_config=job_config)
 	print('Waiting for job to finish...')
 	copy_job.result()
-	print('Table {} copied to {}.'.format(table_id, new_table_id))
+	print('Table {} from {} is copied to {} on {}.'.format(table_id, from_dataset_id, new_table_id, to_dataset_id))
 	
 def drop_table(dataset_name,table_name):
-	print("Dropping table {}".format(table_name))
+	print("Dropping table {} on {}".format(table_name, dataset_name))
 	client = bigquery.Client()
 	dataset_ref = client.dataset(dataset_name)
 	dataset = client.get_dataset(dataset_ref)
@@ -33,4 +33,5 @@ if __name__ == '__main__':
 		drop_table("pecten_dataset_new",table)
 		copy_table("pecten_dataset_new","pecten_dataset_new",table+"_94",table,"igenie-project")
 		drop_table("pecten_dataset_new",table+"_94")
+		print("--------------------------------------")
 	
