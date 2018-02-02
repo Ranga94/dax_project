@@ -23,8 +23,14 @@ def drop_table(dataset_name,table_name):
 	client.delete_table(table)
 	
 if __name__ == '__main__':
-	#copy_table("pecten_dataset_test","pecten_dataset_new","dividend","divedend_94","igenie-project")
-	#drop_table("pecten_dataset_new","dividend")
-	#copy_table("pecten_dataset_new","pecten_dataset_new","divedend_94","dividend","igenie-project")
-	drop_table("pecten_dataset_new","divedend_94")
+	import sys
+	#data_collection_tables = ["all_news","analyst_opinions","business_ratio","dividend","frankfurt_trading_parameters","historical",
+	#							"historical_key_data","instrument_information","liquidity","ma_deals","master_data","news_logs","recent_report",
+	#							"technical_figures","ticker_data","ticker_logs","trading_parameters","tweet_logs","tweets"]
+	data_collection_tables = ["all_news","analyst_opinions"]
+	for table in data_collection_tables:
+		copy_table("pecten_dataset_test","pecten_dataset_new",data_collection_tables[table]+"_94","igenie-project")
+		drop_table("pecten_dataset_new",data_collection_tables[table])
+		copy_table("pecten_dataset_new","pecten_dataset_new",data_collection_tables[table]+"_94",data_collection_tables[table],"igenie-project")
+		drop_table("pecten_dataset_new",data_collection_tables[table]+"_94")
 	
