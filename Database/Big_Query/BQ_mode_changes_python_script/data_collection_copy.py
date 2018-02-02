@@ -29,8 +29,8 @@ if __name__ == '__main__':
 	#							"technical_figures","ticker_data","ticker_logs","trading_parameters","tweet_logs","tweets"]
 	data_collection_tables = ["all_news","analyst_opinions"]
 	for table in data_collection_tables:
-		copy_table("pecten_dataset_test","pecten_dataset_new",data_collection_tables[table]+"_94","igenie-project")
-		drop_table("pecten_dataset_new",data_collection_tables[table])
-		copy_table("pecten_dataset_new","pecten_dataset_new",data_collection_tables[table]+"_94",data_collection_tables[table],"igenie-project")
-		drop_table("pecten_dataset_new",data_collection_tables[table]+"_94")
+		copy_table("pecten_dataset_test","pecten_dataset_new",table,table+"_94","igenie-project")
+		drop_table("pecten_dataset_new",table)
+		copy_table("pecten_dataset_new","pecten_dataset_new",table+"_94",table,"igenie-project")
+		drop_table("pecten_dataset_new",table+"_94")
 	
