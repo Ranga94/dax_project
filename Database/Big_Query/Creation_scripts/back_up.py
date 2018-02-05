@@ -1,9 +1,5 @@
-from google.cloud import bigquery
+import requests as req
 
-    # If you don't specify credentials when constructing the client, the
-    # client library will look for credentials in the environment.
-bigquery_client = bigquery.Client()
+resp = req.get("GET https://www.googleapis.com/bigquery/v2/projects/igenie-project/datasets/pecten_dataset_dev/tables")
 
-    # Make an authenticated API request
-datasets = list(bigquery_client.list_datasets())
-print(datasets)
+print(resp.text)
