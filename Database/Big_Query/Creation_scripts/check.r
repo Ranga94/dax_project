@@ -78,8 +78,19 @@ shinyApp(
                    br(),
                    plotOutput("Industry_comparison_graph")
                  )
-               )))
-    
+               )),
+      tabPanel("Obermatt", fluid = TRUE,
+               sidebarLayout(
+                 sidebarPanel(
+                   selectInput("Constituents_input_O","Constituents",
+                               choices= c("Adidas","Lufthansa"))
+                 ),
+                 mainPanel(
+                   plotOutput("Obermatt_graph")
+                 )
+                 
+               ))
+    ) 
   ), 
   server = function(input, output) {
     output$coolplot <- renderPlot({
@@ -362,7 +373,8 @@ shinyApp(
           hold_data <- rbind(hold_data, get_data)}
         merge_data <- cbind(dates, hold_data)
         #print(merge_data)
-        barplot(merge_data$tweets, names = dates) 
+        barplot(merge_data$tweets, names = dates, col= "blue") 
+        title("bar plot showing collection from past 6 months", xlab = "Year and month", ylab = "number of tweets")
       }
       else if(input$collection_type2 == "Twitter" & input$Industry_input == "Chemicals"){
         for (year in dates){
@@ -373,7 +385,8 @@ shinyApp(
           hold_data <- rbind(hold_data, get_data)}
         merge_data <- cbind(dates, hold_data)
         #print(merge_data)
-        barplot(merge_data$tweets, names = dates) 
+        barplot(merge_data$tweets, names = dates, col = "blue")
+        title("bar plot showing collection from past 6 months", xlab = "Year and month", ylab = "number of tweets")
       }
       else if(input$collection_type2 == "Twitter" & input$Industry_input == "Manufacturing"){
         for (year in dates){
@@ -384,7 +397,8 @@ shinyApp(
           hold_data <- rbind(hold_data, get_data)}
         merge_data <- cbind(dates, hold_data)
         #print(merge_data)
-        barplot(merge_data$tweets, names = dates) 
+        barplot(merge_data$tweets, names = dates, col = "blue")
+        title("bar plot showing collection from past 6 months", xlab = "Year and month", ylab = "number of tweets")
       }
       else if(input$collection_type2 == "Twitter" & input$Industry_input == "Banking"){
         for (year in dates){
@@ -395,9 +409,10 @@ shinyApp(
           hold_data <- rbind(hold_data, get_data)}
         merge_data <- cbind(dates, hold_data)
         #print(merge_data)
-        barplot(merge_data$tweets, names = dates) 
+        barplot(merge_data$tweets, names = dates, col = "blue")
+        title("bar plot showing collection from past 6 months", xlab = "Year and month", ylab = "number of tweets")
       }
-     else if(input$collection_type2 == "Twitter" & input$Industry_input == "Energy"){
+      else if(input$collection_type2 == "Twitter" & input$Industry_input == "Energy"){
         for (year in dates){
           sql <- paste("Select sum(downloaded_tweets) as tweets FROM [igenie-project:pecten_dataset_test.tweet_logs] where date between TIMESTAMP('",year,"-01') and TIMESTAMP('",year,"-30') and constituent_name IN ('E.ON SE','RWE AG')", sep = "")
           get_data <- query_exec(project=project,sql,useLegacySql = FALSE)
@@ -406,15 +421,130 @@ shinyApp(
           hold_data <- rbind(hold_data, get_data)}
         merge_data <- cbind(dates, hold_data)
         #print(merge_data)
-        barplot(merge_data$tweets, names = dates) 
-      }	  
+        barplot(merge_data$tweets, names = dates, col = "blue")
+        title("bar plot showing collection from past 6 months", xlab = "Year and month", ylab = "number of tweets")
+      }
+      else if(input$collection_type2 == "Twitter" & input$Industry_input == "Medical"){
+        for (year in dates){
+          sql <- paste("Select sum(downloaded_tweets) as tweets FROM [igenie-project:pecten_dataset_test.tweet_logs] where date between TIMESTAMP('",year,"-01') and TIMESTAMP('",year,"-30') and constituent_name IN ('FRESENIUS MEDICAL CARE AG & CO. KGAA','FRESENIUS SE & CO. KGAA')", sep = "")
+          get_data <- query_exec(project=project,sql,useLegacySql = FALSE)
+          
+          
+          hold_data <- rbind(hold_data, get_data)}
+        merge_data <- cbind(dates, hold_data)
+        #print(merge_data)
+        barplot(merge_data$tweets, names = dates, col = "blue")
+        title("bar plot showing collection from past 6 months", xlab = "Year and month", ylab = "number of tweets")
+      }
+      if(input$collection_type2 == "News" & input$Industry_input == "Insurance"){
+        for (year in dates){
+          sql <- paste("Select sum(downloaded_news) as news FROM [igenie-project:pecten_dataset_test.news_logs] where date between TIMESTAMP('",year,"-01') and TIMESTAMP('",year,"-30') and constituent_name IN ('ALLIANZ SE','MUNCHENER RUCKVERSICHERUNGS-GESELLSCHAFT AKTIENGESELLSCHAFT IN MUNCHEN')", sep = "")
+          get_data <- query_exec(project=project,sql,useLegacySql = FALSE)
+          
+          
+          hold_data <- rbind(hold_data, get_data)}
+        merge_data <- cbind(dates, hold_data)
+        #print(merge_data)
+        barplot(merge_data$news, names = dates, col = "blue")
+        title("bar plot showing collection from past 6 months", xlab = "Year and month", ylab = "number of news items")
+      }
+      else if(input$collection_type2 == "News" & input$Industry_input == "Chemicals"){
+        for (year in dates){
+          sql <- paste("Select sum(downloaded_news) as news FROM [igenie-project:pecten_dataset_test.news_logs] where date between TIMESTAMP('",year,"-01') and TIMESTAMP('",year,"-30') and constituent_name IN ('BASF SE','BAYER AG','BEIERSDORF AG','HENKEL AG & CO. KGAA','MERCK KGAA')", sep = "")
+          get_data <- query_exec(project=project,sql,useLegacySql = FALSE)
+          
+          
+          hold_data <- rbind(hold_data, get_data)}
+        merge_data <- cbind(dates, hold_data)
+        #print(merge_data)
+        barplot(merge_data$news, names = dates, col = "blue")
+        title("bar plot showing collection from past 6 months", xlab = "Year and month", ylab = "number of news items")
+      }
+      else if(input$collection_type2 == "News" & input$Industry_input == "Manufacturing"){
+        for (year in dates){
+          sql <- paste("Select sum(downloaded_news) as news FROM [igenie-project:pecten_dataset_test.news_logs] where date between TIMESTAMP('",year,"-01') and TIMESTAMP('",year,"-30') and constituent_name IN ('BAYERISCHE MOTOREN WERKE AG','CONTINENTAL AG','DAIMLER AG','VOLKSWAGEN AG','THYSSENKRUPP AG')", sep = "")
+          get_data <- query_exec(project=project,sql,useLegacySql = FALSE)
+          
+          
+          hold_data <- rbind(hold_data, get_data)}
+        merge_data <- cbind(dates, hold_data)
+        #print(merge_data)
+        barplot(merge_data$news, names = dates, col = "blue")
+        title("bar plot showing collection from past 6 months", xlab = "Year and month", ylab = "number of news items")
+      }
+      else if(input$collection_type2 == "News" & input$Industry_input == "Banking"){
+        for (year in dates){
+          sql <- paste("Select sum(downloaded_news) as news FROM [igenie-project:pecten_dataset_test.news_logs] where date between TIMESTAMP('",year,"-01') and TIMESTAMP('",year,"-30') and constituent_name IN ('DEUTSCHE BANK AG','COMMERZBANK AKTIENGESELLSCHAFT')", sep = "")
+          get_data <- query_exec(project=project,sql,useLegacySql = FALSE)
+          
+          
+          hold_data <- rbind(hold_data, get_data)}
+        merge_data <- cbind(dates, hold_data)
+        #print(merge_data)
+        barplot(merge_data$news, names = dates, col = "blue")
+        title("bar plot showing collection from past 6 months", xlab = "Year and month", ylab = "number of news items")
+      }
+      else if(input$collection_type2 == "News" & input$Industry_input == "Energy"){
+        for (year in dates){
+          sql <- paste("Select sum(downloaded_news) as news FROM [igenie-project:pecten_dataset_test.news_logs] where date between TIMESTAMP('",year,"-01') and TIMESTAMP('",year,"-30') and constituent_name IN ('E.ON SE','RWE AG')", sep = "")
+          get_data <- query_exec(project=project,sql,useLegacySql = FALSE)
+          
+          
+          hold_data <- rbind(hold_data, get_data)}
+        merge_data <- cbind(dates, hold_data)
+        #print(merge_data)
+        barplot(merge_data$news, names = dates, col = "blue")
+        title("bar plot showing collection from past 6 months", xlab = "Year and month", ylab = "number of news items")
+      }
+      else if(input$collection_type2 == "News" & input$Industry_input == "Medical"){
+        for (year in dates){
+          sql <- paste("Select sum(downloaded_news) as news FROM [igenie-project:pecten_dataset_test.news_logs] where date between TIMESTAMP('",year,"-01') and TIMESTAMP('",year,"-30') and constituent_name IN ('FRESENIUS MEDICAL CARE AG & CO. KGAA','FRESENIUS SE & CO. KGAA')", sep = "")
+          get_data <- query_exec(project=project,sql,useLegacySql = FALSE)
+          
+          
+          hold_data <- rbind(hold_data, get_data)}
+        merge_data <- cbind(dates, hold_data)
+        #print(merge_data)
+        barplot(merge_data$news, names = dates, col = "blue")
+        title("bar plot showing collection from past 6 months", xlab = "Year and month", ylab = "number of news items")
+      }
+      
     })
-  
-
-
-
-
-
-
-
-})
+    output$Obermatt_graph <- renderPlot({
+      sql <- paste("SELECT Stock_type, year_2014, year_2015,year_2016, year_2017 FROM [igenie-project:pecten_dataset_dev.Obermatt] where Stock_type IN('COMBINED STOCK RANKS','CONSOLIDATED RANK: VALUE','CONSOLIDATED RANK: GROWTH','CONSOLIDATED RANK: SAFETY')
+                   and constituent = '",input$Constituents_input_O,"'",sep ="")
+      get_data <- query_exec(project=project,sql,useLegacySql = FALSE)
+      a <- as.data.frame(t(get_data))
+      print(a)
+      b <- a[2:5,]
+      colnames(b) <- c("growth", "safety", "combined", 
+                       "value")
+      print(b)
+      print(class(b))
+      #print(b)
+      #colnames(a) <- 
+      #print(b)
+      #ggplot(b, aes(x = Stock_type)) + 
+       # geom_line(aes(y = growth), colour="blue") + 
+        #geom_line(aes(y = safety), colour = "red") + 
+        #geom_line(aes(y = combined), colour = "yellow") +
+        #geom_line(aes(y = value), colour = "black") 
+      #ylab(label="Percentile") + 
+       # xlab("Year")
+      years= c("2014","2015","2016","2017")
+      plot(years,b$growth,type = "l", col = "red")
+      lines(years,b$safety, type="l", col = "green")
+      lines(years, b$combined, type = "l", col = "blue")
+      lines(years, b$value, type = "l", col = "yellow")
+      print(b$growth)
+    })
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  })
