@@ -35,7 +35,7 @@ class StdOutListener(StreamListener):
 			VALUES ('{0}','{1}','{2}','{3}','{4}',{5},{6},{7})""".format(created_at,text,name, screen_name,location,followers_count,reply_count,retweet_count))
 			insert_result = query_insert.result()
 		except Exception as e:
-			print(e)
+			pass
 			
 		#print(screen_name)
 		#print(followers_count)
