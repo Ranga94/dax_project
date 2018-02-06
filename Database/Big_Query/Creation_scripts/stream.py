@@ -1,5 +1,6 @@
 from tweepy.streaming import StreamListener
 from tweepy import OAuthHandler
+from google.cloud import bigquery
 from tweepy import Stream
 import json
  
