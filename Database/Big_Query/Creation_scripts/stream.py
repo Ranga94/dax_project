@@ -14,13 +14,13 @@ class StdOutListener(StreamListener):
     """
 
 
-    def on_data(self, data):
+	def on_data(self, data):
 		print(data)
 		return True
           
 
-    def on_error(self, status):
-        print(status)
+	def on_error(self, status):
+		print(status)
 
  
 if __name__ == '__main__':
