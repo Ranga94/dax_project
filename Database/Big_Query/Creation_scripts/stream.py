@@ -22,7 +22,7 @@ class StdOutListener(StreamListener):
 		#followers_count = python_obj["followers_count"]
 		client = bigquery.Client()
 		query_insert =  client.query("""INSERT INTO `igenie-project.pecten_dataset_dev.stream_twitter`
-		(`created_at`,text) 
+		(`created_at`,`text`) 
 		VALUES ('{}','{}')""".format(created_at,text))
 		insert_result = query_insert.result()
 		#print(screen_name)
