@@ -1,6 +1,7 @@
 from tweepy.streaming import StreamListener
 from tweepy import OAuthHandler
 from tweepy import Stream
+import json
  
 import twitter_credentials
  
@@ -9,19 +10,29 @@ import twitter_credentials
 
 # # # # TWITTER STREAM LISTENER # # # #
 class StdOutListener(StreamListener):
-    """
-    This is a basic listener that just prints received tweets to stdout.
-    """
 
-
-	def on_data(self, data):
-		print(data)
+	def on_data(self,data):
+		python_obj = json.loads(data)
+		created_at =  python_obj["created_at"]
+		text = python_obj["text"]
+		#followers_count= python_obj["followers_count"]
+		#language = python_obj["language"]
+		#favourites_count = python_obj["favourites_count"]
+		#followers_count = python_obj["followers_count"]
+		client = bigquery.Client()
+		query_insert =  client.query("""INSERT INTO `igenie-project.pecten_dataset_dev.stream_twitter`
+		(`created_at`, `text`) 
+		VALUES ({0}, {1})""".format(created_at,text))
+		insert_result = query_insert.result()
+		#print(screen_name)
+		#print(followers_count)
+		#print(language)
+		#print(favourites_count)
+		#print(followers_count)
 		return True
-          
-
+		
 	def on_error(self, status):
 		print(status)
-
  
 if __name__ == '__main__':
 	listener = StdOutListener()
