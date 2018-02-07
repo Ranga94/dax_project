@@ -39,13 +39,12 @@ def data_logs():
 		#print(ticker)
 	df = pd.DataFrame(
 		{'constituent_name':constituent_name,
-		 'tweets':tweets,
-		 'bloomberg':bloomberg,
-		 'orbis':orbis,
-		 'rss':rss,
-		 'ticker':ticker
-		}
-		)
+		 'tweets':[tweets],
+		 'bloomberg':[bloomberg],
+		 'orbis':[orbis],
+		 'rss':[rss],
+		 'ticker':[ticker]
+		})
 	print(df)
 		#body = body + row.Constituent_name +":tweets: " + str(row.tweets)+ "| bloomberg:" + str(row.bloomberg)+ "| orbis:" + str(row.orbis)+ "| rss:" + str(row.rss_feeds)+"| ticker:" + str(row.ticker) + "\n"
 		#s = s+str(row.number)+" news items were inserted for "+row.constituent_name+"\n"
