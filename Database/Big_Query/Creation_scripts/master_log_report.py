@@ -10,18 +10,16 @@ import smtplib
 ##   4 - Recipient email id no 2
 
 def data_logs():
-	#today = DT.date.today()
-	#week_ago = today - DT.timedelta(days=7)
-	#today = 2018-02-01
-	#week_ago = 2018-02-02
-	#subject = ("Tweet collection report for the date range between " + str(week_ago) + "and" + str(today) + ":")
-	subject = ("Data collection report for 06/Feb/2018") 
+	today = DT.date.today()
+
+	week_ago = today - DT.timedelta(days=7)
+	subject = ("Tweet collection report for the date range between " + str(week_ago) + "and" + str(today) + ":")
 	client = bigquery.Client()
 	query_job = client.query("""SELECT Constituent_name, sum(tweets) as tweets, sum(bloomberg) as bloomberg, sum(orbis) as orbis, 
 	sum(rss_feeds) as rss_feeds, sum(ticker) as ticker
 	FROM `igenie-project.pecten_dataset_test.master_log_table`
-	where date = TIMESTAMP("2018-02-06")
-	GROUP By Constituent_name""".#format(week_ago, today))
+	where date between TIMESTAMP("{}") and TIMESTAMP("{}")
+	GROUP By Constituent_name""".format(week_ago, today))
 	
 	results = query_job.result()
 	body = "Constiuent | Tweets | Bloomberg | Orbis | RSS FEEDS | TICKER" + "\n"
