@@ -49,12 +49,12 @@ def data_logs():
 	#message = message + "\n" + s
 	message = 'Subject: {}\n\n{}'.format(subject, df)	
 	print(message)	
-	#server = smtplib.SMTP('smtp.gmail.com', 587)
-	#server.starttls()
-	#server.login(sys.argv[1], sys.argv[2])
-	#toaddrs = [sys.argv[3],sys.argv[4]]
-	#server.sendmail(sys.argv[1], toaddrs, message)
-	#server.quit()
+	server = smtplib.SMTP('smtp.gmail.com', 587)
+	server.starttls()
+	server.login(sys.argv[1], sys.argv[2])
+	toaddrs = [sys.argv[3]]
+	server.sendmail(sys.argv[1], toaddrs, message)
+	server.quit()
 	
 if __name__ == '__main__':
 	data_logs()
