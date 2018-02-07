@@ -3,7 +3,13 @@ import datetime as DT
 import sys
 import smtplib
 
-def twitter_logs():
+####System arguments
+##   1 - From Email Id
+##   2 - Password of from email id
+##   3 - Recipient email id no 1
+##   4 - Recipient email id no 2
+
+def data_logs():
 	today = DT.date.today()
 	week_ago = today - DT.timedelta(days=7)
 	subject = ("Tweet collection report for the date range between " + str(week_ago) + "and" + str(today) + ":")
@@ -25,10 +31,10 @@ def twitter_logs():
 	print(message)	
 	server = smtplib.SMTP('smtp.gmail.com', 587)
 	server.starttls()
-	server.login("rangavittal2@gmail.com", "rahuldravid")
-	toaddrs = ["ranga@igenieconsulting.com","rangavittalprasad@gmail.com"]
-	server.sendmail("rangavittal2@gmail.com", toaddrs, message)
+	server.login(sys.argv[1], sys.argv[2])
+	toaddrs = [sys.argv[3],sys.argv[4]]
+	server.sendmail(sys.argv[1], toaddrs, message)
 	server.quit()
 	
 if __name__ == '__main__':
-	twitter_logs()
+	data_logs()
