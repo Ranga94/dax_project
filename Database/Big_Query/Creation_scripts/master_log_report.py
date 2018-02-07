@@ -15,7 +15,7 @@ def twitter_logs():
 	GROUP By Constituent_name""".format(week_ago, today))
 	
 	results = query_job.result()
-	body = ""
+	body = "Constiuent | Tweets | Bloomberg | Orbis | RSS FEEDS | TICKER" + "\n"
 	#constituent_name = []
 	for row in results:
 		body = body + row.Constituent_name +": " + str(row.tweets) + str(row.bloomberg) + str(row.orbis) + str(row.rss_feeds) + str(row.ticker) + "\n"
