@@ -24,7 +24,7 @@ def data_logs():
 	body = "Constiuent | Tweets | Bloomberg | Orbis | RSS FEEDS | TICKER" + "\n"
 	#constituent_name = []
 	for row in results:
-		constituent_name = row.constituent_name
+		constituent_name = row.Constituent_name
 		print(constituent_name)
 		tweets = row.tweets
 		print(tweets)
