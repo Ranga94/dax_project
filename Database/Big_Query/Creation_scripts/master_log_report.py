@@ -10,17 +10,15 @@ import smtplib
 ##   4 - Recipient email id no 2
 
 def data_logs():
-	#today = DT.date.today()
-	today = "2018-01-31"
-	#week_ago = today - DT.timedelta(days=7)
-	week_ago = "2018-01-31"
-	subject = ("Data collection report for the date range between " + str(week_ago) + "and" + str(today) + ":")
+	today = DT.date.today()
+	day_before = today - DT.timedelta(days=1)
+	subject = ("Data collection report for the date " + str(day_before) + ":")
 	client = bigquery.Client()
 	query_job = client.query("""SELECT Constituent_name, sum(tweets) as tweets, sum(bloomberg) as bloomberg, sum(orbis) as orbis, 
 	sum(rss_feeds) as rss_feeds, sum(ticker) as ticker
 	FROM `igenie-project.pecten_dataset_test.master_log_table`
-	where date between TIMESTAMP("{}") and TIMESTAMP("{}")
-	GROUP By Constituent_name""".format(week_ago, today))
+	where date = TIMESTAMP("{}") 
+	GROUP By Constituent_name""".format(day_before))
 	
 	results = query_job.result()
 	body = "Constiuent | Tweets | Bloomberg | Orbis | RSS FEEDS | TICKER" + "\n"
@@ -31,12 +29,12 @@ def data_logs():
 	#message = message + "\n" + s
 	message = 'Subject: {}\n\n{}'.format(subject, body)	
 	print(message)	
-	server = smtplib.SMTP('smtp.gmail.com', 587)
-	server.starttls()
-	server.login(sys.argv[1], sys.argv[2])
-	toaddrs = [sys.argv[3],sys.argv[4]]
-	server.sendmail(sys.argv[1], toaddrs, message)
-	server.quit()
+	#server = smtplib.SMTP('smtp.gmail.com', 587)
+	#server.starttls()
+	#server.login(sys.argv[1], sys.argv[2])
+	#toaddrs = [sys.argv[3],sys.argv[4]]
+	#server.sendmail(sys.argv[1], toaddrs, message)
+	#server.quit()
 	
 if __name__ == '__main__':
 	data_logs()
