@@ -32,7 +32,7 @@ def data_logs():
 		print(bloomberg)
 		orbis = row.orbis
 		print(orbis)
-		rss = row.rss
+		rss = row.rss_feeds
 		print(rss)
 		ticker = row.ticker
 		print(ticker)
