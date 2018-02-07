@@ -47,8 +47,8 @@ def data_logs():
 		#body = body + row.Constituent_name +":tweets: " + str(row.tweets)+ "| bloomberg:" + str(row.bloomberg)+ "| orbis:" + str(row.orbis)+ "| rss:" + str(row.rss_feeds)+"| ticker:" + str(row.ticker) + "\n"
 		#s = s+str(row.number)+" news items were inserted for "+row.constituent_name+"\n"
 	#message = message + "\n" + s
-	#message = 'Subject: {}\n\n{}'.format(subject, body)	
-	#print(message)	
+	message = 'Subject: {}\n\n{}'.format(subject, df)	
+	print(message)	
 	#server = smtplib.SMTP('smtp.gmail.com', 587)
 	#server.starttls()
 	#server.login(sys.argv[1], sys.argv[2])
