@@ -23,27 +23,25 @@ def data_logs():
 	
 	results = query_job.result()
 	body = "Constiuent | Tweets | Bloomberg | Orbis | RSS FEEDS | TICKER" + "\n"
-	#constituent_name = []
+	constituent_name = []
+	tweets = []
+	bloomberg = []
+	orbis = []
+	rss = []
+	ticker = []
 	for row in results:
-		constituent_name = row.Constituent_name
-		#print(constituent_name)
-		tweets = row.tweets
-		#print(tweets)
-		bloomberg = row.bloomberg
-		#print(bloomberg)
-		orbis = row.orbis
-		#print(orbis)
-		rss = row.rss_feeds
-		#print(rss)
-		ticker = row.ticker
-		#print(ticker)
+		constituent_name.append(row.Constituent_name)
+		tweets.append(row.tweets)
+		bloomberg.append(row.bloomberg)
+		orbis.append(row.orbis)
+		rss.append(row.rss_feeds)
+		ticker.append(row.ticker)
 	df = pd.DataFrame(
-		{'constituent_name':constituent_name,
-		 'tweets':[tweets],
-		 'bloomberg':[bloomberg],
-		 'orbis':[orbis],
-		 'rss':[rss],
-		 'ticker':[ticker]
+		{'constituent_name':constituent_name,'tweets':tweets,
+		 'bloomberg':bloomberg,
+		 'orbis':orbis,
+		 'rss':rss,
+		 'ticker':ticker
 		})
 	print(df)
 		#body = body + row.Constituent_name +":tweets: " + str(row.tweets)+ "| bloomberg:" + str(row.bloomberg)+ "| orbis:" + str(row.orbis)+ "| rss:" + str(row.rss_feeds)+"| ticker:" + str(row.ticker) + "\n"
