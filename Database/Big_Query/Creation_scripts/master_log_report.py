@@ -20,7 +20,7 @@ def data_logs():
 	sum(rss_feeds) as rss_feeds, sum(ticker) as ticker
 	FROM `igenie-project.pecten_dataset_test.master_log_table`
 	where date = TIMESTAMP("2018-02-06")
-	GROUP By Constituent_name"""#.format(week_ago, today))
+	GROUP By Constituent_name"""
 	
 	results = query_job.result()
 	body = "Constiuent | Tweets | Bloomberg | Orbis | RSS FEEDS | TICKER" + "\n"
