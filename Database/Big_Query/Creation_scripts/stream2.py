@@ -22,12 +22,13 @@ class StdOutListener(StreamListener):
 		retweet_count = python_obj["retweet_count"]
 		favourites_count = python_obj["favorite_count"]
 		client = bigquery.Client()
-		query_insert =  client.query("""INSERT INTO `igenie-project.pecten_dataset_dev.stream_twitter`
+		try:
+			query_insert =  client.query("""INSERT INTO `igenie-project.pecten_dataset_dev.stream_twitter`
 			(created_at,text,name,screen_name,location, followers_count,reply_count,retweet_count) 
 			VALUES ('{0}','{1}','{2}','{3}','{4}',{5},{6},{7})""".format(created_at,text,name, screen_name,location,followers_count,reply_count,retweet_count))
-		insert_result = query_insert.result()
-		#except Exception as e:
-		#	pass
+			insert_result = query_insert.result()
+		except Exception as e:
+			pass
 		
 		return True
 	
