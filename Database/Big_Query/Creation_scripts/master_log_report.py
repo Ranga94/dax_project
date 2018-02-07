@@ -25,7 +25,7 @@ def twitter_logs():
 	print(message)	
 	server = smtplib.SMTP('smtp.gmail.com', 587)
 	server.starttls()
-	server.login("rangavittal2@gmail.com", "rahuldravid"])
+	server.login("rangavittal2@gmail.com", "rahuldravid")
 	toaddrs = ["ranga@igenieconsulting.com","rangavittalprasad@gmail.com"]
 	server.sendmail("rangavittal2@gmail.com", toaddrs, message)
 	server.quit()
