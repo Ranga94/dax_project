@@ -18,7 +18,7 @@ def twitter_logs():
 	body = "Constiuent | Tweets | Bloomberg | Orbis | RSS FEEDS | TICKER" + "\n"
 	#constituent_name = []
 	for row in results:
-		body = body + row.Constituent_name +":tweets: " + str(row.tweets)+ "bloomberg:" + str(row.bloomberg)+ "orbis:" + str(row.orbis)+ "rss:" + str(row.rss_feeds)+"ticker:" + str(row.ticker) + "\n"
+		body = body + row.Constituent_name +":tweets: " + str(row.tweets)+ "| bloomberg:" + str(row.bloomberg)+ "| orbis:" + str(row.orbis)+ "| rss:" + str(row.rss_feeds)+"| ticker:" + str(row.ticker) + "\n"
 		#s = s+str(row.number)+" news items were inserted for "+row.constituent_name+"\n"
 	#message = message + "\n" + s
 	message = 'Subject: {}\n\n{}'.format(subject, body)	
