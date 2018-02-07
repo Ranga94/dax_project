@@ -24,16 +24,24 @@ def data_logs():
 	body = "Constiuent | Tweets | Bloomberg | Orbis | RSS FEEDS | TICKER" + "\n"
 	#constituent_name = []
 	for row in results:
-		tweets = row.constituent_name
+		constituent_name = row.constituent_name
+		print(constituent_name)
+		tweets = row.tweets
+		print(tweets)
 		bloomberg = row.bloomberg
+		print(bloomberg)
 		orbis = row.orbis
+		print(orbis)
 		rss = row.rss
+		print(rss)
 		ticker = row.ticker
+		print(ticker)
+		
 		#body = body + row.Constituent_name +":tweets: " + str(row.tweets)+ "| bloomberg:" + str(row.bloomberg)+ "| orbis:" + str(row.orbis)+ "| rss:" + str(row.rss_feeds)+"| ticker:" + str(row.ticker) + "\n"
 		#s = s+str(row.number)+" news items were inserted for "+row.constituent_name+"\n"
 	#message = message + "\n" + s
-	message = 'Subject: {}\n\n{}'.format(subject, body)	
-	print(message)	
+	#message = 'Subject: {}\n\n{}'.format(subject, body)	
+	#print(message)	
 	#server = smtplib.SMTP('smtp.gmail.com', 587)
 	#server.starttls()
 	#server.login(sys.argv[1], sys.argv[2])
