@@ -26,17 +26,17 @@ def data_logs():
 	#constituent_name = []
 	for row in results:
 		constituent_name = row.Constituent_name
-		print(constituent_name)
+		#print(constituent_name)
 		tweets = row.tweets
-		print(tweets)
+		#print(tweets)
 		bloomberg = row.bloomberg
-		print(bloomberg)
+		#print(bloomberg)
 		orbis = row.orbis
-		print(orbis)
+		#print(orbis)
 		rss = row.rss_feeds
-		print(rss)
+		#print(rss)
 		ticker = row.ticker
-		print(ticker)
+		#print(ticker)
 	df = pd.DataFrame(
 		{'constituent_name':constituent_name,
 		 'tweets':tweets,
