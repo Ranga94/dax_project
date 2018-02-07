@@ -44,5 +44,5 @@ if __name__ == '__main__':
 	auth.set_access_token(twitter_credentials.ACCESS_TOKEN,twitter_credentials.ACCESS_TOKEN_SECRET)
 	
 	stream = Stream(auth, listener)
-	stream.filter(track=['BREXIT'])
+	stream.filter(track=['BREXIT','ADIDAS'])
 
