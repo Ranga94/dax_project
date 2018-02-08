@@ -11,7 +11,7 @@ import smtplib
 
 def data_logs():
 	today = DT.date.today()
-	day_before = today - DT.timedelta(days=1)
+	day_before = today - DT.timedelta(days=2)
 	subject = ("Data collection report for the date " + str(day_before) + ":")
 	client = bigquery.Client()
 	query_job = client.query("""SELECT Constituent_name, sum(tweets) as tweets, sum(bloomberg) as bloomberg, sum(orbis) as orbis, 
