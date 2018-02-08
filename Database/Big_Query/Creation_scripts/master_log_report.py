@@ -2,7 +2,6 @@ from google.cloud import bigquery
 import datetime as DT
 import sys
 import smtplib
-import pandas as pd
 
 ####System arguments
 ##   1 - From Email Id
@@ -23,38 +22,19 @@ def data_logs():
 	
 	results = query_job.result()
 	body = "Constiuent | Tweets | Bloomberg | Orbis | RSS FEEDS | TICKER" + "\n"
-	constituent_name = []
-	tweets = []
-	bloomberg = []
-	orbis = []
-	rss = []
-	ticker = []
+	#constituent_name = []
 	for row in results:
-		constituent_name.append(row.Constituent_name)
-		tweets.append(row.tweets)
-		bloomberg.append(row.bloomberg)
-		orbis.append(row.orbis)
-		rss.append(row.rss_feeds)
-		ticker.append(row.ticker)
-	df = pd.DataFrame(
-		{'constituent_name':constituent_name,'tweets':tweets,
-		 'bloomberg':bloomberg,
-		 'orbis':orbis,
-		 #'rss':rss,
-		 #'ticker':ticker
-		})
-	print(df)
-		#body = body + row.Constituent_name +":tweets: " + str(row.tweets)+ "| bloomberg:" + str(row.bloomberg)+ "| orbis:" + str(row.orbis)+ "| rss:" + str(row.rss_feeds)+"| ticker:" + str(row.ticker) + "\n"
+		body = body + row.Constituent_name +":tweets: " + str(row.tweets)+ "| bloomberg:" + str(row.bloomberg)+ "| orbis:" + str(row.orbis)+ "| rss:" + str(row.rss_feeds)+"| ticker:" + str(row.ticker) + "\n"
 		#s = s+str(row.number)+" news items were inserted for "+row.constituent_name+"\n"
 	#message = message + "\n" + s
-	message = 'Subject: {}\n\n{}'.format(subject, df)	
+	message = 'Subject: {}\n\n{}'.format(subject, body)	
 	print(message)	
-	server = smtplib.SMTP('smtp.gmail.com', 587)
-	server.starttls()
-	server.login(sys.argv[1], sys.argv[2])
-	toaddrs = [sys.argv[3]]
-	server.sendmail(sys.argv[1], toaddrs, message)
-	server.quit()
+	#server = smtplib.SMTP('smtp.gmail.com', 587)
+	#server.starttls()
+	#server.login(sys.argv[1], sys.argv[2])
+	#toaddrs = [sys.argv[3],sys.argv[4]]
+	#server.sendmail(sys.argv[1], toaddrs, message)
+	#server.quit()
 	
 if __name__ == '__main__':
 	data_logs()
