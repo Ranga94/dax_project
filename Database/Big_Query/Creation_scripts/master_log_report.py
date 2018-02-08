@@ -8,17 +8,17 @@ import smtplib
 ##   2 - Password of from email id
 ##   3 - Recipient email id no 1
 ##   4 - Recipient email id no 2
-
-def data_logs():
+##   5 - Dataset id
+def data_logs(dataset_id):
 	today = DT.date.today()
-	day_before = today - DT.timedelta(days=2)
-	subject = ("Data collection report for the date " + str(day_before) + ":")
+	day_before = today - DT.timedelta(days=1)
+	subject = ("Data collection report for the date " + str(day_before) + "for" +dataset_id +"is:")
 	client = bigquery.Client()
 	query_job = client.query("""SELECT Constituent_name, sum(tweets) as tweets, sum(bloomberg) as bloomberg, sum(orbis) as orbis, 
 	sum(rss_feeds) as rss_feeds, sum(ticker) as ticker
-	FROM `igenie-project.pecten_dataset_test.master_log_table`
-	where date = TIMESTAMP("{}") 
-	GROUP By Constituent_name""".format(day_before))
+	FROM `igenie-project.{1}.master_log_table`
+	where date = TIMESTAMP("{0}") 
+	GROUP By Constituent_name""".format(day_before,dataset_id))
 	
 	results = query_job.result()
 	body = "Constiuent | Tweets | Bloomberg | Orbis | RSS FEEDS | TICKER" + "\n"
@@ -37,4 +37,4 @@ def data_logs():
 	server.quit()
 	
 if __name__ == '__main__':
-	data_logs()
+	data_logs(sys.argv[5])
