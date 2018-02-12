@@ -33,7 +33,7 @@ def export_big_table():
 		for table in big_table:
 			table_ref = dataset.table(table)
 			print(table_ref)
-			destination = "gs://"+dataset+"/"+table+"/"+table+"-*.json"
+			destination = "gs://"+str(dataset)+"/"+table+"/"+table+"-*.json"
 			job_config.destination_format = 'NEWLINE_DELIMITED_JSON'
 			job = client.extract_table(table_ref, destination,job_config= job_config)
 			job.result()
