@@ -3,7 +3,7 @@ from google.cloud import bigquery
 DATASET_ID = ["pecten_dataset_test","pecten_dataset","pecten_dataset_dev"]
 client = bigquery.Client()
 #DATASET_ID = "pecten_dataset_test"
-	for dataset_id in DATASET_ID
+for dataset_id in DATASET_ID
 	dataset = bigquery.Dataset(client.dataset(dataset_id))
 	tables = list(client.list_dataset_tables(dataset))
 	#print(tables)
