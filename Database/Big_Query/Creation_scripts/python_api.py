@@ -12,7 +12,7 @@ def export_data():
 
 		for table in tables:
 			table_ref = dataset.table(table.table_id)
-			#print(table.table_id)
+			print(table.table_id)
 			try:
 				destination = "gs://"+dataset_id+"/"+table.table_id+".json"
 				
