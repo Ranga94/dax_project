@@ -2,7 +2,7 @@ from google.cloud import bigquery
 
 client = bigquery.Client()
 
-def export_data()
+def export_data():
 	DATASET_ID = ["pecten_dataset_test"]
 
 	for dataset_id in DATASET_ID:
