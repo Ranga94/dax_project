@@ -22,7 +22,7 @@ def export_data():
 				job.result()
 			except Exception as e:
 				print(e)
-			print('Exported {} to {}'.format(table.table_id, destination)
+			#print('Exported {} to {}'.format(table.table_id, destination)
 			
 ##For tables containing data of more than 1 GB			
 def export_big_table():
