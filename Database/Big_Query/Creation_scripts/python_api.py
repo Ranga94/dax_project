@@ -28,10 +28,10 @@ def export_data():
 def export_big_table():
 	DATASET_ID = ["pecten_dataset_test","pecten_dataset_dev","pecten_dataset"]
 	for dataset in DATASET_ID:
-		dataset = (client.dataset(dataset))
+		dataset_ref = (client.dataset(dataset))
 		big_table = ["all_news","tweets","tweets_unmodified"]
-		for table in big_table:
-			table_ref = dataset.table(table)
+		for table_id in big_table:
+			table_ref = dataset_ref.table(table_id)
 			print(table_ref)
 			destination = "gs://"+str(dataset)+"/"+table+"/"+table+"-*.json"
 			job_config.destination_format = 'NEWLINE_DELIMITED_JSON'
