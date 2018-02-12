@@ -11,7 +11,7 @@ for dataset_id in DATASET_ID:
 	for table in tables:
 		table_ref = dataset.table(table.table_id)
 		#print(table.table_id)
-		destination = "gs://"+DATASET_ID+"/"+table.table_id
+		destination = "gs://"+dataset_id+"/"+table.table_id
 		job = client.extract_table(table_ref, destination)
 		job.result()
 		#print('Exported {} to {}'.format(table.table_id, destination)
