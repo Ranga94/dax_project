@@ -26,7 +26,7 @@ def export_data():
 ##For tables containing data of more than 1 GB			
 def export_big_table():
 	DATASET_ID = ["pecten_dataset_test","pecten_dataset_dev","pecten_dataset"]
-	for dataset in dataset_id:
+	for dataset in DATASET_ID:
 		dataset = bigquery.Dataset(client.dataset(dataset))
 		big_table = ["all_news","tweets","tweets_unmodified"]
 		for table in big_table:
