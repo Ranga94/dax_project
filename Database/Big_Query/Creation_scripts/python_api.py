@@ -12,7 +12,7 @@ for dataset_id in DATASET_ID:
 		table_ref = dataset.table(table.table_id)
 		#print(table.table_id)
 		destination = "gs://"+dataset_id+"/"+table.table_id+".json"
-		job_config = bigquery.ExtractJobConfig()
+		job_config = bigquery.ExtracJobConfig()
 		job_config.destinationFormat = 'NEWLINE_DELIMITED_JSON'
 		job = client.extract_table(table_ref, destination,job_config= job_config)
 		job.result()
