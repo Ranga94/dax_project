@@ -1,4 +1,4 @@
-from google.cloud import storage
+from google.cloud import bigquery
 
 bigquery_client = bigquery.Client()
 DATASET_ID = "pecten_dataset_test"
