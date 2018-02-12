@@ -15,7 +15,7 @@ def export_data():
 			print(table.table_id)
 			try:
 				destination = "gs://"+dataset_id+"/"+table.table_id+".json"
-				
+				print(destination)
 				job_config.destination_format = 'NEWLINE_DELIMITED_JSON'
 				job = client.extract_table(table_ref, destination,job_config= job_config)
 				job.result()
