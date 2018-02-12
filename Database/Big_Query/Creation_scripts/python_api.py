@@ -12,8 +12,8 @@ for dataset_id in DATASET_ID:
 		table_ref = dataset.table(table.table_id)
 		#print(table.table_id)
 		destination = "gs://"+dataset_id+"/"+table.table_id+".json"
-		#job_config = bigquery.LoadJobConfig()
-		configuration.extract.destinationFormat = 'NEWLINE_DELIMITED_JSON'
-		job = client.extract_table(table_ref, destination)
+		job_config = bigquery.LoadJobConfig()
+		job_config.extract.destinationFormat = 'NEWLINE_DELIMITED_JSON'
+		job = client.extract_table(table_ref, destination,job_config= job_config)
 		job.result()
 		#print('Exported {} to {}'.format(table.table_id, destination)
