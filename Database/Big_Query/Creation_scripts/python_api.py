@@ -16,7 +16,7 @@ def export_data():
 			table_ref = dataset.table(table.table_id)
 			print(table_ref)
 			print(table.table_id)
-			destination = "gs://pecten_"+duration+dataset_id+"/"+table.table_id+".json"
+			destination = "gs://pecten_"+duration+"/"+dataset_id+"/"+table.table_id+".json"
 			job_config.destination_format = 'NEWLINE_DELIMITED_JSON'
 			print(destination)
 			try:
@@ -35,7 +35,7 @@ def export_big_table():
 		for table_id in big_table:
 			table_ref = dataset_ref.table(table_id)
 			print(table_ref)
-			destination = "gs://pecten_"+duration+str(dataset)+"/"+table_id+"/"+table_id+"-*.json"
+			destination = "gs://pecten_"+duration+"/"+str(dataset)+"/"+table_id+"/"+table_id+"-*.json"
 			job_config.destination_format = 'NEWLINE_DELIMITED_JSON'
 			job = client.extract_table(table_ref, destination,job_config= job_config)
 			job.result()
