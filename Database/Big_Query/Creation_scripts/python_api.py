@@ -11,6 +11,6 @@ for table in tables:
 	#print(table.table_id)
 	destination = "gs://pecten_dataset_t/"+table.table_id
 	print(destination)
-	#job = bigquery_client.extract_table(table_ref, destination)
-	#job.result()
+	job = bigquery_client.extract_table(table_ref, destination)
+	job.result()
 	#print('Exported {} to {}'.format(table.table_id, destination)
