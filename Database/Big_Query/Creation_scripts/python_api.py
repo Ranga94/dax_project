@@ -34,7 +34,7 @@ def export_big_table():
 			destination = "gs://pecten_dataset_t/"+table+"-*.json"
 			job_config.destination_format = 'NEWLINE_DELIMITED_JSON'
 			job = client.extract_table(table_ref, destination,job_config= job_config)
-			job.result
+			job.result()
 			
 if __name__ == '__main__':
 	#export_data()
