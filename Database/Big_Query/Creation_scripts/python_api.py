@@ -1,6 +1,6 @@
 from google.cloud import bigquery
 
-DATASET_ID = ["pecten_dataset_test","pecten_dataset","pecten_dataset_dev"]
+DATASET_ID = ["pecten_dataset_t"]
 client = bigquery.Client()
 #DATASET_ID = "pecten_dataset_test"
 for dataset_id in DATASET_ID:
@@ -14,4 +14,4 @@ for dataset_id in DATASET_ID:
 		destination = "gs://"+dataset_id+"/"+table.table_id
 		job = client.extract_table(table_ref, destination)
 		job.result()
-		print('Exported {} to {}'.format(table.table_id, destination)
+		#print('Exported {} to {}'.format(table.table_id, destination)
