@@ -9,5 +9,8 @@ print(tables)
 for table in tables:
 	table_ref = dataset.table(table.table_id)
 	#print(table.table_id)
-	print(table_ref)
+	destination = "gs://pecten_dataset_t/"+table.table_id
+	job = bigquery_client.extract_table(table_ref, destination)
+	job.result()
+	print('Exported {} to {}'.format(table.table_id, destination)
 
