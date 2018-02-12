@@ -1,6 +1,6 @@
 from google.cloud import bigquery
 
-DATASET_ID = ["pecten_dataset_t"]
+DATASET_ID = ["pecten_dataset_test"]
 client = bigquery.Client()
 #DATASET_ID = "pecten_dataset_test"
 for dataset_id in DATASET_ID:
