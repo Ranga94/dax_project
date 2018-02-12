@@ -14,4 +14,4 @@ for dataset_id in DATASET_ID:
 		destination = "gs://"+dataset_id+"/"+table.table_id
 		job = client.extract_table(table_ref, destination)
 		job.result()
-		#print('Exported {} to {}'.format(table.table_id, destination)
+		print('Exported {} to {}'.format(table.table_id, destination)
