@@ -8,5 +8,5 @@ print(tables)
 
 for table in tables:
 	source_table_ref = dataset.table(table.table_id)
-	print(source_table_ref)
+	print(table.table_id)
 
