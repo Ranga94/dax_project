@@ -3,14 +3,15 @@ from google.cloud import bigquery
 DATASET_ID = ["pecten_dataset_test","pecten_dataset","pecten_dataset_dev"]
 client = bigquery.Client()
 #DATASET_ID = "pecten_dataset_test"
-dataset = bigquery.Dataset(client.dataset(DATASET_ID))
-tables = list(client.list_dataset_tables(dataset))
-#print(tables)
+	for dataset_id in DATASET_ID
+	dataset = bigquery.Dataset(client.dataset(dataset_id))
+	tables = list(client.list_dataset_tables(dataset))
+	#print(tables)
 
-for table in tables:
-	table_ref = dataset.table(table.table_id)
-	#print(table.table_id)
-	destination = "gs://"+DATASET_ID+"/"+table.table_id
-	job = client.extract_table(table_ref, destination)
-	job.result()
-	#print('Exported {} to {}'.format(table.table_id, destination)
+	for table in tables:
+		table_ref = dataset.table(table.table_id)
+		#print(table.table_id)
+		destination = "gs://"+DATASET_ID+"/"+table.table_id
+		job = client.extract_table(table_ref, destination)
+		job.result()
+		#print('Exported {} to {}'.format(table.table_id, destination)
