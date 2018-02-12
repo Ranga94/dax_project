@@ -42,4 +42,4 @@ def export_big_table():
 			
 if __name__ == '__main__':
 	export_data()
-	#export_big_table()
+	export_big_table()
