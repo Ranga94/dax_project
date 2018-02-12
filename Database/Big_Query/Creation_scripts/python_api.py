@@ -6,7 +6,7 @@ def export_data():
 	DATASET_ID = ["pecten_dataset_test","pecten_dataset_dev","pecten_dataset"]
 
 	for dataset_id in DATASET_ID:
-		dataset = client.dataset(dataset_id))
+		dataset = client.dataset(dataset_id)
 		tables = list(client.list_dataset_tables(dataset))
 		print(tables)
 
@@ -40,4 +40,4 @@ def export_big_table():
 			
 if __name__ == '__main__':
 	export_data()
-	export_big_table()
+	#export_big_table()
