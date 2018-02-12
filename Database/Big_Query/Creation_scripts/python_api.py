@@ -7,6 +7,7 @@ tables = list(client.list_dataset_tables(dataset))
 print(tables)
 
 for table in tables:
-	source_table_ref = dataset.table(table.table_id)
-	print(table.table_id)
+	table_ref = dataset.table(table.table_id)
+	#print(table.table_id)
+	print(table_ref)
 
