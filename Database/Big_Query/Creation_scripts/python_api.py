@@ -11,7 +11,7 @@ for dataset_id in DATASET_ID:
 	for table in tables:
 		table_ref = dataset.table(table.table_id)
 		#print(table.table_id)
-		destination = "gs://pecten_dataset_t"+table.table_id+"-*.json"
+		destination = "gs://pecten_dataset_t/"+table.table_id+"-*.json"
 		job_config = bigquery.ExtractJobConfig()
 		job_config.destination_format = 'NEWLINE_DELIMITED_JSON'
 		job = client.extract_table(table_ref, destination,job_config= job_config)
