@@ -13,4 +13,3 @@ for table in tables:
 	job = bigquery_client.extract_table(table_ref, destination)
 	job.result()
 	print('Exported {} to {}'.format(table.table_id, destination)
-
