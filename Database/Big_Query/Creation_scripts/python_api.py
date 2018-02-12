@@ -31,7 +31,7 @@ def export_big_table():
 		big_table = ["all_news","tweets","tweets_unmodified"]
 		for table in big_table:
 			table_ref = dataset.table(table)
-			destination = "gs://pecten_dataset_t/"+table+"-*.json"
+			destination = "gs://pecten_dataset_t/"+table+"/"+table+"-*.json"
 			job_config.destination_format = 'NEWLINE_DELIMITED_JSON'
 			job = client.extract_table(table_ref, destination,job_config= job_config)
 			job.result()
