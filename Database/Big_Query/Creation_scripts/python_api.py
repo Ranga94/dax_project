@@ -22,7 +22,6 @@ def export_data():
 			try:
 				job = client.extract_table(table_ref, destination,job_config= job_config)
 				job.result()
-				return True
 			except Exception as e:
 				print(e)
 			#print('Exported {} to {}'.format(table.table_id, destination)
