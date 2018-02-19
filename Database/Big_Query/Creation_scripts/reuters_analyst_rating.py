@@ -22,8 +22,8 @@ for constituent in constituent_name:
     table.columns = table.iloc[0]
     table1 = table.iloc[1:]
 #table.reindex(table.index.drop(1))
-	table1['constituent'] = constituent
-	table1['date'] = "2018-02-19"
+    table1['constituent'] = constituent
+    table1['date'] = "2018-02-19"
     df_res = df_res.append(table1)
 #print(df_res)
 buy =[]
