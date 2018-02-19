@@ -40,7 +40,8 @@ mean_rating =[]
 mean_rating = list(df_res.iloc[:,11])
 constituent = []
 constituent = list(df_res.iloc[:,14])
-#date = df_res.iloc[:,16]
+date = []
+date = list(df_res.iloc[:,16])
 #print(buy)
 #print(outperform)
 #print(hold)
