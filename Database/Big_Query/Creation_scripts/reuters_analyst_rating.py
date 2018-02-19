@@ -42,7 +42,7 @@ constituent = df_res.iloc[:,14]
 #print(mean_rating)
 #print(constituent)
 #print(date)
-print(buy[i])
+print(buy[1])
 
 for i in range(0,len(constituent)):
 	print('----')
