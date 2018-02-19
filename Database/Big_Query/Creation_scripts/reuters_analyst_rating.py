@@ -22,17 +22,24 @@ for constituent in constituent_name:
     table.columns = table.iloc[0]
     table1 = table.iloc[1:]
 #table.reindex(table.index.drop(1))
-  #  table1['constituent'] = constituent
- #   table1['date'] = "2018-02-19"
+	table1['constituent'] = constituent
+	table1['date'] = "2018-02-19"
     df_res = df_res.append(table1)
 #print(df_res)
-buy = df_res.iloc[:,1]
-outperform = df_res.iloc[:,3]
-hold = df_res.iloc[:,5]
-underperform = df_res.iloc[:,7]
-sell = df_res.iloc[:,9]
-mean_rating = df_res.iloc[:,11]
-constituent = df_res.iloc[:,14]
+buy =[]
+buy = list(df_res.iloc[:,1])
+outperform = []
+outperform = list(df_res.iloc[:,3])
+hold = []
+hold = list(df_res.iloc[:,5])
+underperform = []
+underperform = list(df_res.iloc[:,7])
+sell = []
+sell = list(df_res.iloc[:,9])
+mean_rating =[]
+mean_rating = list(df_res.iloc[:,11])
+constituent = []
+constituent = list(df_res.iloc[:,14])
 #date = df_res.iloc[:,16]
 #print(buy)
 #print(outperform)
@@ -42,7 +49,7 @@ constituent = df_res.iloc[:,14]
 #print(mean_rating)
 #print(constituent)
 #print(date)
-print(buy[0])
+#print(buy[0])
 
 for i in range(0,len(constituent)):
 	print('----')
