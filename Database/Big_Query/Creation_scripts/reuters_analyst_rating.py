@@ -1,16 +1,20 @@
 import pandas as pd
 import datetime as DT
 from google.cloud import bigquery
+import sys
 
-
+##Load the Big Query Client
 client = bigquery.Client()
 
+###Define an empty dataframe
 headers = ['1-5 Linear Scale','(1) BUY','(2) OUTPERFORM','(3) HOLD','(4) UNDERPERFORM','(5) SELL','No Opinion','NaN','Mean Rating','constituent']
 df_res = pd.DataFrame(columns = headers)
-#print(df_res)
+
+#Define the constituents into a list
 constituent_name = ['Adidas' ,'Allianz','BASF','Bayer','BMW','Beiersdorf AG','Commerzbank','Continental','Daimler','Deutsche Bank','Deutsche Boerse',
 'Deutsche Lufthansa','Deutsche Post','Deutsche Telekom','E.ON','Fresenius Medical','Fresenius SE','HeidelbergCement','Henkel','Infineon','Linde','Merck','Munich Re Group',
 'Prosiebensat1','RWE','SAP','Siemens','ThyssenKrupp','Volkswagen','Vonovia']
+#For loop to change constituents name to equivalent constituent id used in the url
 for constituent in constituent_name:
 	if constituent == 'Allianz':
 		name = 'ALVG.DE'
@@ -73,19 +77,20 @@ for constituent in constituent_name:
 	elif constituent == 'Vonovia':
 		name = 'VNAn.DE'		
 	
-		
-	dfs = pd.read_html('https://www.reuters.com/finance/stocks/analyst/{}'.format(name))
-	table = dfs[1]
+	##The url from which the data is to be scraped	
+	dfs = pd.read_html('https://www.reuters.com/finance/stocks/analyst/{}'.format(name)) #dfs will have all the tables present in the url
+	table = dfs[1] #Pick the second table, i.e. 'ANALYST RECOMMENDATIONS AND REVISIONS' 
     
-	df1 = table[[0,1]]
+	df1 = table[[0,1]] #Pick only the first two columns which is Linear scale and current ratings
 	table = df1.transpose()
 	table.columns = table.iloc[0]
 	table1 = table.iloc[1:]
 #table.reindex(table.index.drop(1))
-	table1['constituent'] = constituent
-	table1['date'] = DT.date.today()
+	table1['constituent'] = constituent #Append the constituent name
+	table1['date'] = DT.date.today() #Append the date
 	df_res = df_res.append(table1)
 #print(df_res)
+#Loading the dataframe to separate list for BQ data insertion
 buy =[]
 buy = list(df_res.iloc[:,1])
 outperform = []
@@ -115,8 +120,8 @@ date = list(df_res.iloc[:,16])
 for i in range(0,len(constituent)):
 	print('----')
 	print(buy[i])	
-	query_insert = client.query("""INSERT INTO `igenie-project.pecten_dataset.reuters_analyst_rating` 
+	query_insert = client.query("""INSERT INTO `igenie-project.{}.reuters_analyst_rating` 
 	(buy, outperform, hold, underperfrom , sell, mean_rating, constituent, date) 
-	VALUES({},{},{},{},{},{},'{}','{}')""".format(buy[i],outperform[i],hold[i],underperform[i],sell[i],mean_rating[i],constituent[i],date[i]))
+	VALUES({},{},{},{},{},{},'{}','{}')""".format(sys.argv[1],buy[i],outperform[i],hold[i],underperform[i],sell[i],mean_rating[i],constituent[i],date[i]))
 	insert_result = query_insert.result()
-	
+	print("The data for {} is inserted to BQ table".format(constituent[i]))
