@@ -33,7 +33,7 @@ underperform = df_res.iloc[:,7]
 sell = df_res.iloc[:,9]
 mean_rating = df_res.iloc[:,11]
 constituent = df_res.iloc[:,14]
-date = df_res.iloc[:,16]
+#date = df_res.iloc[:,16]
 #print(buy)
 #print(outperform)
 #print(hold)
