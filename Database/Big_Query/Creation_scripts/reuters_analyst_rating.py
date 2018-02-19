@@ -12,10 +12,10 @@ constituent_name = ['Adidas' ,'Allianz','BASF','Bayer','BMW','Beiersdorf AG','Co
 'Deutsche Lufthansa','Deutsche Post','Deutsche Telekom','E.ON','Fresenius Medical','Fresenius SE','HeidelbergCement','Henkel','Infineon','Linde','Merck','Munich Re Group',
 'Prosiebensat1','RWE','SAP','Siemens','ThyssenKrupp','Volkswagen','Vonovia']
 for constituent in constituent_name:
-    if constituent == 'Allianz':
-        name = 'ALVG.DE'
-    elif constituent == 'Adidas':
-        name = 'ADSGn.DE'
+	if constituent == 'Allianz':
+		name = 'ALVG.DE'
+	elif constituent == 'Adidas':
+		name = 'ADSGn.DE'
 	elif constituent == 'BASF':
 		name = 'BASFn.DE'
 	elif constituent = 'Bayer'
@@ -75,16 +75,16 @@ for constituent in constituent_name:
 	
 		
 	dfs = pd.read_html('https://www.reuters.com/finance/stocks/analyst/{}'.format(name))
-    table = dfs[1]
+	table = dfs[1]
     
-    df1 = table[[0,1]]
-    table = df1.transpose()
-    table.columns = table.iloc[0]
-    table1 = table.iloc[1:]
+	df1 = table[[0,1]]
+	table = df1.transpose()
+	table.columns = table.iloc[0]
+	table1 = table.iloc[1:]
 #table.reindex(table.index.drop(1))
-    table1['constituent'] = constituent
-    table1['date'] = "2018-02-19"
-    df_res = df_res.append(table1)
+	table1['constituent'] = constituent
+	table1['date'] = "2018-02-19"
+	df_res = df_res.append(table1)
 #print(df_res)
 buy =[]
 buy = list(df_res.iloc[:,1])
