@@ -46,7 +46,6 @@ print(date)
 for i in range(0,len(constituent)):
 	query_insert = client.query("""INSERT INTO `igenie-project.pecten_dataset.reuters_analyst_rating` 
     (buy, outperform, hold, underperfrom , sell, mean_rating, constituent, date)
-    VALUES({},{},{},{},{},{},'{}','{}'""".format(buy[i],outperform[i],hold[i],underperform[i],sell[i],mean_rating[i],
-                                                          constituent[i],date[i]))
+    VALUES({},{},{},{},{},{},'{}','{}'""".format(buy[i],outperform[i],hold[i],underperform[i],sell[i],mean_rating[i],constituent[i],date[i]))
 	insert_result = query_insert.result()
 	
