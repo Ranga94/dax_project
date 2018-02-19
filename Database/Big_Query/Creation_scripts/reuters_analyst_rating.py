@@ -2,6 +2,9 @@ import pandas as pd
 import datetime as DT
 from google.cloud import bigquery
 import sys
+#System argument 1 takes the datset to which the data is to be inserted
+
+
 
 ##Load the Big Query Client
 client = bigquery.Client()
@@ -119,9 +122,9 @@ date = list(df_res.iloc[:,16])
 
 for i in range(0,len(constituent)):
 	print('----')
-	print(buy[i])	
+	#print(buy[i])	
 	query_insert = client.query("""INSERT INTO `igenie-project.{}.reuters_analyst_rating` 
-	(buy, outperform, hold, underperfrom , sell, mean_rating, constituent, date) 
+	(buy, outperform, hold, underperform , sell, mean_rating, constituent, date) 
 	VALUES({},{},{},{},{},{},'{}','{}')""".format(sys.argv[1],buy[i],outperform[i],hold[i],underperform[i],sell[i],mean_rating[i],constituent[i],date[i]))
 	insert_result = query_insert.result()
 	print("The data for {} is inserted to BQ table".format(constituent[i]))
