@@ -33,5 +33,5 @@ twitter_df =pd.DataFrame({'constituent_name':constituent_name_twitter,'tweets':t
 twitter_merge = pd.merge(constituent_name_pd, twitter_df, on = 'constituent_name', how = 'left')
 #print(twitter_merge)
 for key,value in twitter_merge.iteritems():
-	print(value[0])
+	print(value[0][1])
 
