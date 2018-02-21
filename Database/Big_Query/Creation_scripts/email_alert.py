@@ -29,7 +29,7 @@ for row in tweet_results:
 	constituent_name_twitter.append(row.constituent_name)
 	tweets.append(row.tweets)
 
-twitter_df =pd.DataFrame({'Constituent_name':constituent_name_twitter,'tweets':tweets})
+twitter_df =pd.DataFrame({'constituent_name':constituent_name_twitter,'tweets':tweets})
 twitter_merge = pd.merge(constituent_name_pd, twitter_df, on = 'constituent_name', how = 'left')
 print(twitter_merge)
 
