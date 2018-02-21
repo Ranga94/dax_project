@@ -137,10 +137,11 @@ def log_table(dataset_id):
 	RSS_feeds = df.iloc[:,5]
 	StockTwits = df.iloc[:,6]
 	Ticker = df.iloc[:,7]
-	
+	body1 = "Twitter on "+day_before+"\n"
 	for i in range(0,len(constituent)):
 		if (Tweets[i] == 0):
-			print("No tweets recieved for {}".format(constituent[i]))
+			
+			body1 = body1 +"No tweets were collected for " + constituent[i] +"\n" 
 	print("------")
 	for i in range(0,len(constituent)):
 		if (Ticker[i] == 0):
