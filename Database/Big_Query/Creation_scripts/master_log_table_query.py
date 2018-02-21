@@ -142,19 +142,15 @@ def log_table(dataset_id):
 	body3 = "Orbis on " +str(day_before)+"\n"
 	for i in range(0,len(constituent)):
 		if (Tweets[i] == 0):
-			
 			body1 = body1 +"No tweets were collected for " + constituent[i] +"\n" 
-			print(body1)
-	print("------")
 	for i in range(0,len(constituent)):
 		if (Ticker[i] == 0):
 			body2 = body2 + "No ticker data were collected for " + constituent[i] + "\n"
-			print(body2)
-	print("------")
 	for i in range(0,len(constituent)):
 		if (Orbis[i] == 0):
 			body3 = body3 + "No Orbis data were collected for " +constituent[i] +"\n"
-			print(body3)
+	body = body1+body2+body3
+	print(body)
 	######################################Insert into table###########################
 	#for i in range(0,len(constituent)):
 	
