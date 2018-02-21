@@ -145,6 +145,10 @@ def log_table(dataset_id):
 	for i in range(0,len(constituent)):
 		if (Ticker[i] == 0):
 			print("No ticker data collected for {}".format(constituent[i]))
+	print("------")
+	for i in range(0,len(constituent)):
+		if (Orbis[i] == 0):
+			print("No Orbis news was collected for {}".format(constituent[i]))
 	######################################Insert into table###########################
 	#for i in range(0,len(constituent)):
 	
