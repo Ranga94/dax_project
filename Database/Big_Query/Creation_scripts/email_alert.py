@@ -31,5 +31,7 @@ for row in tweet_results:
 
 twitter_df =pd.DataFrame({'constituent_name':constituent_name_twitter,'tweets':tweets})
 twitter_merge = pd.merge(constituent_name_pd, twitter_df, on = 'constituent_name', how = 'left')
-print(twitter_merge)
+#print(twitter_merge)
+for row_index, row in twitter_merge.iterrows():
+	print row_index, row
 
