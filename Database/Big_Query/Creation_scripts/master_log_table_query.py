@@ -142,6 +142,7 @@ def log_table(dataset_id):
 		if (Tweets[i] == 0):
 			
 			body1 = body1 +"No tweets were collected for " + constituent[i] +"\n" 
+			print(body1)
 	print("------")
 	for i in range(0,len(constituent)):
 		if (Ticker[i] == 0):
