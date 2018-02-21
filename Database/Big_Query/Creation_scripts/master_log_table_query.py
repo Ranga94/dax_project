@@ -32,7 +32,7 @@ def log_table(dataset_id):
 	##########Merge the list into pandas dataframe######
 	tweets_df = pd.DataFrame({'Date':date,'Constituent_name':constituent_name_twitter,
 							'tweets':tweets})
-	tweets_df = pd.merge(constituent_name_pd,tweets_df on = 'Constituent_name',how='left')
+	tweets_df = pd.merge(constituent_name_pd,tweets_df, on = 'Constituent_name',how='left')
 	print(tweets_df)
 	######################################Bloomberg log query################################
 	query_bloomberg = client.query("""SELECT constituent_name, sum(downloaded_news) as bloomberg FROM `igenie-project.{}.news_logs` 
