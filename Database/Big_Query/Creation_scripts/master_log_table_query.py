@@ -138,9 +138,9 @@ def log_table(dataset_id):
 	Ticker = df.iloc[:,7]
 	
 	for i in constituent:
-		if (Tweets[i] == 0)
+		if (Tweets[i] == 0):
 			print("No tweets recieved for {}".format(constituent[i]))
-		elif (Ticker[i] == 0)
+		elif (Ticker[i] == 0):
 			print("No ticker data collected for {}".format(constituent[i]))
 	######################################Insert into table###########################
 	#for i in range(0,len(constituent)):
