@@ -141,7 +141,9 @@ def log_table(dataset_id):
 	for i in range(0,len(constituent)):
 		if (Tweets[i] == 0):
 			print("No tweets recieved for {}".format(constituent[i]))
-		elif (Ticker[i] == 0):
+	print("------")
+	for i in range(0,len(constituent)):
+		if (Ticker[i] == 0):
 			print("No ticker data collected for {}".format(constituent[i]))
 	######################################Insert into table###########################
 	#for i in range(0,len(constituent)):
