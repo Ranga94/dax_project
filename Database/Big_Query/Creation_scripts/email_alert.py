@@ -30,6 +30,6 @@ for row in tweet_results:
 	tweets.append(row.tweets)
 
 twitter_df =pd.DataFrame({'Constituent_name':constituent_name_twitter,'tweets':tweets})
-twitter_merge = pd.merge(constituent_name_pd, constituent_name_twitter, on = 'constituent_name', how = 'left')
+twitter_merge = pd.merge(constituent_name_pd, twitter_df, on = 'constituent_name', how = 'left')
 print(twitter_merge)
 
