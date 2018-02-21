@@ -136,6 +136,12 @@ def log_table(dataset_id):
 	RSS_feeds = df.iloc[:,5]
 	StockTwits = df.iloc[:,6]
 	Ticker = df.iloc[:,7]
+	
+	for i in constituent:
+		if (Tweets[i] == 0)
+			print("No tweets recieved for {}".format(constituent[i]))
+		elif (Ticker[i] == 0)
+			print("No ticker data collected for {}".format(constituent[i]))
 	######################################Insert into table###########################
 	#for i in range(0,len(constituent)):
 	
