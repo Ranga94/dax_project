@@ -138,6 +138,8 @@ def log_table(dataset_id):
 	StockTwits = df.iloc[:,6]
 	Ticker = df.iloc[:,7]
 	body1 = "Twitter on "+str(day_before)+"\n"
+	body2 = "Ticker on " +str(day_before)+"\n"
+	body3 = "Orbis on " +str(day_before)+"\n"
 	for i in range(0,len(constituent)):
 		if (Tweets[i] == 0):
 			
@@ -146,11 +148,13 @@ def log_table(dataset_id):
 	print("------")
 	for i in range(0,len(constituent)):
 		if (Ticker[i] == 0):
-			print("No ticker data collected for {}".format(constituent[i]))
+			body2 = body2 + "No ticker data were collected for " + constituent[i] + "\n"
+			print(body2)
 	print("------")
 	for i in range(0,len(constituent)):
 		if (Orbis[i] == 0):
-			print("No Orbis news was collected for {}".format(constituent[i]))
+			body3 = body3 + "No Orbis data were collected for " +constituent[i] +"\n"
+			print(body3)
 	######################################Insert into table###########################
 	#for i in range(0,len(constituent)):
 	
