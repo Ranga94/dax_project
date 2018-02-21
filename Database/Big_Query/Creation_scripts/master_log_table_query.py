@@ -126,7 +126,7 @@ def log_table(dataset_id):
 	ticker_merge = pd.merge(stocktwits_merge, ticker_df,on='Constituent_name', how = 'left')
 	#############Replace Nan in dataframes with zero#######
 	df = ticker_merge.fillna(0)
-	#print(df)
+	print(df)
 	##########################Split dataframes for data insertion##########
 	constituent = df.iloc[:,0]
 	Date = df.iloc[:,1]
