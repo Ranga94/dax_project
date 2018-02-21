@@ -33,7 +33,7 @@ def log_table(dataset_id):
 	tweets_df = pd.DataFrame({'Date':date,'Constituent_name':constituent_name_twitter,
 							'tweets':tweets})
 	tweets_df = pd.merge(constituent_name_pd,tweets_df, on = 'Constituent_name',how='left')
-	print(tweets_df)
+	#print(tweets_df)
 	######################################Bloomberg log query################################
 	query_bloomberg = client.query("""SELECT constituent_name, sum(downloaded_news) as bloomberg FROM `igenie-project.{}.news_logs` 
 	where date = TIMESTAMP('{}') and source = 'Bloomberg'
@@ -127,7 +127,7 @@ def log_table(dataset_id):
 	ticker_merge = pd.merge(stocktwits_merge, ticker_df,on='Constituent_name', how = 'left')
 	#############Replace Nan in dataframes with zero#######
 	df = ticker_merge.fillna(0)
-	#print(df)
+	print(df)
 	##########################Split dataframes for data insertion##########
 	constituent = df.iloc[:,0]
 	Date = df.iloc[:,1]
@@ -138,11 +138,11 @@ def log_table(dataset_id):
 	StockTwits = df.iloc[:,6]
 	Ticker = df.iloc[:,7]
 	
-	"""for i in range(0,len(constituent)):
+	for i in range(0,len(constituent)):
 		if (Tweets[i] == 0):
 			print("No tweets recieved for {}".format(constituent[i]))
 		elif (Ticker[i] == 0):
-			print("No ticker data collected for {}".format(constituent[i]))"""
+			print("No ticker data collected for {}".format(constituent[i]))
 	######################################Insert into table###########################
 	#for i in range(0,len(constituent)):
 	
