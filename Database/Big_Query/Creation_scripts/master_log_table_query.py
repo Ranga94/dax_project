@@ -9,7 +9,7 @@ def log_table(dataset_id):
 'FRESENIUS MEDICAL CARE AG & CO. KGAA','FRESENIUS SE & CO. KGAA','HEIDELBERGCEMENT AG','HENKEL AG & CO. KGAA','INFINEON TECHNOLOGIES AG','LINDE AG','MERCK KGAA',
 'MUNCHENER RUCKVERSICHERUNGS-GESELLSCHAFT AKTIENGESELLSCHAFT IN MUNCHEN','PROSIEBENSAT.1 MEDIA SE','RWE AG','SAP SE','SIEMENS AG','THYSSENKRUPP AG','VOLKSWAGEN AG',
 'VONOVIA SE']
-	constituent_name_pd = pd.DataFrame({'constituent_name':constituent_name})
+	constituent_name_pd = pd.DataFrame({'Constituent_name':Constituent_name})
 	##################################Set Date and take previous day for data agregation##############
 	today = DT.date.today()
 	day_before = today - DT.timedelta(days=1)
