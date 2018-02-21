@@ -149,7 +149,7 @@ def log_table(dataset_id):
 	for i in range(0,len(constituent)):
 		if (Orbis[i] == 0):
 			body3 = body3 + "No Orbis data were collected for " +constituent[i] +"\n"
-	body = body1+body2+body3
+	body = body1+"\n"+body2+"\n"+body3
 	print(body)
 	######################################Insert into table###########################
 	#for i in range(0,len(constituent)):
