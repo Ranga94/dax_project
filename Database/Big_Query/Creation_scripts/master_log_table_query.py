@@ -137,7 +137,7 @@ def log_table(dataset_id):
 	StockTwits = df.iloc[:,6]
 	Ticker = df.iloc[:,7]
 	
-	for i in constituent:
+	for i in range(0,len(constituent)):
 		if (Tweets[i] == 0):
 			print("No tweets recieved for {}".format(constituent[i]))
 		elif (Ticker[i] == 0):
