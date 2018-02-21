@@ -16,9 +16,9 @@ def log_table(dataset_id):
 	client = bigquery.Client()  
 	########################################Twitter logs Query#############################################
 	query_twitter = client.query("""SELECT constituent_name, sum(downloaded_tweets) as tweets
-	FROM `igenie-project.pecten_dataset_test.tweet_logs`
+	FROM `igenie-project.{}.tweet_logs`
 	where date = timestamp('{}')
-	GROUP BY constituent_name""".format(day_before))
+	GROUP BY constituent_name""".format(dataset_id,day_before))
 	tweet_results = query_twitter.result()
 	######Initialise empty list and append results from BQ######
 	constituent_name_twitter = [] 
@@ -34,9 +34,9 @@ def log_table(dataset_id):
 							'tweets':tweets})
 	tweets_df = pd.merge(tweets_df,constituent_name_pd, on = 'Constituent_name',how='left')						
 	######################################Bloomberg log query################################
-	query_bloomberg = client.query("""SELECT constituent_name, sum(downloaded_news) as bloomberg FROM `igenie-project.pecten_dataset_test.news_logs` 
+	query_bloomberg = client.query("""SELECT constituent_name, sum(downloaded_news) as bloomberg FROM `igenie-project.{}.news_logs` 
 	where date = TIMESTAMP('{}') and source = 'Bloomberg'
-	GROUP BY constituent_name""".format(day_before))
+	GROUP BY constituent_name""".format(dataset_id,day_before))
 	bloomberg_results = query_bloomberg.result()
 	######Initialise empty list and append results from BQ####
 	constituent_name_bloomberg = []
@@ -50,9 +50,9 @@ def log_table(dataset_id):
 	######Merge the two dataframes based on key value Constituent_name#######							
 	bloomberg_merge = pd.merge(tweets_df,bloomberg_df,on ='Constituent_name',how='left')
 	##########################################Orbis Log Query################################
-	query_orbis = client.query("""SELECT constituent_name, sum(downloaded_news) as orbis FROM `igenie-project.pecten_dataset_test.news_logs` 
+	query_orbis = client.query("""SELECT constituent_name, sum(downloaded_news) as orbis FROM `igenie-project.{}.news_logs` 
 	where date = TIMESTAMP('{}') and source = 'Orbis'
-	GROUP BY constituent_name""".format(day_before))
+	GROUP BY constituent_name""".format(dataset_id,day_before))
 	orbis_results = query_orbis.result()
 	constituent_name_orbis = []
 	orbis = []
@@ -65,9 +65,9 @@ def log_table(dataset_id):
 	####Merge the previous dataframe with orbis_df based on Constituent_name#########
 	orbis_merge = pd.merge(bloomberg_merge,orbis_df,on='Constituent_name',how='left')
 	########################################rss_feeds###########################################
-	query_rss = client.query("""SELECT constituent_name, sum(downloaded_news) as rss FROM `igenie-project.pecten_dataset_test.news_logs` 
+	query_rss = client.query("""SELECT constituent_name, sum(downloaded_news) as rss FROM `igenie-project.{}.news_logs` 
 	where date = TIMESTAMP('{}') and source = 'Yahoo Finance RSS'
-	GROUP BY constituent_name""".format(day_before))
+	GROUP BY constituent_name""".format(dataset_id,day_before))
 	rss_results = query_rss.result()
 	#####Initialise empty list and append result from BQ####
 	constituent_name_rss = []
@@ -81,9 +81,9 @@ def log_table(dataset_id):
 	######Merge rss dataframe with the previous dataframe based on constituent_name#######
 	rss_merge = pd.merge(orbis_merge,rss_df,on='Constituent_name',how='left')
 	#############################################stocktwits######################
-	query_stocktwits = client.query("""SELECT constituent_name, count(*) as stocktwits FROM `igenie-project.pecten_dataset_test.tweets` 
+	query_stocktwits = client.query("""SELECT constituent_name, count(*) as stocktwits FROM `igenie-project.{}.tweets` 
 	where source = 'StockTwits' and date = TIMESTAMP('{}')
-	group by constituent_name""".format(day_before))
+	group by constituent_name""".format(dataset_id,day_before))
 	stocktwits_results = query_stocktwits.result()
 	######Initialise list with a dummy value because of the possibility of query result being nil for stocktwits######################
 	stocktwits = [0]
@@ -103,9 +103,9 @@ def log_table(dataset_id):
 	######Merge the two dataframes
 	stocktwits_merge = pd.merge(rss_merge, stocktwits_df,on='Constituent_name',how='left')
 	##########################################ticker log query##############################
-	query_ticker = client.query("""SELECT constituent_name, sum(downloaded_ticks) as ticker FROM `igenie-project.pecten_dataset_test.ticker_logs` 
+	query_ticker = client.query("""SELECT constituent_name, sum(downloaded_ticks) as ticker FROM `igenie-project.{}.ticker_logs` 
 	where date = TIMESTAMP('{}')
-	group by constituent_name""".format(day_before))
+	group by constituent_name""".format(dataset_id,day_before))
 	ticker_results = query_ticker.result()
 	##############Initialise list with a dummy value because of the possibility of query result being nil for ticker#####
 	ticker = [0]
