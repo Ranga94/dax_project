@@ -138,9 +138,9 @@ def log_table(dataset_id):
 	RSS_feeds = df.iloc[:,5]
 	StockTwits = df.iloc[:,6]
 	Ticker = df.iloc[:,7]
-	body1 = "Twitter on "+str(day_before)+" for "+dataset_id+"\n"
-	body2 = "Ticker on " +str(day_before)+" for "+dataset_id+"\n"
-	body3 = "Orbis on " +str(day_before)+" for "+dataset_id+"\n"
+	body1 = "\n Twitter on "+str(day_before)+" for "+dataset_id+"\n \n"
+	body2 = "Ticker on " +str(day_before)+" for "+dataset_id+"\n \n"
+	body3 = "Orbis on " +str(day_before)+" for "+dataset_id+"\n \n"
 	for i in range(0,len(constituent)):
 		if (Tweets[i] == 0):
 			body1 = body1 +"No tweets were collected for " + constituent[i] +"\n" 
