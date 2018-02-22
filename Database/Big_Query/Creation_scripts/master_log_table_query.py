@@ -174,7 +174,7 @@ if __name__ == '__main__':
 	message = 'Subject: {}\n\n{}'.format(subject,message)
 	server = smtplib.SMTP('smtp.gmail.com', 587)
 	server.starttls()
-	server.login("info@igeniconsulting.com","iGenie2017")
+	server.login("info@igenieconsulting.com","iGenie2017")
 	toaddrs = ["hamsa@igenieconsulting.com","ranga@igenieconsulting.com"]
 	server.sendmail("info@igeniconsulting.com", toaddrs, message)
 	server.quit()
