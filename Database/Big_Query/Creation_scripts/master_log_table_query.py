@@ -151,7 +151,6 @@ def log_table(dataset_id):
 			body3 = body3 + "No Orbis data were collected for " +constituent[i] +"\n"
 	log_table.body = body1+"\n"+body2+"\n"+body3
 	#print(body)
-	return body
 	######################################Insert into table###########################
 	#for i in range(0,len(constituent)):
 	
