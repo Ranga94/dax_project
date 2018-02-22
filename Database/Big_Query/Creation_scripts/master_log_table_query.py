@@ -1,6 +1,7 @@
 from google.cloud import bigquery
 import datetime as DT
 import pandas as pd
+import smtplib
 
 ########insert dataset id as first system argument while running###########3
 def log_table(dataset_id):
