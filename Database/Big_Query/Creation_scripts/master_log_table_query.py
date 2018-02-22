@@ -127,7 +127,7 @@ def log_table(dataset_id):
 	ticker_merge = pd.merge(stocktwits_merge, ticker_df,on='Constituent_name', how = 'left')
 	#############Replace Nan in dataframes with zero#######
 	df = ticker_merge.fillna(0)
-	print(df)
+	#print(df)
 	##########################Split dataframes for data insertion##########
 	constituent = df.iloc[:,0]
 	Date = df.iloc[:,1]
@@ -137,9 +137,9 @@ def log_table(dataset_id):
 	RSS_feeds = df.iloc[:,5]
 	StockTwits = df.iloc[:,6]
 	Ticker = df.iloc[:,7]
-	body1 = "Twitter on "+str(day_before)+" for production\n"
-	body2 = "Ticker on " +str(day_before)+" for production \n"
-	body3 = "Orbis on " +str(day_before)+" for production\n"
+	body1 = "Twitter on "+str(day_before)+" for "+dataset_id+"\n"
+	body2 = "Ticker on " +str(day_before)+" for "+dataset_id+"\n"
+	body3 = "Orbis on " +str(day_before)+" for "+dataset_id+"\n"
 	for i in range(0,len(constituent)):
 		if (Tweets[i] == 0):
 			body1 = body1 +"No tweets were collected for " + constituent[i] +"\n" 
