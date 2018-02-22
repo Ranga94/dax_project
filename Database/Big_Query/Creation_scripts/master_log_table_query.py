@@ -150,7 +150,7 @@ def log_table(dataset_id):
 		if (Orbis[i] == 0):
 			body3 = body3 + "No Orbis data were collected for " +constituent[i] +"\n"
 	body = body1+"\n"+body2+"\n"+body3
-	print(body)
+	#print(body)
 	######################################Insert into table###########################
 	#for i in range(0,len(constituent)):
 	
@@ -162,7 +162,10 @@ def log_table(dataset_id):
 	
 if __name__ == '__main__':
 	log_table("pecten_dataset")
+	message1 = body
 	log_table("pecten_dataset_test")
+	message 2 = body
+	message = message1 + message2
 	
 	
 	
