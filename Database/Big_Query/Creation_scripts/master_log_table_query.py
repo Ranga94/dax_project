@@ -167,6 +167,7 @@ if __name__ == '__main__':
 	y = log_table("pecten_dataset_test")
 	message2 = log_table.body
 	message = message1 + message2
+	print(message)
 	
 	
 	
