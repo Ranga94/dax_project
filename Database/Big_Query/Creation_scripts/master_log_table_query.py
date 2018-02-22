@@ -1,7 +1,7 @@
 from google.cloud import bigquery
 import datetime as DT
 import pandas as pd
-import sys
+
 ########insert dataset id as first system argument while running###########3
 def log_table(dataset_id):
 	Constituent_name = ['ADIDAS AG','ALLIANZ SE','BASF SE','BAYER AG','BAYERISCHE MOTOREN WERKE AG','BEIERSDORF AG','COMMERZBANK AKTIENGESELLSCHAFT',
@@ -137,9 +137,9 @@ def log_table(dataset_id):
 	RSS_feeds = df.iloc[:,5]
 	StockTwits = df.iloc[:,6]
 	Ticker = df.iloc[:,7]
-	body1 = "Twitter on "+str(day_before)+"for production\n"
-	body2 = "Ticker on " +str(day_before)+"for production \n"
-	body3 = "Orbis on " +str(day_before)+"for production\n"
+	body1 = "Twitter on "+str(day_before)+" for production\n"
+	body2 = "Ticker on " +str(day_before)+" for production \n"
+	body3 = "Orbis on " +str(day_before)+" for production\n"
 	for i in range(0,len(constituent)):
 		if (Tweets[i] == 0):
 			body1 = body1 +"No tweets were collected for " + constituent[i] +"\n" 
@@ -161,7 +161,7 @@ def log_table(dataset_id):
 	
 	
 if __name__ == '__main__':
-	log_table(sys.argv[1])
+	log_table("pecten_dataset")
 	
 	
 	
