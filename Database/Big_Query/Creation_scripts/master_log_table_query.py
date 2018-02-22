@@ -173,8 +173,8 @@ if __name__ == '__main__':
 	server = smtplib.SMTP('smtp.gmail.com', 587)
 	server.starttls()
 	server.login("rangavittal2@gmail.com","rahuldravid")
-	toaddrs = [kiran71594@gmail.com,srinathuk7@gmail.com]
-	server.sendmail(rangavittal2@gmail, toaddrs, message)
+	toaddrs = ["kiran71594@gmail.com","srinathuk7@gmail.com"]
+	server.sendmail("rangavittal2@gmail", toaddrs, message)
 	server.quit()
 	
 	
