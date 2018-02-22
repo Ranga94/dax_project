@@ -162,7 +162,7 @@ def log_table(dataset_id):
 	
 if __name__ == '__main__':
 	log_table("pecten_dataset")
-	
+	log_table("pecten_dataset_test")
 	
 	
 	
