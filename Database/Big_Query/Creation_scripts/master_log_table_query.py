@@ -169,7 +169,7 @@ if __name__ == '__main__':
 	message = message1 + message2
 	print(message)
 	subject = "Data collection report"
-	message = 'Subject: {}\n\n{}'.format(message, body)
+	message = 'Subject: {}\n\n{}'.format(subject,message)
 	server = smtplib.SMTP('smtp.gmail.com', 587)
 	server.starttls()
 	server.login("rangavittal2@gmail.com","rahuldravid")
