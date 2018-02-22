@@ -164,10 +164,10 @@ def log_table(dataset_id):
 if __name__ == '__main__':
 	log_table("pecten_dataset")
 	x = log_table("pecten_dataset")
-	message1 = x.body
+	message1 = str(x.body)
 	log_table("pecten_dataset_test")
 	y = log_table("pecten_dataset_test")
-	message2 = y.body
+	message2 = str(y.body)
 	message = message1 + message2
 	
 	
