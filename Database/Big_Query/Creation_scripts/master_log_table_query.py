@@ -164,7 +164,7 @@ if __name__ == '__main__':
 	log_table("pecten_dataset")
 	message1 = body
 	log_table("pecten_dataset_test")
-	message 2 = body
+	message2 = body
 	message = message1 + message2
 	
 	
