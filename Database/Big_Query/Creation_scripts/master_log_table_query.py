@@ -143,13 +143,13 @@ def log_table(dataset_id):
 	body3 = "Orbis on " +str(day_before)+" for "+dataset_id+"\n \n"
 	for i in range(0,len(constituent)):
 		if (Tweets[i] == 0):
-			body1 = body1 +"No tweets were collected for " + constituent[i] +"\n" 
+			body1 = body1 +"No tweets was collected for " + constituent[i] +"\n" 
 	for i in range(0,len(constituent)):
 		if (Ticker[i] == 0):
-			body2 = body2 + "No ticker data were collected for " + constituent[i] + "\n"
+			body2 = body2 + "No ticker data was collected for " + constituent[i] + "\n"
 	for i in range(0,len(constituent)):
 		if (Orbis[i] == 0):
-			body3 = body3 + "No Orbis data were collected for " +constituent[i] +"\n"
+			body3 = body3 + "No Orbis data was collected for " +constituent[i] +"\n"
 	dash = "--------------------------------------------------------------------------------------"
 	log_table.body = body1+"\n"+dash+"\n"+body2+"\n"+dash+"\n"+body3+"\n"+dash
 	#print(body)
@@ -175,7 +175,7 @@ if __name__ == '__main__':
 	server = smtplib.SMTP('smtp.gmail.com', 587)
 	server.starttls()
 	server.login("info@igenieconsulting.com","iGenie2017")
-	toaddrs = ["hamsa@igenieconsulting.com","ranga@igenieconsulting.com"]
+	toaddrs = ["ranga@igenieconsulting.com"]
 	server.sendmail("info@igeniconsulting.com", toaddrs, message)
 	server.quit()
 	
