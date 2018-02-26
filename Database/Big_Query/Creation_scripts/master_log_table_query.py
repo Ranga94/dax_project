@@ -3,7 +3,7 @@ import datetime as DT
 import pandas as pd
 import smtplib
 
-########insert dataset id as first system argument while running###########3
+########insert password as first system argument while running###########3
 def log_table(dataset_id):
 	Constituent_name = ['ADIDAS AG','ALLIANZ SE','BASF SE','BAYER AG','BAYERISCHE MOTOREN WERKE AG','BEIERSDORF AG','COMMERZBANK AKTIENGESELLSCHAFT',
 'CONTINENTAL AG','DAIMLER AG','DAX','DEUTSCHE BANK AG','DEUTSCHE BOERSE AG','DEUTSCHE LUFTHANSA AG','DEUTSCHE POST AG','DEUTSCHE TELEKOM AG','E.ON SE',
@@ -170,11 +170,11 @@ if __name__ == '__main__':
 	message2 = log_table.body
 	message = message1 + message2
 	print(message)
-	subject = "Data collection report"
+	subject = "Data collection errors"
 	message = 'Subject: {}\n\n{}'.format(subject,message)
 	server = smtplib.SMTP('smtp.gmail.com', 587)
 	server.starttls()
-	server.login("info@igenieconsulting.com","iGenie2017")
+	server.login("info@igenieconsulting.com",sys.argv[1])
 	toaddrs = ["ranga@igenieconsulting.com"]
 	server.sendmail("info@igeniconsulting.com", toaddrs, message)
 	server.quit()
